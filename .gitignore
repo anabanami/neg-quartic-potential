@@ -127,7 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-Energies_unbroken.npy
 Energies_HO.npy
 quench_time_evolution/
 sims/
+odhobs/

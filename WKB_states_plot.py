@@ -52,9 +52,12 @@ if __name__ == "__main__":
 
     for i, E in enumerate(Energies):
         WKB_state = phi(x, E)
-        plt.plot(x, np.real(WKB_state) + E, label=fR'$\phi_{i}$')
-        plt.plot(x, np.imag(WKB_state) + E, linestyle='--', color='grey')
+        plt.plot(x, (np.real(WKB_state)) * 7 + E, label=fR'$\phi_{i}$')
+        plt.plot(x, (np.imag(WKB_state)) * 7  + E, linestyle='--', color='grey')
 
+    plt.ylabel("E")
+    plt.xlabel("x")
+    plt.xlim(-25, 25)
     plt.legend()
     plt.show()
 
