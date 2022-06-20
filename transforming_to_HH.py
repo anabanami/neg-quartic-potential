@@ -29,18 +29,16 @@ def complex_quad(func, a, b, **kwargs):
 
 def HHamiltonian(y, n):
     h = 1e-6
-    
     z = np.array(y)
     z[z == 0] = 1e-200
-    psi_nz = cpsi(n, z)
-    d2Ψdz2 = ((cpsi(n, z + h) - 2 * psi_nz + cpsi(n, z - h)) / h) ** 2
-
+    psi_nz = (1 / np.sqrt(ℓ)) * cpsi(n, z / ℓ)
+    d2Ψdz2 = ((1 / np.sqrt(ℓ)) * cpsi(n, (z + h) / ℓ) - 2 * psi_nz + (1 / np.sqrt(ℓ)) * cpsi(n, (z - h) / ℓ)) / h ** 2
     return -(hbar ** 2 / (2 * m)) * d2Ψdz2 + (-hbar * np.sqrt(2 * g / m) * z + 4 * g * z ** 4) * psi_nz
 
 
-def element_integrand(x, m, n):
-    psi_m = cpsi(m, x)
-    return np.conj(psi_m) * HHamiltonian(x, n)
+def element_integrand(y, m, n):
+    psi_m = (1 / np.sqrt(ℓ)) * cpsi(m, y / ℓ)
+    return np.conj(psi_m) * HHamiltonian(y, n)
 
 
 # NxN MATRIX
@@ -48,7 +46,7 @@ def Matrix(N):
     M = np.zeros((N, N), dtype="complex")
     for m in tqdm(range(N)):
         for n in tqdm(range(N)):
-            b = 2 * np.abs(np.sqrt(4 * min(m, n) + 2) + 2)
+            b = np.abs(np.sqrt(4 * min(m, n) + 2))
             element = complex_quad(
                 element_integrand, -b, b, args=(m, n), epsabs=1.49e-08, limit=1000
             )
@@ -61,29 +59,12 @@ def Matrix(N):
     return M
 
 
-def filtering_sorting_eigenstuff(evals, evects):
-    # filtering
-    mask = (0 < evals.real) & (evals.real < 100)
-    # print(mask)
-    evals = evals[mask]
-    evects = evects[:, mask]
-
-    # sorting
-    # print(f"{evals[0] = }\n")
-    order = np.argsort(np.round(evals.real, 3) + np.round(evals.imag, 3) / 1e6)
-    # print(f"{order = }\n")
-    evals = evals[order]
-    evects = evects[:, order]
-    # print(f"{evals[0] = }\n")
-    return evals, evects
-
-
 def spatial_wavefunctions(N, y, evals, evects):
     # calculating basis functions
     y[y == 0] = 1e-200
     PHI_ns = []
     for n in range(N):
-        phi_n = cpsi(n, y)
+        phi_n = (1 / np.sqrt(ℓ)) * cpsi(n, y / ℓ)
         PHI_ns.append(phi_n)
     PHI_ns = np.array(PHI_ns)
 
@@ -121,7 +102,7 @@ def spatial_wavefunctions(N, y, evals, evects):
         # )
         plt.plot(y, eigenfunctions[i] + evals[i], "-", linewidth=1, label=fr"$\psi_{i}$")
         plt.legend(loc="upper right")
-        plt.xlabel(r'$y$')
+        plt.xlabel(r'$z$')
         # plt.ylabel(r'$ |\psi_{n}|^2$')
         plt.ylabel(r'$\psi_{n}$')
 
@@ -131,13 +112,23 @@ def spatial_wavefunctions(N, y, evals, evects):
             fr'$E_1 = {evals[1]:.01f}$',
             fr'$E_2 = {evals[2]:.01f}$',
             fr'$E_3 = {evals[3]:.01f}$',
-            fr'$E_4 = {evals[4]:.01f}$',
+            # fr'$E_4 = {evals[4]:.01f}$',
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+    plt.xlim(-10, 10)
     plt.show()
     return PHI_ns
+
+def plot_potential(y):
+    V = (-hbar * np.sqrt(2 * g / m) * y + 4 * g * y ** 4)
+    plt.plot(y, V)
+    plt.axhline(0,linestyle=":", color="grey")
+    plt.axvline(0,linestyle=":", color="grey")
+    plt.ylim(-1, 2)
+    plt.xlim(-1, 1)
+    plt.show()
 
 
 ################################################################
@@ -147,40 +138,40 @@ def globals():
     N = 100
 
     hbar = 1
-    m = 2
-    # ω = 1
+    # m = 2
+    m = 1
+    ω = 1
     g = 1
-    λ = (hbar ** 2 / (m * g)) ** -(1 / 6)
-    L = λ * (hbar ** 2 / (m * g)) ** (1 / 6)
+    # ℓ = np.sqrt(hbar / (m * ω))
+    ℓ = 1
 
     Ny = 2048
-    y = np.linspace(-15, 15, Ny)
+    y = np.linspace(-100, 100, Ny)
     delta_y = y[1] - y[0]
 
-    # Energies = np.load("Energies_WKB_N=10.npy")
-    # Energies = Energies.reshape(len(Energies))
-
-    # return hbar, m, ω, L, Energies
-    return hbar, m, g, L, N, Ny, y, delta_y
+    # matrix = np.load(f"matrix_512.npy")
+    return hbar, m, g, N, ℓ, Ny, y, delta_y
 
 
 if __name__ == "__main__":
 
-    hbar, m, g, L, N, Ny, y, delta_y = globals()
+    hbar, m, g, N, ℓ, Ny, y, delta_y = globals()
+
+    # plot_potential(y)
 
     matrix = Matrix(N)
+    # np.save(f"matrix_256.npy", matrix)
     # np.save(f"matrix_512.npy", matrix)
     np.save(f"matrix_100.npy", matrix)
 
-    # matrix = np.load(f"matrix_512.npy")
+    # matrix = np.load(f"matrix_512.npy") 
     # matrix = np.load(f"matrix_100.npy")
     print(f"\n\nMatrix\n{matrix}")
 
     # remember that evects are columns!
     evals, evects = linalg.eigh(matrix)
-    # evals, evects = filtering_sorting_eigenstuff(evals, evects)
 
-    print(f"\neigenvalues\n{evals}")
-    print(f"\neigenvectors\n{evects}")
+    # print(f"\neigenvalues\n{evals}")
+    print(f"\neigenvectors\n{abs(evects)}")# <------ look at eigenvectors
 
     PHI_ns = spatial_wavefunctions(N, y, evals, evects)
