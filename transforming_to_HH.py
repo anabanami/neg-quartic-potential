@@ -135,21 +135,18 @@ def plot_potential(y):
 # GLOBALS
 def globals():
 
-    N = 100
+    N = 10
 
     hbar = 1
-    # m = 2
     m = 1
     ω = 1
     g = 1
-    # ℓ = np.sqrt(hbar / (m * ω))
     ℓ = 1
 
     Ny = 2048
     y = np.linspace(-100, 100, Ny)
     delta_y = y[1] - y[0]
 
-    # matrix = np.load(f"matrix_512.npy")
     return hbar, m, g, N, ℓ, Ny, y, delta_y
 
 
@@ -160,18 +157,20 @@ if __name__ == "__main__":
     # plot_potential(y)
 
     matrix = Matrix(N)
-    # np.save(f"matrix_256.npy", matrix)
+    # np.save(f"matrix_100.npy", matrix)
+    # np.save(f"matrix_200.npy", matrix)
     # np.save(f"matrix_512.npy", matrix)
-    np.save(f"matrix_100.npy", matrix)
 
-    # matrix = np.load(f"matrix_512.npy") 
     # matrix = np.load(f"matrix_100.npy")
+    # matrix = np.load(f"matrix_256.npy")
+    # matrix = np.load(f"matrix_512.npy") 
+
     print(f"\n\nMatrix\n{matrix}")
 
     # remember that evects are columns!
     evals, evects = linalg.eigh(matrix)
 
     # print(f"\neigenvalues\n{evals}")
-    print(f"\neigenvectors\n{abs(evects)}")# <------ look at eigenvectors
+    # print(f"\neigenvectors\n{abs(evects)}")
 
     PHI_ns = spatial_wavefunctions(N, y, evals, evects)
