@@ -46,7 +46,7 @@ def Matrix(N):
     M = np.zeros((N, N), dtype="complex")
     for m in tqdm(range(N)):
         for n in tqdm(range(N)):
-            b = 2 * np.abs(np.sqrt(4 * min(m, n) + 2) + 2)
+            b = np.abs(np.sqrt(4 * min(m, n) + 2))
             element = complex_quad(
                 element_integrand, -b, b, args=(m, n), epsabs=1.49e-08, limit=1000
             )

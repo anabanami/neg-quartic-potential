@@ -74,7 +74,7 @@ def spatial_wavefunctions(N, y, evals, evects):
     eigenfunctions = []
     # print(f"{np.shape(evects) = }\n")
 
-    for j in range(4):
+    for j in range(5):
         c = evects[:, j]
         print(f"{c= }\n")
 
@@ -95,7 +95,7 @@ def spatial_wavefunctions(N, y, evals, evects):
     fig, ax = plt.subplots()
 
     # probability density plot
-    for i in range(4):
+    for i in range(5):
 
         # plt.plot(
         #     y, abs(eigenfunctions[i]) ** 2, "-", linewidth=1, label=fr"$|\psi_{i}|^2$"
@@ -108,17 +108,19 @@ def spatial_wavefunctions(N, y, evals, evects):
 
     textstr = '\n'.join(
         (
-            fr'$E_0 = {evals[0]:.05f}$',
-            fr'$E_1 = {evals[1]:.05f}$',
-            fr'$E_2 = {evals[2]:.05f}$',
-            fr'$E_3 = {evals[3]:.05f}$',
-            fr'$E_4 = {evals[4]:.01f}$',
+            fr'$E_0 = {evals[0]:.06f}$',
+            fr'$E_1 = {evals[1]:.06f}$',
+            fr'$E_2 = {evals[2]:.06f}$',
+            fr'$E_3 = {evals[3]:.06f}$',
+            fr'$E_4 = {evals[4]:.06f}$',
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+    plt.plot(y, (-hbar * np.sqrt(2 * g / m) * y) + 4 * g * y ** 4, color="black")
     plt.axvline(0, linestyle=":", color="grey")
-    plt.xlim(-10, 10)
+    plt.ylim(-1, 30)
+    plt.xlim(-5, 5)
     plt.show()
     return PHI_ns
 
@@ -136,7 +138,7 @@ def plot_potential(y):
 # GLOBALS
 def globals():
 
-    N = 20
+    N = 100
 
     hbar = 1
     m = 1/2
@@ -156,12 +158,12 @@ if __name__ == "__main__":
 
     # plot_potential(y)
 
-    matrix = Matrix(N)
+    # matrix = Matrix(N)
     # np.save(f"matrix_100.npy", matrix)
     # np.save(f"matrix_200.npy", matrix)
     # np.save(f"matrix_512.npy", matrix)
 
-    # matrix = np.load(f"matrix_100.npy")
+    matrix = np.load(f"matrix_100.npy")
     # matrix = np.load(f"matrix_256.npy")
     # matrix = np.load(f"matrix_512.npy") 
 
