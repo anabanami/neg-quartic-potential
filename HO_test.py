@@ -33,7 +33,7 @@ def HHamiltonian(y, n):
     z[z == 0] = 1e-200
     psi_nz = cpsi(n, z)
     d2Ψdz2 = (cpsi(n, (z + h)) - 2 * psi_nz + cpsi(n, (z - h))) / h ** 2
-    return -(hbar ** 2 / (2 * m)) * d2Ψdz2 + (-hbar * np.sqrt(2 * g / m) * z + 4 * g * z ** 4) * psi_nz
+    return -(hbar ** 2 / (2 * m)) * d2Ψdz2 + (1 / 2) * m * z ** 2 * psi_nz
 
 
 def element_integrand(y, m, n):
@@ -108,39 +108,29 @@ def spatial_wavefunctions(N, y, evals, evects):
 
     textstr = '\n'.join(
         (
-            fr'$E_0 = {evals[0]:.05f}$',
-            fr'$E_1 = {evals[1]:.05f}$',
-            fr'$E_2 = {evals[2]:.05f}$',
-            fr'$E_3 = {evals[3]:.05f}$',
-            fr'$E_4 = {evals[4]:.01f}$',
+            fr'$E_0 = {evals[0]:.02f}$',
+            fr'$E_1 = {evals[1]:.02f}$',
+            fr'$E_2 = {evals[2]:.02f}$',
+            fr'$E_3 = {evals[3]:.02f}$',
+            # fr'$E_4 = {evals[4]:.01f}$',
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
-    plt.axvline(0, linestyle=":", color="grey")
     plt.xlim(-10, 10)
+    plt.axvline(0,linestyle=":", color="grey")
     plt.show()
     return PHI_ns
-
-def plot_potential(y):
-    V = (-hbar * np.sqrt(2 * g / m) * y + 4 * g * y ** 4)
-    plt.plot(y, V)
-    plt.axhline(0,linestyle=":", color="grey")
-    plt.axvline(0,linestyle=":", color="grey")
-    plt.ylim(-1, 2)
-    plt.xlim(-1, 1)
-    plt.show()
 
 
 ################################################################
 # GLOBALS
 def globals():
 
-    N = 20
+    N = 10
 
     hbar = 1
-    m = 1/2
-    ω = 1
+    m = 1
     g = 1
 
     Ny = 2048
@@ -158,12 +148,8 @@ if __name__ == "__main__":
 
     matrix = Matrix(N)
     # np.save(f"matrix_100.npy", matrix)
-    # np.save(f"matrix_200.npy", matrix)
-    # np.save(f"matrix_512.npy", matrix)
 
     # matrix = np.load(f"matrix_100.npy")
-    # matrix = np.load(f"matrix_256.npy")
-    # matrix = np.load(f"matrix_512.npy") 
 
     print(f"\n\nMatrix\n{matrix}")
 

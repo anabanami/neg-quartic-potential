@@ -48,7 +48,7 @@ def variance(x, dx, Ψ):
     f_right = f[1:] # right endpoints
     f_left = f[:-1] # left endpoints
     expectation_value_x = (dx / 2) * np.sum(f_right + f_left)
-    print(f"{expectation_value_x =}")
+    # print(f"{expectation_value_x =}")
     
     g = (x - expectation_value_x) ** 2 * abs(Ψ ** 2)
     g_right = g[1:] 
@@ -62,7 +62,7 @@ def simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder):
     PLOT_INTERVAL = 5000
 
     waves = []
-    # SIGMAS_SQUARED = []
+    SIGMAS_SQUARED = []
     while t < t_final:
         # print(i)
         if not i % PLOT_INTERVAL:
@@ -90,12 +90,12 @@ def simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder):
             plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
             plt.clf()
 
-            # # spatial variance
-            # sigma_x_squared = variance(x, delta_x, wave)
-            # SIGMAS_SQUARED.append(sigma_x_squared)
+            # spatial variance
+            sigma_x_squared = variance(x, delta_x, wave)
+            SIGMAS_SQUARED.append(sigma_x_squared)
             # print(f"variance = {sigma_x_squared}\n")
 
-            h = abs(wave ** 2)
+            h = abs(wave) ** 2
             h_right = h[1:]
             h_left = h[:-1]
             print(f"wave normalisation: {delta_x / 2 * np.sum(h_right + h_left)}")
@@ -104,8 +104,8 @@ def simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder):
         i += 1
         t += delta_t
 
-    # np.save(f"SIGMAS_SQUARED_{t_final=}.npy", SIGMAS_SQUARED)
-    np.save(f"waves_list_{t_final=20}.npy", waves)
+    np.save(f"SIGMAS_SQUARED_{t_final=}.npy", SIGMAS_SQUARED)
+    np.save(f"waves_list_{t_final=}.npy", waves)
 
 
 def globals():
@@ -133,8 +133,8 @@ def globals():
 
     # time interval
     t = 0
-    t_final = 20
-    delta_t = m * delta_x ** 2 / (np.pi * hbar)
+    t_final = 5
+    delta_t = 1.5 * m * delta_x ** 2 / (np.pi * hbar)
 
     i = 0
 
@@ -146,9 +146,9 @@ if __name__ == "__main__":
 
     folder, hbar, m, ω, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i = globals()
 
-    # simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder)
+    simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder)
 
-    sigmas_list = np.load("SIGMAS_SQUARED.npy")
+    # sigmas_list = np.load("SIGMAS_SQUARED.npy")
     time = np.linspace(t, t_final, len(sigmas_list))
     
     plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")

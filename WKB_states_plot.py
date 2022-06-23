@@ -10,7 +10,7 @@ plt.rcParams['figure.dpi'] = 200
 
 def globals():
     hbar = 1
-    m = 2
+    m = 1
     ω = 1
     g = 1
     λ = (hbar ** 2 / (m * g)) ** -(1 / 6)
