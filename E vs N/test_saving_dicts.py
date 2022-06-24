@@ -7,6 +7,8 @@ from scipy.integrate import quad
 from scipy import linalg
 from tqdm import tqdm
 from odhobs import psi as cpsi
+from pathlib import Path
+import json
 
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
@@ -136,8 +138,6 @@ def plot_potential(y):
 # GLOBALS
 def globals():
 
-    N = 5
-
     hbar = 1
     m = 1/2
     ω = 1
@@ -147,30 +147,32 @@ def globals():
     y = np.linspace(-100, 100, Ny)
     delta_y = y[1] - y[0]
 
-    return hbar, m, g, N, Ny, y, delta_y
+    return hbar, m, g, Ny, y, delta_y
 
 
 if __name__ == "__main__":
 
-    hbar, m, g, N, Ny, y, delta_y = globals()
-
+    hbar, m, g, Ny, y, delta_y = globals()
     # plot_potential(y)
 
+    json_file = Path('data.json')
+    try:
+        data = json.loads(json_file.read_text())
+    except FileNotFoundError:
+        data = {"N": [], "E":[]}
+
+    N = 25
+
     matrix = Matrix(N)
-    # np.save(f"matrix_100.npy", matrix)
-    # np.save(f"matrix_200.npy", matrix)
-    # np.save(f"matrix_512.npy", matrix)
-
-    # matrix = np.load(f"matrix_100.npy")
-    # matrix = np.load(f"matrix_256.npy")
-    # matrix = np.load(f"matrix_512.npy") 
-
-    print(f"\n\nMatrix\n{matrix}")
 
     # remember that evects are columns!
     evals, evects = linalg.eigh(matrix)
 
-    # print(f"\neigenvalues\n{evals}")
-    # print(f"\neigenvectors\n{abs(evects)}")
+    data["N"].append(N)
+    data["E"].append(list(evals))
 
-    PHI_ns = spatial_wavefunctions(N, y, evals, evects)
+    json_file.write_text(
+        json.dumps(data, indent=4),
+    )
+
+
