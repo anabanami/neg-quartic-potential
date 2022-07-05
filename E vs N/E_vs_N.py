@@ -25,7 +25,7 @@ def Extract(lst, n):
     return E_n
 
 
-for n in range(5):
+for n in range(4):
     E_n = Extract(E_lists, n)
     evalue = E_n[-1]
     if n <= 1:
@@ -34,8 +34,8 @@ for n in range(5):
     else:
         plt.plot(N_list[n-1:], E_n, label=fR"$E_{n} = {evalue:.06f}$")
 
-# plt.title("Eigenvalue convergence number of basis states (N)")
-plt.legend()
+plt.title("Eigenvalue convergence vs number of basis states (N)")
+plt.legend(title="Eigenvalues", title_fontsize=7)
 plt.ylabel("Energy")
 plt.xlabel("N")
 plt.show()

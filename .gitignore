@@ -131,3 +131,6 @@ Energies_HO.npy
 quench_time_evolution/
 sims/
 odhobs/
+HH_RK4_time_evolution/
+HH_U_time_evolution/
+RK4_prob_dens_HH_HO_gs.mp4

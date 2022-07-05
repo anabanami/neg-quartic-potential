@@ -23,11 +23,6 @@ def V(x, t):
     else:
         return -x ** 4
 
-# # Potential for equivalent Hermitian Hamiltonian
-# def V(x, t):
-#     return 4 * x ** 4 - hbar * np.sqrt(2 / m) * x 
-
-
 def Schrodinger_eqn(t, Ψ):
     # Fourier derivative theorem
     KΨ = -hbar ** 2 / (2 * m) * ifft(-(k ** 2) * fft(Ψ))
