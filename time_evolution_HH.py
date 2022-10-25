@@ -68,6 +68,7 @@ def evolve_RK4(t, t_final, i, x, wave, x_max, delta_x, folder):
             # plt.legend()
 
             # prob. density plot
+            plt.plot(y, (-hbar * np.sqrt(2 * g / m) * y) + 4 * g * y ** 4, color="black", linewidth=2)
             plt.plot(x, abs(wave ** 2))
             plt.ylabel(R"$|\psi(x,t)|^2$")
             plt.title(f"state at t = {t:04f}")
@@ -96,7 +97,7 @@ def evolve_RK4(t, t_final, i, x, wave, x_max, delta_x, folder):
 ####################################################################################################
 
 def HHamiltonian(x, n):
-    h = 1e-6
+    h = 1e-2
     z = np.array(x)
     z[z == 0] = 1e-200
     psi_nz = cpsi(n, z)
@@ -173,7 +174,7 @@ def plot_spatial_wavefunction(N, y, t):
     plt.xlim(-1.5, 1.5)
     plt.legend()
     
-    plt.savefig(f"{folder2}/{t:06f}.png")
+    plt.savefig(f"{folder2}/{t:.06f}.png")
     plt.clf()
 
 
@@ -181,11 +182,11 @@ def plot_spatial_wavefunction(N, y, t):
 
 def globals():
     #makes folder for simulation frames
-    # folder = Path('HH_RK4_time_evolution')
+    folder = Path('HH_RK4_time_evolution')
     folder2 = Path('HH_U_time_evolution')
 
-    # os.makedirs(folder, exist_ok=True)
-    # os.system(f'rm {folder}/*.png')
+    os.makedirs(folder, exist_ok=True)
+    os.system(f'rm {folder}/*.png')
 
     os.makedirs(folder2, exist_ok=True)
     os.system(f'rm {folder2}/*.png')
@@ -228,23 +229,23 @@ def globals():
     y = np.linspace(-2, 2, Ny)
     delta_y = y[1] - y[0]
 
-    # return folder, folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y
-    return folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y
+    return folder, folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y
+    # return folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y
 
 
 
 if __name__ == "__main__":
 
-    # folder, folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y = globals()
-    folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y = globals()
+    folder, folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y = globals()
+    # folder2, hbar, m, ω, g, x_max, x, delta_x,  n, k, wave, t, t_final, delta_t, i, N, Ny, y, delta_y = globals()
 
 
     ## Runga-Kutta time evolution
-    # evolve_RK4(t, t_final, i, x, wave, x_max, delta_x, folder)
+    evolve_RK4(t, t_final, i, x, wave, x_max, delta_x, folder)
 
     ####################################################################################################
     ## U-operator time evolution
-    time_steps = np.arange(0.0, 10, 0.01)
+    time_steps = np.arange(0.0, 10, 0.001)
     for step in time_steps:
         plot_spatial_wavefunction(N, y, step)
 
