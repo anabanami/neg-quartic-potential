@@ -26,7 +26,7 @@ def globals():
     t_final = 1
     delta_t = t_d
 
-    Energies = np.load("Energies_WKB_N=100.npy")
+    Energies = np.load("Energies_WKB_N=10.npy")
     Energies = Energies.reshape(len(Energies))
 
     return hbar, m, ω, L, x, x_max, t, t_final, delta_t, Energies

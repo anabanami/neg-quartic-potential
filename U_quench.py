@@ -124,7 +124,7 @@ def plot_spatial_wavefunction(N, M, y, t, state, i):
 
         plt.title(f"state at t = {t:04f}")
 
-        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:03d}.png")
+        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:04d}.png")
         plt.clf()
 
 
