@@ -91,9 +91,9 @@ def Schrodinger_eqn(x, Ψ):
 E0 = 1.1563
 E = E0
 
-N = 10
+N = 100
 # ϵ = 2
-# ϵ = 0
+ϵ = 0
 
 # change of variables
 tp_minus = E ** (1 / (ϵ + 2)) * np.exp(1j * np.pi * (3 / 2 - (1 / (ϵ + 2))))
