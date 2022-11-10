@@ -10,7 +10,53 @@ from scipy import linalg
 from scipy.linalg import expm
 from tqdm import tqdm
 
+
 plt.rcParams['figure.dpi'] = 150
+
+
+def subdominant_WKB_states(x, ϵ, Energies):
+    states = []
+    if ϵ == 0:
+        for E in Energies:
+            x0 = -np.sqrt(E)
+            print(f"{x0 = }")
+            assert x[0] < x0 < x[-1]
+
+            i = np.searchsorted(x, x0)
+            sqrt_P = np.sqrt((E - x ** 2).astype(complex))
+            integral = np.cumsum(sqrt_P) * delta_x
+            integral-= integral[i]
+            wkb = np.exp(1j * integral) / np.sqrt(sqrt_P)
+            # print(f"{np.shape(wkb) = }\n")
+            states.append(wkb)
+            # print(f"\n{wkb = }\n")
+
+    if ϵ == 2:
+        for E in Energies:
+            # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
+            wkb = np.exp(1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E)) / ((E + x ** 4) ** (1 / 4))
+            states.append(wkb)
+            print(f"\n{wkb = }\n")
+    return states
+
+
+def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
+    PT_normed_states = []
+    for i, P_state in enumerate(P_states_ϵ):
+        # print(f"{i = }")
+        PT_norm = np.dot(np.conjugate(P_state), states_ϵ[i])
+        normed_state = states_ϵ[i] / np.sqrt(PT_norm)
+        PT_normed_states.append(normed_state)
+    return PT_normed_states
+
+
+def C_operator(normalised_states):
+    wavefunction_products = []
+    for state in normalised_states:
+        wavefunction_products.append(np.dot(state, state))
+    C_op = np.sum(wavefunction_products)
+    return C_op
+
 
 def V(x, ϵ):
     if ϵ == 0:
@@ -18,61 +64,45 @@ def V(x, ϵ):
     elif ϵ == 2:
         return - x ** 4
 
-def subdominant_WKB_states(x, ϵ, Energies):
-    states = []
-    if ϵ == 0:
-        for i, E in enumerate(Energies):
-            x0 = np.sqrt(E)
-            # print(f"{x0 = }")
-            x_prime = np.linspace(x0, x[i], Nx) # SHould this be size Nx??
-            # print(f"{x_prime = }")
-            # print(f"{np.shape(x_prime) = }")
-            f_xj = np.sqrt((E - x_prime ** 2).astype(complex))
-            # print(f"{np.shape(f_xj) = }")
-            wkb = np.exp(-1j * np.cumsum(f_xj) * delta_x)
-            # print(f"{np.shape(wkb) = }\n")
-            states.append(wkb)
 
-    if ϵ == 2:
-        for E in Energies:
-            # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
-            states.append(np.exp(-1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E))/ ((E + x ** 4) ** (1 / 4)))
-    return states
-
-def PT_normalised_states(x, ϵ, states, Energies):
-    P_states = subdominant_WKB_states(-x, ϵ, Energies)
-    PT_states = []
-    for i, state in enumerate(states):
-        # print(f"{i = }")
-        PT_norm = np.dot(np.conjugate(P_states[i]), state)
-        state/=np.sqrt(PT_norm)
-        PT_states.append(state)
-        # print(f"{np.shape(PT_states) = }")
-    return PT_states
-
-def C_operator(PT_states):
-    wavefunction_products = []
-    for state in PT_states:
-        wavefunction_products.append(np.dot(state, state))
-    C_op = np.sum(wavefunction_products)
-    return C_op
+def HΨ(x, ϵ, normaliseded_states):
+    for state in normalised_states:
+        # Fourier derivative theorem
+        KΨ = -hbar ** 2 / (2 * m) * ifft(-(k ** 2) * fft(state))
+        VΨ = V(x, ϵ) * state
+        return (-1j / hbar) * (KΨ + VΨ)
 
 
+def element_integrand(x, ϵ, C_op, normalised_state, P_P_normaliseed_state):
+    return C_op * np.conj(P_P_normalised_state) * HΨ(x, ϵ, normalised_state)
 
 
+def Matrix(N):
+    M = np.zeros((N, N), dtype="complex")
+    for m in tqdm(range(N)):
+        for n in tqdm(range(N)):
+            element = element_integrand #<<<< WHAT KIND OF INTEGRAL DO I WANT HERE?
+            print(element)
+            M[m][n] = element
+    #print(f"{M = }")
+    return M
 
+# def U_operator(N, t):
+#     # print(f"{HMatrix(N) = }")
+#     return expm(-1j * HMatrix(N) * t / hbar)
 
+# def U_time_evolution(N, t):
+#     HO_GS = np.zeros(N, complex)
+#     HO_GS[0] = 1
+#     # print(HO_GS)
 
-
-
-
-
-# def Matrix(PT_states):
-#     if ϵ == 0:
-#         return x ** 2
-#     elif ϵ == 2:
-#         return - x ** 4
-
+#     ## create time evolution operator
+#     U = U_operator(N, t)
+#     # print(f"\ntime evolution operator:\n")
+#     # for line in U:
+#     #     print ('  '.join(map(str, line)))
+#     ## state vector
+#     return np.einsum('ij,j->i', U, HO_GS)
 
 def plot_states(states, ϵ):
     ax = plt.gca()
@@ -96,9 +126,9 @@ def plot_states(states, ϵ):
         # plt.ylabel(R"$|\psi_{n}(x, E)|^2$", labelpad=6)
 
     plt.legend()
-    # plt.twinx()
     plt.xlim(xmin=-5, xmax=5)
     plt.xlabel(r'$x$', labelpad=6)
+    # plt.twinx()
     # plt.ylabel(r'$Energy$', labelpad=6)
 
     if ϵ == 0:
@@ -107,8 +137,6 @@ def plot_states(states, ϵ):
         plt.title(fR"First subdominant WKB states for $H = p^{{2}} - x^{{4}}$")
 
     plt.show()
-
-
 
 
 
@@ -127,9 +155,11 @@ def globals():
 
     # spatial dimension
     Nx = 1024
-    x = np.linspace(-10, 10, Nx)
+    x = np.linspace(-100, 100, Nx)
     x[x==0] = 1e-200
     delta_x = x[1] - x[0]
+    # FFT variable
+    k = 2 * np.pi * np.fft.fftfreq(Nx, delta_x) 
 
     # # time interval
     # t_d = m * delta_x ** 2 / (np.pi * hbar)
@@ -137,44 +167,39 @@ def globals():
     # t_final = 1
     # delta_t = t_d
 
-    f_x = np.zeros_like(x)
-    # print(f"Initialised {f_x = }\n")
-
     ϵ0 = 0
     ϵ2 = 2
 
-    Energies_HO = np.load("Energies_HO_WKB_N=10.npy")
-    Energies_HO = Energies_HO.reshape(len(Energies_HO))
+    Energies_ϵ0 = np.load("Energies_HO_WKB_N=10.npy")
+    Energies_ϵ0 = Energies_ϵ0.reshape(len(Energies_ϵ0))
 
 
     Energies_ϵ2 = np.load("Energies_WKB_N=10.npy")
     Energies_ϵ2 = Energies_ϵ2.reshape(len(Energies_ϵ2))
 
-    return hbar, m, ω, g, Nx, x, delta_x, f_x, ϵ0, ϵ2, Energies_HO, Energies_ϵ2
+    N = len(Energies_ϵ2)
+
+    return hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N
 
 
 if __name__ == "__main__":
 
-    hbar, m, ω, g, Nx, x, delta_x, f_x, ϵ0, ϵ2, Energies_HO, Energies_ϵ2 = globals()
-
-    # print(f"\n{np.shape(Energies_HO) = }\n")
-    states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_HO)
-    PT_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, Energies_HO)
-    # print(f"{np.shape(PT_states_ϵ0) = }")
-    # print(f"{PT_states_ϵ0[0] = }")
-    C = C_operator(PT_states_ϵ0)
-    print(f"\nCheck if C^2 = 1\n{C**2 = }\n")
-
-    print("\nCheck if CΨ_j = (-1)^n Ψ_j\n")
-    # for j in PT_states_ϵ0:
-    #     print(f"\n{C * PT_states_ϵ0[j] = }\n")
+    hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N = globals()
 
 
+# HARMONIC OSCILLATOR STUFF
+    # print(f"\n{np.shape(Energies_ϵ0) = }\n")
+    states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0)
+    # parity flipped
+    P_states_ϵ0 = states_ϵ0[::-1]
+    normalised_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
 
+    plot_states(states_ϵ0, ϵ0)
+    
+    # C_ϵ0 = C_operator(normalised_states_ϵ0) #NEEED TO CHECK THIS FURTHER
+    # print(f"\nCheck if C^2 = 1\n{C_ϵ0**2 = }\n")
+    # # print("\nCheck if CΨ_j = (-1)^n Ψ_j\n")
+    # # for j in normalised_states_ϵ0:
+    # #     print(f"\n{C * normalised_states_ϵ0[j] = }\n")
 
-
-
-    # states_ϵ2 = subdominant_WKB_states(x, ϵ2, Energies_ϵ2)
-    # PT_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, Energies_ϵ2)
-    # plot_states(PT_states_ϵ2, ϵ2)
-
+    
