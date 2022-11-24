@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import scipy.special as sc
 from scipy import linalg
 from scipy.linalg import expm
-from operator import neg
 from tqdm import tqdm
 
 
@@ -20,38 +19,28 @@ def V(x, ϵ):
     elif ϵ == 2:
         return - x ** 4
 
+
 def subdominant_WKB_states(x, ϵ, Energies):
     states = []
-    if ϵ == 0:
-        for E in Energies:
-            x0 = -np.sqrt(E)
-            assert x[0] < x0 < x[-1]
-            i = np.searchsorted(x, x0)
-            sqrt_P = np.sqrt((E - V(x, ϵ)).astype(complex))
-            integral = np.cumsum(sqrt_P) * delta_x #### aqui?
-            integral-= integral[i]
-            wkb = np.exp(1j * integral) / np.sqrt(sqrt_P)
-            ## TESTS:
-            # print(f"\n{E = }")
-            # print(f"\n{x0 = }")
-            # print(f"{i = }")
-            # print(f"{x ** 2 = }")
-            # print(f"{E - x ** 2 = }")
-            # print(f"{np.sqrt((E - x ** 2).astype(complex)) = }\n")
-            # print(f"{np.cumsum(sqrt_P) = }")
-            # print(f"{integral = }")
-            # print(f"{1j * integral = }")
-            # print(f"{np.exp(1j * integral) = }\n")
-            # print(f"{wkb = }\n") #### When I plot these states I get the peak at x[0],
-            # NEED TO rethink this approach
-            # MAYBE find analytic solution
-            states.append(wkb)
+    for E in Energies:
+        x0 = -np.sqrt(E)
+        assert x[0] < x0 < x[-1]
+        i = np.searchsorted(x, x0)
+        sqrt_P = np.sqrt((E - V(x, ϵ)).astype(complex))
+        # sqrt_P[x < x0] *= -1 
 
-    elif ϵ == 2:
-        for E in Energies:
-            # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
-            wkb = np.exp(1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E)) / ((E + x ** 4) ** (1 / 4))
-            states.append(wkb)
+        integral = np.cumsum(sqrt_P) * delta_x
+        integral-= integral[i] # ignore maybe? cause its phase only
+
+        # wkb = np.exp(1j * integral) / np.sqrt(sqrt_P)
+        wkb = (np.exp(1j * integral) + np.exp(-1j * integral)) / np.sqrt(sqrt_P)
+
+        states.append(wkb)
+
+    # for E in Energies:
+    #   # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
+    #   wkb = np.exp(1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E)) / ((E + x ** 4) ** (1 / 4))
+    #   states.append(wkb)
     return states
 
 
@@ -59,7 +48,6 @@ def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
     PT_normed_states = []
     PT_normed_P_states = []
     for i, P_state in enumerate(P_states_ϵ):
-        print(f"State {i}")
         # print(f"{P_state = }")
         # print(f"{np.conj(P_state) = }")
         PT_norm = np.dot(np.conj(P_state), states_ϵ[i])
@@ -83,38 +71,40 @@ def C_operator(normalised_states, normalised_P_states):
         # print(f"{state_j = }")
 
     c_ns = [] 
-    j = 0
-    for prod in wavefunction_PT_products:
-        c_ns.append((-1 ** j) * prod)
-        j+=1
+    for j, prod in enumerate(wavefunction_PT_products):
+        c_n = prod * (-1) ** j
+        c_ns.append(c_n)
     C_op = np.sum(c_ns)
     return C_op
 
 
-def HΨ(x, ϵ, normaliseded_states):
-    for state in normalised_states:
-        # Fourier derivative theorem
-        KΨ = -hbar ** 2 / (2 * m) * ifft(-(k ** 2) * fft(state))
-        VΨ = V(x, ϵ) * state
-        return (-1j / hbar) * (KΨ + VΨ)
+# def HΨ(x, ϵ, normalised_states):
+#     for state in normalised_states:
+#         # Fourier derivative theorem
+#         KΨ = -hbar ** 2 / (2 * m) * ifft(-(k ** 2) * fft(state))
+#         VΨ = V(x, ϵ) * state
+#         return (-1j / hbar) * (KΨ + VΨ)
 
 
-def element_integrand(x, ϵ, C_op, normalised_state, P_P_normaliseed_state):
-    return C_op * np.conj(P_P_normalised_state) * HΨ(x, ϵ, normalised_state)
+# def element_integrand(x, ϵ, C_op, normalised_state, P_normalised_state):
+#     return C_op * np.conj(P_normalised_state) * HΨ(x, ϵ, normalised_state)
 
 
-def Matrix(N):
-    M = np.zeros((N, N), dtype="complex")
-    for m in tqdm(range(N)):
-        for n in tqdm(range(N)):
-            element = element_integrand #<<<< WHAT KIND OF INTEGRAL DO I WANT HERE?
-            print(element)
-            M[m][n] = element    #print(f"{M = }")
-    return M
+# def Matrix(N):
+#     M = np.zeros((N, N), dtype="complex")
+#     for m in tqdm(range(N)):
+#         for n in tqdm(range(N)):
+#             element = element_integrand #<<<< WHAT KIND OF INTEGRAL DO I WANT HERE??????????????
+#             print(element)
+#             M[m][n] = element    
+#     print(f"{M = }")
+#     return M
+
 
 # def U_operator(N, t):
 #     # print(f"{HMatrix(N) = }")
 #     return expm(-1j * HMatrix(N) * t / hbar)
+
 
 # def U_time_evolution(N, t):
 #     HO_GS = np.zeros(N, complex)
@@ -130,35 +120,33 @@ def Matrix(N):
 #     return np.einsum('ij,j->i', U, HO_GS)
 
 
-def plot_states(states, ϵ):
+def plot_states(states, ϵ, Energies):
     ax = plt.gca()
     for i, state in enumerate(states[:5]):
 
         color = next(ax._get_lines.prop_cycler)['color']
-
-        # plt.plot(x, np.real(state), color=color, label=fR"$\psi_{i}$")
-        # plt.plot(x, np.imag(state), linestyle='--', color = color)
-        # plt.ylabel(R"$\psi_{n}(x, E_{WKB})$", labelpad=6)
-
-        # Energy shifted states
-        # plt.plot(x, 5 * np.real(state) + Energies[i], color=color, label=fR"$\psi_{i}$")
-        # plt.plot(x, 5 * np.imag(state) + Energies[i], linestyle='--', color = color)
+        # # Energy shifted states
+        # plt.plot(x, np.real(state) + Energies[i], color=color, label=fR"$\psi_{i}$")
+        # plt.plot(x, np.imag(state) + Energies[i], linestyle='--', color=color)
         # plt.axhline(Energies[i], linestyle=":", linewidth=0.6, color="grey")
-        # plt.ylabel(R"$\psi_{n}(x, E)$", labelpad=6)
+        # plt.ylabel(r'$Energy$', labelpad=6)
 
         # # Probability density plot
-        plt.plot(x, abs(state)**2, label=fR"$|\psi_{i}|^{{2}}$")
-        plt.ylabel(R"$|\psi_{n}(x, E_{wkb})|^2$", labelpad=6)
+        plt.plot(x, abs(state)**2 + Energies[i], label=fR"$|\psi_{i}|^{{2}}$")
+        plt.axhline(Energies[i], linewidth=0.5, linestyle=":", color="gray")
+        plt.ylabel(r'$Energy$', labelpad=6)
 
     plt.legend()
-    plt.xlim(xmin=-15, xmax=15)
+    plt.axis(xmin=-5,xmax=5, ymin=-1, ymax=15)
     plt.xlabel(r'$x$', labelpad=6)
     # plt.twinx()
     # plt.ylabel(r'$Energy$', labelpad=6)
 
     if ϵ == 0:
+        plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
         plt.title(fR"First subdominant WKB states for $H = p^{{2}} + x^{{2}}$")
     elif ϵ == 2:
+        plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
         plt.title(fR"First subdominant WKB states for $H = p^{{2}} - x^{{4}}$")
 
     plt.show()
@@ -210,32 +198,63 @@ if __name__ == "__main__":
 
     hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N = globals()
 
-    print("#################### Harmonic oscillator ####################")
+    print("\n#################### Harmonic oscillator ####################")
     # print(f"\n{Energies_ϵ0 = }\n")
     states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0) 
+    plot_states(states_ϵ0, ϵ0, Energies_ϵ0)
+    ass
 
-    # parity flipped states <------------------------ THIS HOW ?
-    P_states_ϵ0 = states_ϵ0[::-1]
-    # P_states_ϵ0 = map(neg, states_ϵ0) #???
-    # P_states_ϵ0 = subdominant_WKB_states(-x, ϵ0, Energies_ϵ0) #Assert error occurs here 
-    # print(f"shape of P_states_ϵ0{np.shape(P_states_ϵ0)}")
-
-    # ## TEST P squared:
-    # PP_states_ϵ0 = P_states_ϵ0[::-1]
-    # print(f"shape of PP_states_ϵ0{np.shape(PP_states_ϵ0)}")
-    # P_operator = [pp / p for pp, p in zip(PP_states_ϵ0, P_states_ϵ0)]
-    # P_squared = [i ** 2 for i in P_operator]
-    # # print(f"Print: P\n{P_operator}\n")
-    # print(f"Test that P^2 = 1\n{P_squared}\n")
-
+    ## parity flipped states
+    P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
 
     normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
- 
-    # plot_states(states_ϵ0, ϵ0)
-    # plot_states(normalised_states_ϵ0, ϵ0)
+    
+    # plot_states(normalised_states_ϵ0, ϵ0, Energies_ϵ0)
 
+    ## TEST P squared:
+    states_ϵ0_1 = states_ϵ0[1] # is this the same as PP_states_ϵ0_1 ???
+    P_states_ϵ0_1 = P_states_ϵ0[1]
+    P_operator = [pp / p for pp, p in zip(states_ϵ0_1, P_states_ϵ0_1)] 
+    P_operator_squared = [i ** 2 for i in P_operator]
+    # print(f"\nIs P complex? {np.iscomplex(P_operator)}")
+    plt.plot(x, np.real(P_operator_squared))
+    plt.plot(x, np.imag(P_operator_squared))
+    plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
+    plt.show()
+
+    ## TEST C squared:
     C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
-    print(f"C operator = {C_ϵ0}")
+    print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
+    # print(f"C operator = {C_ϵ0}")
     print(f"Test that C^2 = 1\n{C_ϵ0 ** 2}\n")
 
+
+
+
     # print("#################### inverted quartic  ####################")
+    # # print(f"\n{Energies_ϵ2 = }\n")
+    # states_ϵ2 = subdominant_WKB_states(x, ϵ2, Energies_ϵ2) 
+    # ## parity flipped states
+
+    # P_states_ϵ2 = [state[::-1] for state in states_ϵ2]
+    # normalised_states_ϵ2, normalised_P_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, P_states_ϵ2)
+    # # plot_states(states_ϵ2, ϵ2, Energies_ϵ2)
+    # plot_states(normalised_states_ϵ2, ϵ2, Energies_ϵ2)
+
+    # ## TEST P squared:
+    # states_ϵ2_1 = states_ϵ2[1] # is this the same as PP_states_ϵ2_1 ???
+    # P_states_ϵ2_1 = P_states_ϵ2[1]
+    # P_operator2 = [pp / p for pp, p in zip(states_ϵ2_1, P_states_ϵ2_1)]
+    # P_operator2_squared = [i ** 2 for i in P_operator2]
+    # # print(f"\nIs P complex? {np.iscomplex(P_operator2)}")
+    # plt.plot(x, np.real(P_operator2_squared))
+    # plt.plot(x, np.imag(P_operator2_squared))
+    # plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
+    # plt.show()
+
+    # ## TEST C squared:
+    # C_ϵ2 = C_operator(normalised_states_ϵ2, normalised_P_states_ϵ2)
+    # print(f"\nIs C complex? {np.iscomplex(C_ϵ2)}")
+    # # print(f"C operator = {C_ϵ2}")
+    # print(f"Test that C^2 = 1\n{C_ϵ2 ** 2}\n")
+
