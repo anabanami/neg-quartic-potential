@@ -6,6 +6,7 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 import scipy.special as sc
+from scipy import special
 from scipy import linalg
 from scipy.linalg import expm
 from tqdm import tqdm
@@ -19,28 +20,55 @@ def V(x, ϵ):
     elif ϵ == 2:
         return - x ** 4
 
-
 def subdominant_WKB_states(x, ϵ, Energies):
+    δ = 0.0001
     states = []
     for E in Energies:
-        x0 = -np.sqrt(E)
-        assert x[0] < x0 < x[-1]
-        i = np.searchsorted(x, x0)
-        sqrt_P = np.sqrt((E - V(x, ϵ)).astype(complex))
-        # sqrt_P[x < x0] *= -1 
+        wkb = np.zeros(Nx, dtype=complex)
+        x0 = np.sqrt(E)
+        a = -x0
+        b = x0
 
-        integral = np.cumsum(sqrt_P) * delta_x
-        integral-= integral[i] # ignore maybe? cause its phase only
+        if ϵ == 0:
+            F0 = -(2 * a)
+            F1 = 2 * b
+        elif ϵ == 2:
+            F0 = 4 * a ** 3
+            F1 = -4 * b ** 3
 
-        # wkb = np.exp(1j * integral) / np.sqrt(sqrt_P)
-        wkb = (np.exp(1j * integral) + np.exp(-1j * integral)) / np.sqrt(sqrt_P)
+
+        Q = np.sqrt((V(x, ϵ) - E).astype(complex))
+        P = np.sqrt((E - V(x, ϵ)).astype(complex))
+
+        # LHS of potential barrier
+        integral_left = np.cumsum(Q[x < a]) * delta_x
+        integral_left = -(integral_left - integral_left[-1])
+        wkb[x < a] = np.exp(-integral_left) / (2 * np.sqrt(Q[x < a]))
+
+        # left turning point
+        Ai_a, Aip_a, Bi_a, Bip_a = special.airy(F0**(1/3) * (a - x[(x < a - δ) & (a + δ < x)]))
+        wkb[(x < a - δ) & (a + δ < x)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
+
+        # inside potential barrier
+        integral_centre = np.cumsum(P[(a < x) & (x < b)]) * delta_x
+        wkb[(a < x) & (x < b)] = np.cos(integral_centre - np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])# + np.cos(-integral_centre + np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])
+
+        # right turning point
+        Ai_b, Aip_b, Bi_b, Bip_b = special.airy(F1**(1/3) * (x[x==b] - b))
+        wkb[x==b] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+
+        # RHS of potential barrier
+        integral_right = np.cumsum(Q[b < x]) * delta_x
+        wkb[b < x] = np.exp(-integral_right) / (2 * np.sqrt(Q[b < x]))
 
         states.append(wkb)
+        # print(f"{np.shape(states) = }")
 
     # for E in Energies:
     #   # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
     #   wkb = np.exp(1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E)) / ((E + x ** 4) ** (1 / 4))
     #   states.append(wkb)
+
     return states
 
 
@@ -122,7 +150,7 @@ def C_operator(normalised_states, normalised_P_states):
 
 def plot_states(states, ϵ, Energies):
     ax = plt.gca()
-    for i, state in enumerate(states[:5]):
+    for i, state in enumerate(states):
 
         color = next(ax._get_lines.prop_cycler)['color']
         # # Energy shifted states
@@ -131,8 +159,8 @@ def plot_states(states, ϵ, Energies):
         # plt.axhline(Energies[i], linestyle=":", linewidth=0.6, color="grey")
         # plt.ylabel(r'$Energy$', labelpad=6)
 
-        # # Probability density plot
-        plt.plot(x, abs(state)**2 + Energies[i], label=fR"$|\psi_{i}|^{{2}}$")
+        # Probability density plot
+        plt.plot(x,  abs(state)**2 + Energies[i], label=fR"$|\psi_{i}|^{{2}}$")
         plt.axhline(Energies[i], linewidth=0.5, linestyle=":", color="gray")
         plt.ylabel(r'$Energy$', labelpad=6)
 
@@ -144,10 +172,10 @@ def plot_states(states, ϵ, Energies):
 
     if ϵ == 0:
         plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
-        plt.title(fR"First subdominant WKB states for $H = p^{{2}} + x^{{2}}$")
+        plt.title(fR"Subdominant WKB states for $H = p^{{2}} + x^{{2}}$")
     elif ϵ == 2:
         plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
-        plt.title(fR"First subdominant WKB states for $H = p^{{2}} - x^{{4}}$")
+        plt.title(fR"Subdominant WKB states for $H = p^{{2}} - x^{{4}}$")
 
     plt.show()
 
@@ -166,7 +194,7 @@ def globals():
     g = 1
 
     # spatial dimension
-    Nx = 4096
+    Nx = 1024
     x = np.linspace(-10, 10, Nx)
     x[x==0] = 1e-200
     delta_x = x[1] - x[0]
@@ -201,32 +229,31 @@ if __name__ == "__main__":
     print("\n#################### Harmonic oscillator ####################")
     # print(f"\n{Energies_ϵ0 = }\n")
     states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0) 
-    plot_states(states_ϵ0, ϵ0, Energies_ϵ0)
-    ass
+    # plot_states(states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
     ## parity flipped states
     P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
+    # plot_states(P_states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
     normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
-    
-    # plot_states(normalised_states_ϵ0, ϵ0, Energies_ϵ0)
+    # plot_states(normalised_states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
     ## TEST P squared:
-    states_ϵ0_1 = states_ϵ0[1] # is this the same as PP_states_ϵ0_1 ???
-    P_states_ϵ0_1 = P_states_ϵ0[1]
+    states_ϵ0_1 = states_ϵ0[3] # is this the same as PP_states_ϵ0_1 ???
+    P_states_ϵ0_1 = P_states_ϵ0[3]
     P_operator = [pp / p for pp, p in zip(states_ϵ0_1, P_states_ϵ0_1)] 
     P_operator_squared = [i ** 2 for i in P_operator]
-    # print(f"\nIs P complex? {np.iscomplex(P_operator)}")
+    print(f"\nIs P complex? {np.iscomplex(P_operator)}")
     plt.plot(x, np.real(P_operator_squared))
     plt.plot(x, np.imag(P_operator_squared))
-    plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
+    plt.title(fR"$P^2$ for state $\psi_{3}(x)$")
     plt.show()
 
-    ## TEST C squared:
-    C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
-    print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
-    # print(f"C operator = {C_ϵ0}")
-    print(f"Test that C^2 = 1\n{C_ϵ0 ** 2}\n")
+    # ## TEST C squared:
+    # C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
+    # print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
+    # # print(f"C operator = {C_ϵ0}")
+    # print(f"Test that C^2 = 1\n{C_ϵ0 ** 2}\n")
 
 
 
