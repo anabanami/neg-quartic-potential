@@ -14,11 +14,11 @@ delta_x = x[1] - x[0]
 
 y = np.linspace(-1, 1, Nx).T
 
-E = 15
+E = 15 # doesn't work for all Es
 ϵ = 0
 
 δminus = 0.3
-δplus = 0.39
+δplus = 0.8
 
 wkb = np.zeros(Nx, dtype=complex)
 x0 = np.sqrt(E)
@@ -49,18 +49,12 @@ wkb[(a - δminus < x) & (x < a + δplus)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
 # get one array for ψ1 and one for ψ2 and divide them (make sure you avoid zero division!)
 # print("===================== ")
 # print(f"NEW INDEXING")
-integral_aplusδ_x = np.cumsum(P[x > a + δplus]) * delta_x
-print(f"{np.shape(integral_aplusδ_x)=}")
+excessively_long_array = np.cumsum(P[x > a]) * delta_x
+integral_a_x = excessively_long_array[x[x > a] > a + δplus]
 
-# ψ1 = np.cos(integral_a_x - np.pi / 4) / np.sqrt(P[x > a])
-# ψ2 = np.cos(-integral_a_x + np.pi / 4) / np.sqrt(P[x > a])
+wkb[x > a + δplus] = np.cos(integral_a_x - np.pi/4) / np.sqrt(P[x > a + δplus]) 
 
-# c = ψ1 / ψ2
-# # print(f"{np.shape(ψ1)=}")
-# # print(f"{np.shape(ψ2)=}")
-# # print(f"{np.shape(c)=}")
-
-wkb[x > a + δplus] = (np.cos(integral_aplusδ_x) + np.sin(integral_aplusδ_x)) / np.sqrt(2)   # indexing is correct... now my maths are dumb?
+# wkb[x > a + δplus] = (np.cos(integral_a_x) + np.sin(integral_a_x)) / 2  # indexing is correct... now my maths are dumb?
 # print(f"\n{np.shape(wkb)=}")
 # print("===================== ")
 
