@@ -21,11 +21,12 @@ def V(x, ϵ):
         return - x ** 4
 
 def subdominant_WKB_states(x, ϵ, Energies):
-    δ = 0.0001
+    δ = 1
     states = []
     for E in Energies:
         wkb = np.zeros(Nx, dtype=complex)
-        x0 = np.sqrt(E)
+
+        x0 = np.sqrt(E) # MUST THINK THIS THROUGH TO FIT THE NEG QUARTIC SITUATION
         a = -x0
         b = x0
 
@@ -36,7 +37,6 @@ def subdominant_WKB_states(x, ϵ, Energies):
             F0 = 4 * a ** 3
             F1 = -4 * b ** 3
 
-
         Q = np.sqrt((V(x, ϵ) - E).astype(complex))
         P = np.sqrt((E - V(x, ϵ)).astype(complex))
 
@@ -45,17 +45,20 @@ def subdominant_WKB_states(x, ϵ, Energies):
         integral_left = -(integral_left - integral_left[-1])
         wkb[x < a] = np.exp(-integral_left) / (2 * np.sqrt(Q[x < a]))
 
-        # left turning point
-        Ai_a, Aip_a, Bi_a, Bip_a = special.airy(F0**(1/3) * (a - x[(x < a - δ) & (a + δ < x)]))
-        wkb[(x < a - δ) & (a + δ < x)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
+        # approaching left turning point
+        u1 = F0**(1/3) * (a - x[(a - δ < x) & (x < a + δ)])
+        Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u1)
+        wkb[(a - δ < x) & (x < a + δ)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
 
-        # inside potential barrier
-        integral_centre = np.cumsum(P[(a < x) & (x < b)]) * delta_x
-        wkb[(a < x) & (x < b)] = np.cos(integral_centre - np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])# + np.cos(-integral_centre + np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])
+        # # inside potential barrier 
+        # # I don't know yet how does this work
+        # integral_centre = np.cumsum(P[(a < x) & (x < b)]) * delta_x
+        # wkb[(a < x) & (x < b)] = np.cos(integral_centre - np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])# + np.cos(-integral_centre + np.pi / 4) / np.sqrt(P[(a < x) & (x < b)])
 
-        # right turning point
-        Ai_b, Aip_b, Bi_b, Bip_b = special.airy(F1**(1/3) * (x[x==b] - b))
-        wkb[x==b] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+        # approaching right turning point
+        u2 = F1**(1/3) * (x[(b - δ < x) & (x < b + δ)] - b)
+        Ai_b, Aip_b, Bi_b, Bip_b = special.airy(u2)
+        wkb[(b - δ < x) & (x < b + δ)] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
 
         # RHS of potential barrier
         integral_right = np.cumsum(Q[b < x]) * delta_x
@@ -72,38 +75,38 @@ def subdominant_WKB_states(x, ϵ, Energies):
     return states
 
 
-def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
-    PT_normed_states = []
-    PT_normed_P_states = []
-    for i, P_state in enumerate(P_states_ϵ):
-        # print(f"{P_state = }")
-        # print(f"{np.conj(P_state) = }")
-        PT_norm = np.dot(np.conj(P_state), states_ϵ[i])
-        # print(f"with PT norm {PT_norm}")
+# def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
+#     PT_normed_states = []
+#     PT_normed_P_states = []
+#     for i, P_state in enumerate(P_states_ϵ):
+#         # print(f"{P_state = }")
+#         # print(f"{np.conj(P_state) = }")
+#         PT_norm = np.dot(np.conj(P_state), states_ϵ[i])
+#         # print(f"with PT norm {PT_norm}")
 
-        normed_state = states_ϵ[i] / np.sqrt(PT_norm)
-        normed_P_state = P_state / np.sqrt(PT_norm)
-        # print(f"normalised state: {normed_state}")
-        # print(f"state shape:{np.shape(normed_state)}\n")
-        PT_normed_states.append(normed_state)
-        PT_normed_P_states.append(normed_P_state)
+#         normed_state = states_ϵ[i] / np.sqrt(PT_norm)
+#         normed_P_state = P_state / np.sqrt(PT_norm)
+#         # print(f"normalised state: {normed_state}")
+#         # print(f"state shape:{np.shape(normed_state)}\n")
+#         PT_normed_states.append(normed_state)
+#         PT_normed_P_states.append(normed_P_state)
 
-    return PT_normed_states, PT_normed_P_states
+#     return PT_normed_states, PT_normed_P_states
 
 
-def C_operator(normalised_states, normalised_P_states):
-    wavefunction_PT_products = []
-    for i, P_state in enumerate(normalised_P_states):
-        state_j = np.dot(np.conj(P_state), normalised_states[i])
-        wavefunction_PT_products.append(state_j)
-        # print(f"{state_j = }")
+# def C_operator(normalised_states, normalised_P_states):
+#     wavefunction_PT_products = []
+#     for i, P_state in enumerate(normalised_P_states):
+#         state_j = np.dot(np.conj(P_state), normalised_states[i])
+#         wavefunction_PT_products.append(state_j)
+#         # print(f"{state_j = }")
 
-    c_ns = [] 
-    for j, prod in enumerate(wavefunction_PT_products):
-        c_n = prod * (-1) ** j
-        c_ns.append(c_n)
-    C_op = np.sum(c_ns)
-    return C_op
+#     c_ns = [] 
+#     for j, prod in enumerate(wavefunction_PT_products):
+#         c_n = prod * (-1) ** j
+#         c_ns.append(c_n)
+#     C_op = np.sum(c_ns)
+#     return C_op
 
 
 # def HΨ(x, ϵ, normalised_states):
@@ -152,6 +155,10 @@ def plot_states(states, ϵ, Energies):
     ax = plt.gca()
     for i, state in enumerate(states):
 
+        x0 = np.sqrt(Energies[i]) # MUST THINK THIS THROUGH TO FIT THE NEG QUARTIC SITUATION
+        a = -x0
+        b = x0
+
         color = next(ax._get_lines.prop_cycler)['color']
         # # Energy shifted states
         # plt.plot(x, np.real(state) + Energies[i], color=color, label=fR"$\psi_{i}$")
@@ -162,6 +169,10 @@ def plot_states(states, ϵ, Energies):
         # Probability density plot
         plt.plot(x,  abs(state)**2 + Energies[i], label=fR"$|\psi_{i}|^{{2}}$")
         plt.axhline(Energies[i], linewidth=0.5, linestyle=":", color="gray")
+        plt.axvline(a, linewidth=0.3, linestyle=":", color="red")
+        plt.axvline(b, linewidth=0.3, linestyle=":", color="red")
+
+
         plt.ylabel(r'$Energy$', labelpad=6)
 
     plt.legend()
@@ -187,14 +198,14 @@ def globals():
     # os.makedirs(folder, exist_ok=True)
     # os.system(f'rm {folder}/*.png')
 
-    # units based on "Bender's PT-symmetry book"
+    # # units based on "Bender's PT-symmetry book"
     hbar = 1
     m = 1/2
     ω = 2
     g = 1
 
     # spatial dimension
-    Nx = 1024
+    Nx = 1024 * 10
     x = np.linspace(-10, 10, Nx)
     x[x==0] = 1e-200
     delta_x = x[1] - x[0]
@@ -227,27 +238,27 @@ if __name__ == "__main__":
     hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N = globals()
 
     print("\n#################### Harmonic oscillator ####################")
-    # print(f"\n{Energies_ϵ0 = }\n")
+    print(f"\n{Energies_ϵ0 = }\n")
     states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0) 
-    # plot_states(states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
+    plot_states(states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
     ## parity flipped states
-    P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
+    # P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
     # plot_states(P_states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
-    normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
+    # normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
     # plot_states(normalised_states_ϵ0[:4], ϵ0, Energies_ϵ0[:4])
 
-    ## TEST P squared:
-    states_ϵ0_1 = states_ϵ0[3] # is this the same as PP_states_ϵ0_1 ???
-    P_states_ϵ0_1 = P_states_ϵ0[3]
-    P_operator = [pp / p for pp, p in zip(states_ϵ0_1, P_states_ϵ0_1)] 
-    P_operator_squared = [i ** 2 for i in P_operator]
-    print(f"\nIs P complex? {np.iscomplex(P_operator)}")
-    plt.plot(x, np.real(P_operator_squared))
-    plt.plot(x, np.imag(P_operator_squared))
-    plt.title(fR"$P^2$ for state $\psi_{3}(x)$")
-    plt.show()
+    # ## TEST P squared:
+    # states_ϵ0_1 = states_ϵ0[3] # is this the same as PP_states_ϵ0_1 ???
+    # P_states_ϵ0_1 = P_states_ϵ0[3]
+    # P_operator = [pp / p for pp, p in zip(states_ϵ0_1, P_states_ϵ0_1)] 
+    # P_operator_squared = [i ** 2 for i in P_operator]
+    # print(f"\nIs P complex? {np.iscomplex(P_operator)}")
+    # plt.plot(x, np.real(P_operator_squared))
+    # plt.plot(x, np.imag(P_operator_squared))
+    # plt.title(fR"$P^2$ for state $\psi_{3}(x)$")
+    # plt.show()
 
     # ## TEST C squared:
     # C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
@@ -261,12 +272,14 @@ if __name__ == "__main__":
     # print("#################### inverted quartic  ####################")
     # # print(f"\n{Energies_ϵ2 = }\n")
     # states_ϵ2 = subdominant_WKB_states(x, ϵ2, Energies_ϵ2) 
-    # ## parity flipped states
+    # plot_states(states_ϵ2[:4], ϵ2, Energies_ϵ2[:4])
 
+    # ## parity flipped states
     # P_states_ϵ2 = [state[::-1] for state in states_ϵ2]
+    # plot_states(P_states_ϵ2[:4], ϵ2, Energies_ϵ2[:4])
+
     # normalised_states_ϵ2, normalised_P_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, P_states_ϵ2)
-    # # plot_states(states_ϵ2, ϵ2, Energies_ϵ2)
-    # plot_states(normalised_states_ϵ2, ϵ2, Energies_ϵ2)
+    # plot_states(normalised_states_ϵ2[:4], ϵ2, Energies_ϵ2[:4])
 
     # ## TEST P squared:
     # states_ϵ2_1 = states_ϵ2[1] # is this the same as PP_states_ϵ2_1 ???
