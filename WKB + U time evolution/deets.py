@@ -2,38 +2,42 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy import special
+from scipy.signal import convolve
 
 
 plt.rcParams['figure.dpi'] = 180
 
-def V(x, ϵ):
-    if ϵ == 0:
-        return x ** 2
+def V(x):
+    return x ** 2
 
+def gaussian_blur(data, pts):
+    """gaussian blur an array by given number of points"""
+    x = np.arange(-2 * pts, 2 * pts + 1, 1)
+    kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
+    smoothed = convolve(data, kernel, mode='same')
+    normalisation = convolve(np.ones_like(data), kernel, mode='same')
+    return smoothed / normalisation
 
-Nx = 1024
+Nx = 2048
 x = np.linspace(-10, 10, Nx)
 x[x==0] = 1e-200
 delta_x = x[1] - x[0]
 y = np.linspace(-3, 22, Nx).T
 
 ϵ = 0
-# ϵ = 2
 
-Energies_ϵ0 = np.load("Energies_HO_WKB_N=10.npy")
-Energies_ϵ0 = Energies_ϵ0.reshape(len(Energies_ϵ0))
+Energies = np.load("Energies_HO_WKB_N=10.npy")
+Energies = Energies.reshape(len(Energies))
 
-# Energies_ϵ2 = np.load("Energies_WKB_N=10.npy")
-# Energies_ϵ2 = Energies_ϵ2.reshape(len(Energies_ϵ2))
 
-for n, E in enumerate(Energies_ϵ0):
+for n, E in enumerate(Energies):
     print(f"{E = }")
     print(f"{n = }")
 
     # does my method work for all E's?
 
-    δminus = 0.3
-    δplus = 0.8
+    δminus = 0.4
+    δplus = 0.4
 
     δRight = δminus
     δLeft = δplus
@@ -48,8 +52,8 @@ for n, E in enumerate(Energies_ϵ0):
     u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
     u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
 
-    Q = np.sqrt((V(x, ϵ) - E).astype(complex))
-    P = np.sqrt((E - V(x, ϵ)).astype(complex))
+    Q = np.sqrt((V(x) - E).astype(complex))
+    P = np.sqrt((E - V(x)).astype(complex))
 
     # LHS of potential barrier
     integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
@@ -80,6 +84,9 @@ for n, E in enumerate(Energies_ϵ0):
     else:
         wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
 
+    ############## PLOTTING with and without gaussian smoothing ###################################
+    pts = 25
+    wkb = gaussian_blur(wkb, pts)
 
     ax = plt.gca()
     color = next(ax._get_lines.prop_cycler)['color']
@@ -89,20 +96,28 @@ for n, E in enumerate(Energies_ϵ0):
     plt.axhline(E, linestyle=":", linewidth=0.6, color="grey")
     plt.ylabel(r'$Energy$', labelpad=6)
     plt.xlabel(r'$x$', labelpad=6)
-    if ϵ == 0:
-        plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
+    
+    plt.plot(x, V(x), linewidth=2, color="grey")
 
     # plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
     # plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
     # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
     # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
 
-    plt.legend()
+    # plt.legend()
     plt.xlim(-5, 5)
     plt.ylim(-0.2, 21)
 
 
+
 plt.show()
+
+
+    ############## PLOTTING smoothed WKB ###################################
+
+
+
+
 
 
 ########################################################## TO DO
