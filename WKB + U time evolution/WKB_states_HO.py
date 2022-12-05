@@ -14,13 +14,10 @@ from tqdm import tqdm
 
 plt.rcParams['figure.dpi'] = 180
 
-def V(x, ϵ):
-    if ϵ == 0:
-        return x ** 2
-    elif ϵ == 2:
-        return - x ** 4
+def V(x):
+    return x ** 2
 
-def subdominant_WKB_states(x, ϵ, Energies):
+def WKB_states(x, Energies):
     states = []
     for n, E in enumerate(Energies):
         wkb = np.zeros(Nx, dtype=complex)
@@ -29,18 +26,15 @@ def subdominant_WKB_states(x, ϵ, Energies):
         a = -x0
         b = x0
 
-        if ϵ == 0:
-            F0 = -(2 * a)
-            F1 = 2 * b
-        elif ϵ == 2:
-            F0 = 4 * a ** 3
-            F1 = -4 * b ** 3
+        F0 = -(2 * a)
+        F1 = 2 * b
+
 
         u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
         u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
 
-        Q = np.sqrt((V(x, ϵ) - E).astype(complex))
-        P = np.sqrt((E - V(x, ϵ)).astype(complex))
+        Q = np.sqrt((V(x) - E).astype(complex))
+        P = np.sqrt((E - V(x)).astype(complex))
 
         # LHS of potential barrier
         integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
@@ -66,25 +60,25 @@ def subdominant_WKB_states(x, ϵ, Energies):
         # RHS of potential barrier
         integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
         if n % 2 == 0:
-            wkb[x > b + δRight] = np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
+            wkb[x > b + δRight] = np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight])) # I scaled these down to 1/3
         else:
-            wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
+            wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight])) #####
 
         states.append(wkb)
 
     return states
 
 
-def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
+def PT_normalised_states(x, states, P_states):
     PT_normed_states = []
     PT_normed_P_states = []
-    for i, P_state in enumerate(P_states_ϵ):
+    for i, P_state in enumerate(P_states):
         # print(f"{P_state = }")
         # print(f"{np.conj(P_state) = }")
-        PT_norm = np.dot(np.conj(P_state), states_ϵ[i])
+        PT_norm = np.dot(np.conj(P_state), states[i])
         # print(f"with PT norm {PT_norm}")
 
-        normed_state = states_ϵ[i] / np.sqrt(PT_norm)
+        normed_state = states[i] / np.sqrt(PT_norm)
         normed_P_state = P_state / np.sqrt(PT_norm)
         # print(f"normalised state: {normed_state}")
         # print(f"state shape:{np.shape(normed_state)}\n")
@@ -121,13 +115,13 @@ def plot_states(states, ϵ, Energies):
         plt.axvline(b, linewidth=0.3, linestyle=":", color="red")
 
     if ϵ == 0:
-        plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
+        plt.plot(x, V(x), linewidth=2, color="grey")
         plt.title(fR"WKB states for $H = p^{{2}} + x^{{2}}$")
         plt.axis(xmin=-5,xmax=5, ymin=-1, ymax=20)
-    elif ϵ == 2:
-        plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
-        plt.title(fR"WKB states for $H = p^{{2}} - x^{{4}}$")
-        plt.axis(xmin=-10,xmax=10, ymin=-10, ymax=80)
+    # elif ϵ == 2:
+    #     plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
+    #     plt.title(fR"WKB states for $H = p^{{2}} - x^{{4}}$")
+    #     plt.axis(xmin=-10,xmax=10, ymin=-10, ymax=80)
 
     plt.legend()
     plt.ylabel(r'$Energy$', labelpad=6)
@@ -153,14 +147,6 @@ def globals():
     x = np.linspace(-10, 10, Nx)
     x[x==0] = 1e-200
     delta_x = x[1] - x[0]
-    # FFT variable
-    k = 2 * np.pi * np.fft.fftfreq(Nx, delta_x) 
-
-    # # time interval
-    # t_d = m * delta_x ** 2 / (np.pi * hbar)
-    # t = 0
-    # t_final = 1
-    # delta_t = t_d
 
     ϵ0 = 0
     ϵ2 = 2
@@ -179,34 +165,23 @@ def globals():
     δRight = δminus
     δLeft = δplus
 
-    return hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N, δminus, δplus, δRight, δLeft
+    return hbar, m, ω, Nx, x, delta_x, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N, δminus, δplus, δRight, δLeft
 
 
 if __name__ == "__main__":
 
-    hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N, δminus, δplus, δRight, δLeft = globals()
+    hbar, m, ω, Nx, x, delta_x, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N, δminus, δplus, δRight, δLeft = globals()
 
     print("\n#################### Harmonic oscillator ####################")
     # print(f"\n{Energies_ϵ0 = }\n")
-    states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0) 
+    states_ϵ0 = WKB_states(x, Energies_ϵ0) 
     plot_states(states_ϵ0, ϵ0, Energies_ϵ0)
 
     # parity flipped states
     P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
     # plot_states(P_states_ϵ0, ϵ0, Energies_ϵ0)
 
-    normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
+    normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, states_ϵ0, P_states_ϵ0)
     # plot_states(normalised_states_ϵ0, ϵ0, Energies_ϵ0)
 
-    # ## TEST P squared:
-    # for n, state in enumerate(states_ϵ0):
-    #     # is this the same as PP_states_ϵ0_1 ???
-    #     P_state = P_states_ϵ0[n]
-    #     P_operator = [pp / p for pp, p in zip(state, P_state)] 
-    #     P_operator_squared = [i ** 2 for i in P_operator]
-    #     print(f"\nIs P complex? {np.iscomplex(P_operator)}")
-    #     plt.plot(x, np.real(P_operator_squared))
-    #     plt.plot(x, np.imag(P_operator_squared))
-    #     plt.title(fR"$P^2$ for state $\psi_{n}(x)$")
-    #     plt.show()
 

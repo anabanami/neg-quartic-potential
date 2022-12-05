@@ -94,7 +94,6 @@ for n, E in enumerate(Energies_ϵ0):
 
     # plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
     # plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
-
     # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
     # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
 
@@ -107,6 +106,22 @@ plt.show()
 
 
 ########################################################## TO DO
+
+    # ## TEST P squared:
+    # for n, state in enumerate(states_ϵ0):
+    #     # is this the same as PP_states_ϵ0_1 ???
+    #     P_state = P_states_ϵ0[n]
+    #     P_operator = [pp / p for pp, p in zip(state, P_state)] 
+    #     P_operator_squared = [i ** 2 for i in P_operator]
+    #     print(f"\nIs P complex? {np.iscomplex(P_operator)}")
+    #     plt.plot(x, np.real(P_operator_squared))
+    #     plt.plot(x, np.imag(P_operator_squared))
+    #     plt.title(fR"$P^2$ for state $\psi_{n}(x)$")
+    #     plt.show()
+
+
+
+
 
 # def C_operator(normalised_states, normalised_P_states):
 #     wavefunction_PT_products = []
@@ -121,6 +136,16 @@ plt.show()
 #         c_ns.append(c_n)
 #     C_op = np.sum(c_ns)
 #     return C_op
+
+
+
+# ## TEST C squared:
+# C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
+# print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
+# # print(f"C operator = {C_ϵ0}")
+# print(f"Test that C^2 = 1\n{C_ϵ0 ** 2}\n")
+
+
 
 
 # def HΨ(x, ϵ, normalised_states):
@@ -167,43 +192,48 @@ plt.show()
 
 
 
+# print("#################### inverted quartic  ####################")
+# print(f"\n{Energies_ϵ2 = }\n")
 
-    # ## TEST C squared:
-    # C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
-    # print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
-    # # print(f"C operator = {C_ϵ0}")
-    # print(f"Test that C^2 = 1\n{C_ϵ0 ** 2}\n")
+# states_ϵ2 = Requires the solution we found using Mathematica:
+"""A = np.sqrt(E) * (1/2) * (y * np.sqrt(1 - y **2) + np.arcsin(y))
+wkb = np.exp(1j * A) / np.sqrt(np.sqrt(Q))
+states.append(wkb)"""
+
+# plot_states(states_ϵ2, ϵ2, Energies_ϵ2)
+
+# parity flipped states
+# P_states_ϵ2 = [state[::-1] for state in states_ϵ2]
+# plot_states(P_states_ϵ0, ϵ0, Energies_ϵ0)
+
+# normalised_states_ϵ2, normalised_P_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, P_states_ϵ2)
+# plot_states(normalised_states_ϵ2, ϵ2, Energies_ϵ2)
+
+# ## TEST P squared:
+# states_ϵ2_1 = states_ϵ2[1] # is this the same as PP_states_ϵ2_1 ???
+# P_states_ϵ2_1 = P_states_ϵ2[1]
+# P_operator2 = [pp / p for pp, p in zip(states_ϵ2_1, P_states_ϵ2_1)]
+# P_operator2_squared = [i ** 2 for i in P_operator2]
+# # print(f"\nIs P complex? {np.iscomplex(P_operator2)}")
+# plt.plot(x, np.real(P_operator2_squared))
+# plt.plot(x, np.imag(P_operator2_squared))
+# plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
+# plt.show()
+
+# ## TEST C squared:
+# C_ϵ2 = C_operator(normalised_states_ϵ2, normalised_P_states_ϵ2)
+# print(f"\nIs C complex? {np.iscomplex(C_ϵ2)}")
+# # print(f"C operator = {C_ϵ2}")
+# print(f"Test that C^2 = 1\n{C_ϵ2 ** 2}\n")
 
 
 
+# TIME DEPENDENT SIMULATION
 
-    # print("#################### inverted quartic  ####################")
-    # print(f"\n{Energies_ϵ2 = }\n")
-
-    # states_ϵ2 = subdominant_WKB_states(x, ϵ2, Energies_ϵ2) 
-    # plot_states(states_ϵ2, ϵ2, Energies_ϵ2)
-
-    # parity flipped states
-    # P_states_ϵ2 = [state[::-1] for state in states_ϵ2]
-    # plot_states(P_states_ϵ0, ϵ0, Energies_ϵ0)
-
-    # normalised_states_ϵ2, normalised_P_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, P_states_ϵ2)
-    # plot_states(normalised_states_ϵ2, ϵ2, Energies_ϵ2)
-
-    # ## TEST P squared:
-    # states_ϵ2_1 = states_ϵ2[1] # is this the same as PP_states_ϵ2_1 ???
-    # P_states_ϵ2_1 = P_states_ϵ2[1]
-    # P_operator2 = [pp / p for pp, p in zip(states_ϵ2_1, P_states_ϵ2_1)]
-    # P_operator2_squared = [i ** 2 for i in P_operator2]
-    # # print(f"\nIs P complex? {np.iscomplex(P_operator2)}")
-    # plt.plot(x, np.real(P_operator2_squared))
-    # plt.plot(x, np.imag(P_operator2_squared))
-    # plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
-    # plt.show()
-
-    # ## TEST C squared:
-    # C_ϵ2 = C_operator(normalised_states_ϵ2, normalised_P_states_ϵ2)
-    # print(f"\nIs C complex? {np.iscomplex(C_ϵ2)}")
-    # # print(f"C operator = {C_ϵ2}")
-    # print(f"Test that C^2 = 1\n{C_ϵ2 ** 2}\n")
-
+    # FFT variable
+    # k = 2 * np.pi * np.fft.fftfreq(Nx, delta_x) 
+    # # time interval
+    # t_d = m * delta_x ** 2 / (np.pi * hbar)
+    # t = 0
+    # t_final = 1
+    # delta_t = t_d
