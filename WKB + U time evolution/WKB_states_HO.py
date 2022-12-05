@@ -160,8 +160,8 @@ def globals():
 
     N = len(Energies_ϵ2)
 
-    δminus = 0.3
-    δplus = 0.8
+    δminus = 0.4
+    δplus = 1
     δRight = δminus
     δLeft = δplus
 
