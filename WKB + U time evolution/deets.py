@@ -58,7 +58,7 @@ for n, E in enumerate(Energies):
     # LHS of potential barrier
     integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
     integral_left = -(integral_left - integral_left[-1])
-    wkb[x < a - δminus] = np.exp(-integral_left) / (3 * np.sqrt(Q[x < a - δminus]))
+    wkb[x < a - δminus] = np.exp(-integral_left) / (2 * np.sqrt(Q[x < a - δminus]))
 
     # around left turning point "a"
     Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u0)
@@ -80,9 +80,9 @@ for n, E in enumerate(Energies):
     # RHS of potential barrier
     integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
     if n % 2 == 0:
-        wkb[x > b + δRight] = np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
+        wkb[x > b + δRight] = np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
     else:
-        wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
+        wkb[x > b + δRight] = -np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
 
     ############## PLOTTING with and without gaussian smoothing ###################################
     pts = 25
@@ -108,19 +108,15 @@ for n, E in enumerate(Energies):
     plt.xlim(-5, 5)
     plt.ylim(-0.2, 21)
 
-
-
 plt.show()
 
 
-    ############## PLOTTING smoothed WKB ###################################
 
 
 
 
 
-
-########################################################## TO DO
+## IDEAS ########################################################## TO DO
 
     # ## TEST P squared:
     # for n, state in enumerate(states_ϵ0):
@@ -206,40 +202,6 @@ plt.show()
 
 
 
-
-# print("#################### inverted quartic  ####################")
-# print(f"\n{Energies_ϵ2 = }\n")
-
-# states_ϵ2 = Requires the solution we found using Mathematica:
-"""A = np.sqrt(E) * (1/2) * (y * np.sqrt(1 - y **2) + np.arcsin(y))
-wkb = np.exp(1j * A) / np.sqrt(np.sqrt(Q))
-states.append(wkb)"""
-
-# plot_states(states_ϵ2, ϵ2, Energies_ϵ2)
-
-# parity flipped states
-# P_states_ϵ2 = [state[::-1] for state in states_ϵ2]
-# plot_states(P_states_ϵ0, ϵ0, Energies_ϵ0)
-
-# normalised_states_ϵ2, normalised_P_states_ϵ2 = PT_normalised_states(x, ϵ2, states_ϵ2, P_states_ϵ2)
-# plot_states(normalised_states_ϵ2, ϵ2, Energies_ϵ2)
-
-# ## TEST P squared:
-# states_ϵ2_1 = states_ϵ2[1] # is this the same as PP_states_ϵ2_1 ???
-# P_states_ϵ2_1 = P_states_ϵ2[1]
-# P_operator2 = [pp / p for pp, p in zip(states_ϵ2_1, P_states_ϵ2_1)]
-# P_operator2_squared = [i ** 2 for i in P_operator2]
-# # print(f"\nIs P complex? {np.iscomplex(P_operator2)}")
-# plt.plot(x, np.real(P_operator2_squared))
-# plt.plot(x, np.imag(P_operator2_squared))
-# plt.title(fR"$P^2$ for state $\psi_{1}(x)$")
-# plt.show()
-
-# ## TEST C squared:
-# C_ϵ2 = C_operator(normalised_states_ϵ2, normalised_P_states_ϵ2)
-# print(f"\nIs C complex? {np.iscomplex(C_ϵ2)}")
-# # print(f"C operator = {C_ϵ2}")
-# print(f"Test that C^2 = 1\n{C_ϵ2 ** 2}\n")
 
 
 

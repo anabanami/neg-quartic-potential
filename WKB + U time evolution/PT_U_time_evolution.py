@@ -10,6 +10,7 @@ from scipy import special
 from scipy import linalg
 from scipy.linalg import expm
 from tqdm import tqdm
+from scipy.signal import convolve
 
 
 plt.rcParams['figure.dpi'] = 180
@@ -20,105 +21,106 @@ def V(x, ϵ):
     elif ϵ == 2:
         return - x ** 4
 
-def subdominant_WKB_states(x, ϵ, Energies):
+def WKB_states(x, ϵ, Energies):
     states = []
-    for n, E in enumerate(Energies):
-        wkb = np.zeros(Nx, dtype=complex)
-
-        x0 = np.sqrt(E) # MUST THINK ABOUT THIS TO FIT THE NEG QUARTIC SITUATION
-        a = -x0
-        b = x0
-
-        if ϵ == 0:
+    if ϵ == 0:
+        for n, E in enumerate(Energies):
+            wkb = np.zeros(Nx, dtype=complex)
+            x0 = np.sqrt(E)
+            a = -x0
+            b = x0
             F0 = -(2 * a)
             F1 = 2 * b
-        elif ϵ == 2:
-            F0 = 4 * a ** 3
-            F1 = -4 * b ** 3
+            u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
+            u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
+            Q = np.sqrt((V(x, ϵ) - E).astype(complex))
+            P = np.sqrt((E - V(x, ϵ)).astype(complex))
 
-        u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
-        u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
+            # LHS of potential barrier
+            integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
+            integral_left = -(integral_left - integral_left[-1])
+            wkb[x < a - δminus] = np.exp(-integral_left) / (3 * np.sqrt(Q[x < a - δminus]))
 
-        Q = np.sqrt((V(x, ϵ) - E).astype(complex))
-        P = np.sqrt((E - V(x, ϵ)).astype(complex))
+            # around left turning point "a"
+            Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u0)
+            wkb[(a - δminus < x) & (x < a + δplus)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
 
-        # LHS of potential barrier
-        integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
-        integral_left = -(integral_left - integral_left[-1])
-        wkb[x < a - δminus] = np.exp(-integral_left) / (3 * np.sqrt(Q[x < a - δminus]))
+            # inside potential barrier 
+            excessively_long_array = np.cumsum(P[x > a]) * delta_x
+            integral_a_x = excessively_long_array[x[x > a] > a + δplus]
+            wkb[x > a + δplus] = np.cos(integral_a_x - np.pi/4) / np.sqrt(P[x > a + δplus])
 
-        # around left turning point "a"
-        Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u0)
-        wkb[(a - δminus < x) & (x < a + δplus)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
+            # around right turning point "b"
+            Ai_b, Aip_b, Bi_b, Bip_b = special.airy(u1)
+            if n % 2 == 0:
+                wkb[(b - δLeft < x) & (x < b + δRight)] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+            else:
+                wkb[(b - δLeft < x) & (x < b + δRight)] = -Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
 
-        # inside potential barrier 
-        excessively_long_array = np.cumsum(P[x > a]) * delta_x
-        integral_a_x = excessively_long_array[x[x > a] > a + δplus]
-        wkb[x > a + δplus] = np.cos(integral_a_x - np.pi/4) / np.sqrt(P[x > a + δplus])
+            # RHS of potential barrier
+            integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
+            if n % 2 == 0:
+                wkb[x > b + δRight] = np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight])) # I scaled these down to 1/3
+            else:
+                wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight])) #####
 
-        # around right turning point "b"
-        Ai_b, Aip_b, Bi_b, Bip_b = special.airy(u1)
-        if n % 2 == 0:
-            wkb[(b - δLeft < x) & (x < b + δRight)] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
-        else:
-            wkb[(b - δLeft < x) & (x < b + δRight)] = -Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+            # Gaussian blur
+            pts = 25
+            wkb = gaussian_blur(wkb, pts)
+            states.append(wkb)
 
-        # RHS of potential barrier
-        integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
-        if n % 2 == 0:
-            wkb[x > b + δRight] = np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
-        else:
-            wkb[x > b + δRight] = -np.exp(-integral_right) / (3 * np.sqrt(Q[x > b + δRight]))
-
-        states.append(wkb)
+    elif ϵ == 2:
+        for E in Energies:
+            wkb = np.zeros(Nx, dtype=complex)
+            x0 = - np.sqrt(np.sqrt(E))
+            a = -x0
+            b = x0
+            # analytic solution for WKB approximation: Mathematica WKB_solution-1.nb
+            wkb = np.exp(1j * np.sqrt(E) * sc.hyp2f1(-1 / 2, 1 / 4, 5 / 4, -x ** 4 / E)) / ((E + x ** 4) ** (1 / 4))
+            states.append(wkb)
 
     return states
 
-
-def PT_normalised_states(x, ϵ, states_ϵ, P_states_ϵ):
-    PT_normed_states = []
-    PT_normed_P_states = []
-    for i, P_state in enumerate(P_states_ϵ):
-        # print(f"{P_state = }")
-        # print(f"{np.conj(P_state) = }")
-        PT_norm = np.dot(np.conj(P_state), states_ϵ[i])
-        # print(f"with PT norm {PT_norm}")
-
-        normed_state = states_ϵ[i] / np.sqrt(PT_norm)
-        normed_P_state = P_state / np.sqrt(PT_norm)
-        # print(f"normalised state: {normed_state}")
-        # print(f"state shape:{np.shape(normed_state)}\n")
-        PT_normed_states.append(normed_state)
-        PT_normed_P_states.append(normed_P_state)
-
-    return PT_normed_states, PT_normed_P_states
+def gaussian_blur(data, pts):
+    """gaussian blur an array by given number of points"""
+    x = np.arange(-2 * pts, 2 * pts + 1, 1)
+    kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
+    smoothed = convolve(data, kernel, mode='same')
+    normalisation = convolve(np.ones_like(data), kernel, mode='same')
+    return smoothed / normalisation
 
 
 def plot_states(states, ϵ, Energies):
     ax = plt.gca()
     for i, state in enumerate(states):
 
-        x0 = np.sqrt(Energies[i]) # MUST THINK THIS THROUGH TO FIT THE NEG QUARTIC SITUATION
-        a = -x0
-        b = x0
-
         y = np.linspace(-10, 80, Nx).T
-        plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
-        plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
-        plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
-        plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
+
+        if ϵ == 0:
+            x0 = np.sqrt(Energies[i])
+            a = -x0
+            b = x0
+            # plt.axvline(a, linestyle="--", linewidth=0.3, color="red")
+            # plt.axvline(b, linestyle="--", linewidth=0.3, color="red")
+            # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
+            # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
+
+        elif ϵ == 2:
+            x0 = - np.sqrt(np.sqrt(Energies[i]))  # MUST THINK THIS THROUGH TO FIT THE NEG QUARTIC SITUATION
+            a = -x0
+            b = x0
+            plt.axvline(a, linestyle="--", linewidth=0.3, color="red")
+            plt.axvline(b, linestyle="--", linewidth=0.3, color="red")
+            # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
+            # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
 
         color = next(ax._get_lines.prop_cycler)['color']
-        # # Energy shifted states
-        # plt.plot(x, np.real(state) + Energies[i], color=color, label=fR"$\psi_{i}$")
-        # plt.plot(x, np.imag(state) + Energies[i], linestyle='--', color=color)
-        # plt.axhline(Energies[i], linestyle=":", linewidth=0.6, color="grey")
+        # Energy shifted states
+        plt.plot(x, np.real(state) + Energies[i], color=color, label=fR"$\psi_{i}$")
+        plt.plot(x, np.imag(state) + Energies[i], linestyle='--', color=color)
 
         # # Probability density plot
-        plt.plot(x,  abs(state)**2 + Energies[i], color=color, label=fR"$|\psi_{i}|^{{2}}$")
-        plt.axhline(Energies[i], linewidth=0.5, linestyle=":", color="gray")
-        plt.axvline(a, linewidth=0.3, linestyle=":", color="red")
-        plt.axvline(b, linewidth=0.3, linestyle=":", color="red")
+        # plt.plot(x,  abs(state)**2 + Energies[i], color=color, label=fR"$|\psi_{i}|^{{2}}$")
 
     if ϵ == 0:
         plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
@@ -127,7 +129,11 @@ def plot_states(states, ϵ, Energies):
     elif ϵ == 2:
         plt.plot(x, V(x, ϵ), linewidth=2, color="grey")
         plt.title(fR"WKB states for $H = p^{{2}} - x^{{4}}$")
-        plt.axis(xmin=-10,xmax=10, ymin=-10, ymax=80)
+        # plt.axis(xmin=-10,xmax=10, ymin=-10, ymax=80)
+        plt.axis(xmin=-10,xmax=10, ymin=-10, ymax=20)
+
+
+
 
     plt.legend()
     plt.ylabel(r'$Energy$', labelpad=6)
@@ -149,18 +155,12 @@ def globals():
     g = 1
 
     # spatial dimension
-    Nx = 1024 * 10
+    Nx = 2048
     x = np.linspace(-10, 10, Nx)
     x[x==0] = 1e-200
     delta_x = x[1] - x[0]
     # FFT variable
     k = 2 * np.pi * np.fft.fftfreq(Nx, delta_x) 
-
-    # # time interval
-    # t_d = m * delta_x ** 2 / (np.pi * hbar)
-    # t = 0
-    # t_final = 1
-    # delta_t = t_d
 
     ϵ0 = 0
     ϵ2 = 2
@@ -174,10 +174,16 @@ def globals():
 
     N = len(Energies_ϵ2)
 
-    δminus = 0.3
-    δplus = 0.8
+    δminus = 0.4
+    δplus = 0.4
     δRight = δminus
     δLeft = δplus
+
+    # # time interval
+    # t_d = m * delta_x ** 2 / (np.pi * hbar)
+    # t = 0
+    # t_final = 1
+    # delta_t = t_d
 
     return hbar, m, ω, g, Nx, x, delta_x, k, ϵ0, ϵ2, Energies_ϵ0, Energies_ϵ2, N, δminus, δplus, δRight, δLeft
 
@@ -188,25 +194,17 @@ if __name__ == "__main__":
 
     print("\n#################### Harmonic oscillator ####################")
     # print(f"\n{Energies_ϵ0 = }\n")
-    states_ϵ0 = subdominant_WKB_states(x, ϵ0, Energies_ϵ0) 
-    plot_states(states_ϵ0, ϵ0, Energies_ϵ0)
+    # states_ϵ0 = WKB_states(x, ϵ0, Energies_ϵ0) 
+    # plot_states(states_ϵ0, ϵ0, Energies_ϵ0)
 
     # parity flipped states
-    P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
+    # P_states_ϵ0 = [state[::-1] for state in states_ϵ0]
     # plot_states(P_states_ϵ0, ϵ0, Energies_ϵ0)
 
-    normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, ϵ0, states_ϵ0, P_states_ϵ0)
-    # plot_states(normalised_states_ϵ0, ϵ0, Energies_ϵ0)
-
-    # ## TEST P squared:
-    # for n, state in enumerate(states_ϵ0):
-    #     # is this the same as PP_states_ϵ0_1 ???
-    #     P_state = P_states_ϵ0[n]
-    #     P_operator = [pp / p for pp, p in zip(state, P_state)] 
-    #     P_operator_squared = [i ** 2 for i in P_operator]
-    #     print(f"\nIs P complex? {np.iscomplex(P_operator)}")
-    #     plt.plot(x, np.real(P_operator_squared))
-    #     plt.plot(x, np.imag(P_operator_squared))
-    #     plt.title(fR"$P^2$ for state $\psi_{n}(x)$")
-    #     plt.show()
-
+    # normalised_states_ϵ0, normalised_P_states_ϵ0 = PT_normalised_states(x, states_ϵ0, P_states_ϵ0)
+    # # plot_states(normalised_states_ϵ0, ϵ0, Energies_ϵ0)
+    
+    print("#################### inverted quartic  ####################")
+    # print(f"\n{Energies_ϵ2 = }\n")
+    states_ϵ2 = WKB_states(x, ϵ2, Energies_ϵ2) 
+    plot_states(states_ϵ2[:4], ϵ2, Energies_ϵ2[:4])
