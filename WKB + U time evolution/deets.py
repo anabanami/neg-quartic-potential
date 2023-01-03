@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from scipy import special
 from scipy.signal import convolve
 
-
 plt.rcParams['figure.dpi'] = 180
 
 def V(x):
@@ -18,122 +17,205 @@ def gaussian_blur(data, pts):
     normalisation = convolve(np.ones_like(data), kernel, mode='same')
     return smoothed / normalisation
 
-Nx = 2048
-x = np.linspace(-10, 10, Nx)
-x[x==0] = 1e-200
-delta_x = x[1] - x[0]
-y = np.linspace(-3, 22, Nx).T
+def plot_WKB(wkb_states, Energies):
+    for n, E in enumerate(Energies):
+        ax = plt.gca()
+        color = next(ax._get_lines.prop_cycler)['color']
 
-ϵ = 0
+        plt.plot(x, np.real(wkb_states[n]) + E, label=fR"$\psi_{n}$", color=color)
+        plt.plot(x, np.imag(wkb_states[n]) + E, linestyle='--', color=color)
+        plt.axhline(E, linestyle=":", linewidth=0.6, color="grey")
+        plt.ylabel(r'$Energy$', labelpad=6)
+        plt.xlabel(r'$x$', labelpad=6)
+        
+        plt.plot(x, V(x), linewidth=2, color="grey")
 
-Energies = np.load("Energies_HO_WKB_N=10.npy")
-Energies = Energies.reshape(len(Energies))
+        # plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
+        # plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
+        # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
+        # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
 
+        # plt.legend()
+        plt.xlim(-5, 5)
+        plt.ylim(-0.2, 21)
 
-for n, E in enumerate(Energies):
-    print(f"{E = }")
-    print(f"{n = }")
+    plt.show()
 
-    # does my method work for all E's?
+def WKB_states_generate():
+    wkb_states = []
+    for n, E in enumerate(Energies[:]):
+        wkb = np.zeros(Nx, dtype=complex)
+        x0 = np.sqrt(E)
+        a = -x0
+        b = x0
+        F0 = -(2 * a)
+        F1 = 2 * b
 
-    δminus = 0.4
-    δplus = 0.4
+        u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
+        u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
 
+        Q = np.sqrt((V(x) - E).astype(complex))
+        P = np.sqrt((E - V(x)).astype(complex))
+
+        # LHS of potential barrier
+        integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
+        integral_left = -(integral_left - integral_left[-1])
+        wkb[x < a - δminus] = np.exp(-integral_left) / (2 * np.sqrt(Q[x < a - δminus]))
+
+        # around left turning point "a"
+        Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u0)
+        wkb[(a - δminus < x) & (x < a + δplus)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
+
+        # inside potential barrier 
+        excessively_long_array = np.cumsum(P[x > a]) * delta_x
+        integral_a_x = excessively_long_array[x[x > a] > a + δplus]
+        wkb[x > a + δplus] = np.cos(integral_a_x - np.pi/4) / np.sqrt(P[x > a + δplus])
+
+        # around right turning point "b"
+        Ai_b, Aip_b, Bi_b, Bip_b = special.airy(u1)
+        if n % 2 == 0:
+            wkb[(b - δLeft < x) & (x < b + δRight)] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+        else:
+            wkb[(b - δLeft < x) & (x < b + δRight)] = -Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+
+        # RHS of potential barrier
+        integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
+        if n % 2 == 0:
+            wkb[x > b + δRight] = np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
+        else:
+            wkb[x > b + δRight] = -np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
+
+        ############## Gaussian smoothing ###################################
+        pts = 30
+        wkb = gaussian_blur(wkb, pts)
+        ############## Gaussian smoothing ###################################
+
+        wkb_states.append(wkb)
+    return wkb_states
+
+def globals():
+    Nx = 2048
+    x = np.linspace(-10, 10, Nx)
+    x[x==0] = 1e-200
+    delta_x = x[1] - x[0]
+    y = np.linspace(-3, 22, Nx).T
+
+    ϵ = 0
+
+    δminus = 0.5
+    δplus = 0.5
     δRight = δminus
     δLeft = δplus
 
-    wkb = np.zeros(Nx, dtype=complex)
-    x0 = np.sqrt(E)
-    a = -x0
-    b = x0
-    F0 = -(2 * a)
-    F1 = 2 * b
+    Energies = np.load("Energies_HO_WKB_N=10.npy")
+    Energies = Energies.reshape(len(Energies))
 
-    u0 = F0**(1/3) * (a - x[(a - δminus < x) & (x < a + δplus)])
-    u1 = F1**(1/3) * (x[(b - δLeft < x) & (x < b + δRight)] - b)
+    return Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies
 
-    Q = np.sqrt((V(x) - E).astype(complex))
-    P = np.sqrt((E - V(x)).astype(complex))
 
-    # LHS of potential barrier
-    integral_left = np.cumsum(Q[x < a - δminus]) * delta_x
-    integral_left = -(integral_left - integral_left[-1])
-    wkb[x < a - δminus] = np.exp(-integral_left) / (2 * np.sqrt(Q[x < a - δminus]))
 
-    # around left turning point "a"
-    Ai_a, Aip_a, Bi_a, Bip_a = special.airy(u0)
-    wkb[(a - δminus < x) & (x < a + δplus)] = Ai_a * np.sqrt(np.pi) / F0 ** (1/6)
+Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies = globals()
 
-    # inside potential barrier 
-    excessively_long_array = np.cumsum(P[x > a]) * delta_x
-    integral_a_x = excessively_long_array[x[x > a] > a + δplus]
-    wkb[x > a + δplus] = np.cos(integral_a_x - np.pi/4) / np.sqrt(P[x > a + δplus])
-    # wkb[x > a + δplus] = (np.cos(integral_a_x) + np.sin(integral_a_x)) / 2 < Do I still need to figure out a more correct inside state given psi_1 = c * psi_2???
+# wkb_states = WKB_states_generate()
 
-    # around right turning point "b"
-    Ai_b, Aip_b, Bi_b, Bip_b = special.airy(u1)
-    if n % 2 == 0:
-        wkb[(b - δLeft < x) & (x < b + δRight)] = Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
-    else:
-        wkb[(b - δLeft < x) & (x < b + δRight)] = -Ai_b * np.sqrt(np.pi) / F1 ** (1/6)
+### 6/12/22 ##### MEETING ################# MEETING ################### MEETING ###############
+# # Normalising WKB states
+# normalised_WKB_HO = []
+# for state in wkb_states:
+#     N = np.vdot(state, state) * delta_x
+#     state /= np.sqrt(N)
+#     normalised_WKB_HO.append(state)
+# np.save(f"normalised_wkb_states_HO.npy", normalised_WKB_HO)
+# print(np.shape(normalised_WKB_HO))
 
-    # RHS of potential barrier
-    integral_right = np.cumsum(Q[x > b + δRight]) * delta_x
-    if n % 2 == 0:
-        wkb[x > b + δRight] = np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
-    else:
-        wkb[x > b + δRight] = -np.exp(-integral_right) / (2 * np.sqrt(Q[x > b + δRight]))
+normalised_WKB_HO = np.load(f"normalised_wkb_states_HO.npy")
+# print(np.shape(normalised_WKB_HO))
 
-    ############## PLOTTING with and without gaussian smoothing ###################################
-    pts = 25
-    wkb = gaussian_blur(wkb, pts)
 
-    ax = plt.gca()
-    color = next(ax._get_lines.prop_cycler)['color']
+# checking orthogonality or normalised WKB states
+# for n, istate in enumerate(normalised_WKB_HO):
+#     print("")
+#     for m, jstate in enumerate(normalised_WKB_HO):
+#         Orthogonality_check = (np.vdot(istate, jstate) * delta_x)
+#         print(f"{n, m = }: {Orthogonality_check}")
 
-    plt.plot(x, np.real(wkb) + E, label=fR"$\psi_{n}$", color=color)
-    plt.plot(x, np.imag(wkb) + E, linestyle='--', color=color)
-    plt.axhline(E, linestyle=":", linewidth=0.6, color="grey")
-    plt.ylabel(r'$Energy$', labelpad=6)
-    plt.xlabel(r'$x$', labelpad=6)
+
+# plot_WKB(wkb_states, Energies)
+# plot_WKB(normalised_WKB_HO, Energies)
+
+### 6/12/22 ##### MEETING ################# MEETING ################### MEETING ###############
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# IDEAS ########################################################## TO DO
+
+# # TEST P operator
+# # parity flipped states
+# P_states = [state[::-1] for state in wkb_states] # is this the same as PP_states_ϵ0_1 ???
+# ## TEST P squared:
+# for n, state in enumerate(wkb_states):
+#     P_state = P_states[n]
+#     P_operator = [pp / p for pp, p in zip(state, P_state)]
     
-    plt.plot(x, V(x), linewidth=2, color="grey")
-
-    # plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
-    # plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
-    # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
-    # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
-
-    # plt.legend()
-    plt.xlim(-5, 5)
-    plt.ylim(-0.2, 21)
-
-plt.show()
+#     # np.where(P_operator[P_operator > 1.25]) THIS IS WRONG
+#     # # numpy.isnan(ar)     # True wherever nan
+#     # # numpy.isposinf(ar)  # True wherever pos-inf
+#     # # numpy.isneginf(ar)  # True wherever neg-inf
+#     # # numpy.isinf(ar)     # True wherever pos-inf or neg-inf
 
 
-
-
-
-
-
-## IDEAS ########################################################## TO DO
-
-    # ## TEST P squared:
-    # for n, state in enumerate(states_ϵ0):
-    #     # is this the same as PP_states_ϵ0_1 ???
-    #     P_state = P_states_ϵ0[n]
-    #     P_operator = [pp / p for pp, p in zip(state, P_state)] 
-    #     P_operator_squared = [i ** 2 for i in P_operator]
-    #     print(f"\nIs P complex? {np.iscomplex(P_operator)}")
-    #     plt.plot(x, np.real(P_operator_squared))
-    #     plt.plot(x, np.imag(P_operator_squared))
-    #     plt.title(fR"$P^2$ for state $\psi_{n}(x)$")
-    #     plt.show()
+#     P_operator_squared = [i ** 2 for i in P_operator]
+#     # print(f"\nIs P complex? {np.iscomplex(P_operator)}")
+#     plt.plot(x, np.real(P_operator_squared))
+#     plt.plot(x, np.imag(P_operator_squared))
+#     plt.title(fR"$P^2$ for state $\psi_{n}(x)$")
+#     # plt.ylim(0, 2)
+#     plt.show()
 
 
 
 
 
+
+
+# # TEST C operator
 # def C_operator(normalised_states, normalised_P_states):
 #     wavefunction_PT_products = []
 #     for i, P_state in enumerate(normalised_P_states):
@@ -149,7 +231,6 @@ plt.show()
 #     return C_op
 
 
-
 # ## TEST C squared:
 # C_ϵ0 = C_operator(normalised_states_ϵ0, normalised_P_states_ϵ0)
 # print(f"\nIs C complex? {np.iscomplex(C_ϵ0)}")
@@ -159,6 +240,16 @@ plt.show()
 
 
 
+
+
+
+
+
+
+
+
+
+# Schrodinger equation for TIME evolution
 # def HΨ(x, ϵ, normalised_states):
 #     for state in normalised_states:
 #         # Fourier derivative theorem
@@ -180,7 +271,6 @@ plt.show()
 #             M[m][n] = element    
 #     print(f"{M = }")
 #     return M
-
 
 # def U_operator(N, t):
 #     # print(f"{HMatrix(N) = }")

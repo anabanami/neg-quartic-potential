@@ -88,11 +88,11 @@ def plot_states(states, Energies):
         a = -x0
         b = x0
 
-        y = np.linspace(-10, 80, Nx).T
-        plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
-        plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
-        plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
-        plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
+        # y = np.linspace(-10, 80, Nx).T
+        # plt.axvline(a, linestyle="--", linewidth=0.5, color="red")
+        # plt.axvline(b, linestyle="--", linewidth=0.5, color="red")
+        # plt.fill_betweenx(y, a - δminus, a + δplus , alpha=0.1, color="pink")
+        # plt.fill_betweenx(y, b - δLeft, b + δRight , alpha=0.1, color="pink")
 
         color = next(ax._get_lines.prop_cycler)['color']
         # # Energy shifted states
@@ -110,7 +110,7 @@ def plot_states(states, Energies):
         plt.title(fR"WKB states for $H = p^{{2}} + x^{{2}}$")
         plt.axis(xmin=-5,xmax=5, ymin=-1, ymax=20)
 
-    plt.legend()
+    # plt.legend()
     plt.ylabel(r'$Energy$', labelpad=6)
     plt.xlabel(r'$x$', labelpad=6)
     plt.show()
