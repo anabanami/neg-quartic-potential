@@ -22,9 +22,9 @@ def K():
 # Piece-wise potential
 def V(x, t):
     if t < T:
-        return (1/2) * (x / l1**2) ** 2
+        return (hbar /2) * (x / l1**2) ** 2
     else:
-        return (1/2) * (x / l2**2) ** 2
+        return (hbar /2) * (x / l2**2) ** 2
 
 def F_split_step(Ψ, t, dt):
     Ψ = np.exp(-1j * V(x, t) * dt / hbar) * Ψ

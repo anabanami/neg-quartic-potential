@@ -76,27 +76,27 @@ def spatial_wavefunctions(N, x, evals, evects):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(
-            x,
-            np.real(eigenfunctions[i]) + evals[i],
-            "-",
-            linewidth=1,
-            label=fR"$\psi_{i}$",
-            color=color,
-        )
-        plt.plot(
-            x, np.imag(eigenfunctions[i]) + evals[i], "--", linewidth=1, color=color
-        )
-
-        # # probability density
         # plt.plot(
         #     x,
-        #     abs(eigenfunctions[i] **2 ) + evals[i],
+        #     np.real(eigenfunctions[i]) + evals[i],
+        #     "-",
         #     linewidth=1,
-        #     label=fR"$|\psi_{i}^2|$",
+        #     label=fR"$\psi_{i}$",
         #     color=color,
         # )
-        # plt.ylabel(r'$ |\psi_{n}|^2$')
+        # plt.plot(
+        #     x, np.imag(eigenfunctions[i]) + evals[i], "--", linewidth=1, color=color
+        # )
+
+        # probability density
+        plt.plot(
+            x,
+            abs(eigenfunctions[i] **2 ) + evals[i],
+            linewidth=1,
+            label=fR"$|\psi_{i}^2|$",
+            color=color,
+        )
+        plt.ylabel(r'$ |\psi_{n}|^2$')
         
 
     textstr = '\n'.join(
@@ -141,9 +141,9 @@ P = L
 matrix = np.load(f"matrix_300_neg_quartic.npy")
 
 # remember that evects are columns!
-evals, evects = linalg.eig(matrix)
+evals, evects = linalg.eigh(matrix)
 
-s_ns = spatial_wavefunctions(N, xs, evals, evects)
+# s_ns = spatial_wavefunctions(N, xs, evals, evects)
 
 evals, evects = filtering_sorting_eigenstuff(evals, evects)
 
