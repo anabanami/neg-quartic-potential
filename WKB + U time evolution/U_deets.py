@@ -9,8 +9,14 @@ from scipy import linalg
 from scipy.linalg import expm
 from scipy.fft import fft, ifft
 from tqdm import tqdm
+from matplotlib.ticker import FormatStrFormatter
 
 plt.rcParams['figure.dpi'] = 200
+
+def complex_trapezoid(integrand, y, dy):
+    real = np.real(trapezoid(integrand, y, dy))
+    imaginary = np.imag(trapezoid(integrand, y, dy))
+    return real + 1j * imaginary
 
 # Piece-wise potential for quench
 def V(x, t):
@@ -38,7 +44,7 @@ def HMatrix(N, t):
     for m in tqdm(range(N)):
         for n in tqdm(range(N)):
             element_int = element_integrand(x, m, n, t)
-            M[m][n] = trapezoid(element_int, x, dx=delta_x)
+            M[m][n] = complex_trapezoid(element_int, x, delta_x)
     return M
 
 def U_operator(M):
@@ -68,7 +74,7 @@ def plot_spatial_wavefunction(N, y, t, state, i):
         # making spatial wavefunctions
         for n in range(N):
             print(n)
-            psi_jy += c[n] * normalised_WKB_HO[n] #<---THIS IS WRONG! I NEED TO EVOLVE IN WKB BASIS not spatial basis
+            psi_jy += c[n] * normalised_WKB_HO[n]
 
         if t < T:
             # initial HO 
@@ -96,21 +102,22 @@ def plot_spatial_wavefunction(N, y, t, state, i):
 
     return c
 
+
+
 ####################################################################################################
 
 def globals():
-    #makes folder for simulation frames
-    folder = Path('QUENCH_U_time_evolution')
 
-    os.makedirs(folder, exist_ok=True)
-    os.system(f'rm {folder}/*.png')
 
-    # units based on "Bender's PT-symmetry book"
+    # # units based on "Bender's PT-symmetry book"
+    # hbar = 1
+    # m = 1/2
+    # ω = 2
+
+    ## natural units according to wikipedia
     hbar = 1
-    m = 1/2
-    ω = 2
-    g = 1
-
+    m = 1
+    ω = 1
     length_1 = np.sqrt(hbar /(m * ω))
     length_2 = 4 * np.sqrt(hbar /(m * ω))
 
@@ -127,21 +134,30 @@ def globals():
     t_initial = 0
     t_final = 6
     delta_t = 0.001
+    ## Nyquist?
+    # delta_t = m * delta_x ** 2 / (np.pi * hbar)
 
-    T = 0.1
+    T = 0.5
 
     # wkb basis
     normalised_WKB_HO = np.load(f"normalised_wkb_states_HO.npy")
     N = len(normalised_WKB_HO)
 
-    return folder, hbar, m, ω, g, length_1, length_2, Nx, x, delta_x, L, k, normalised_WKB_HO, N, t_initial, t_final, delta_t, T 
+
+    return hbar, m, ω, length_1, length_2, Nx, x, delta_x, L, k, normalised_WKB_HO, N, t_initial, t_final, delta_t, T 
 
 
 if __name__ == "__main__":
 
-    folder, hbar, m, ω, g, length_1, length_2, Nx, x, delta_x, L, k, normalised_WKB_HO, N, t_initial, t_final, delta_t, T  = globals()
+    hbar, m, ω, length_1, length_2, Nx, x, delta_x, L, k, normalised_WKB_HO, N, t_initial, t_final, delta_t, T  = globals()
 
+    # makes folder for simulation frames
+    folder = Path('QUENCH_U_time_evolution')
+    os.makedirs(folder, exist_ok=True)
+    os.system(f'rm {folder}/*.png')
     ##################################################################################################
+
+    time_steps = np.arange(t_initial, t_final, delta_t)
     # # Making HO matrix
     M = HMatrix(N, t_initial)
     # plt.matshow(np.real(M))
@@ -153,7 +169,6 @@ if __name__ == "__main__":
 
     state = np.zeros(N, dtype="complex")
     state[0] = 1
-    time_steps = np.arange(t_initial, t_final, delta_t)
     i = 0
     for t in time_steps:
         if t < T:
@@ -161,8 +176,4 @@ if __name__ == "__main__":
         else:
             state = plot_spatial_wavefunction(N, x, t, state, i)
         i += 1
-
-
-    # U_time_evolution(M, state)
-
 

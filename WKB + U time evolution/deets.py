@@ -7,7 +7,8 @@ from scipy.signal import convolve
 plt.rcParams['figure.dpi'] = 180
 
 def V(x):
-    return  (1/2) * x ** 2
+    return  (hbar /2) * (x / l1**2) ** 2
+
 def gaussian_blur(data, pts):
     """gaussian blur an array by given number of points"""
     x = np.arange(-2 * pts, 2 * pts + 1, 1)
@@ -120,11 +121,11 @@ def globals():
     Energies = np.load("Energies_HO_WKB_N=10.npy")
     Energies = Energies.reshape(len(Energies))
 
-    return Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies
+    return hbar, m, ω, l1, Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies
 
 
 
-Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies = globals()
+hbar, m, ω, l1, Nx, x, delta_x, y, ϵ, δminus, δplus, δRight, δLeft, Energies = globals()
 
 wkb_states = WKB_states_generate()
 
@@ -158,8 +159,8 @@ plt.colorbar()
 plt.show()
 
 
-plot_WKB(wkb_states, Energies)
-plot_WKB(normalised_WKB_HO, Energies)
+# plot_WKB(wkb_states, Energies)
+# plot_WKB(normalised_WKB_HO, Energies)
 
 ### 6/12/22 ##### MEETING ################# MEETING ################### MEETING ###############
 
