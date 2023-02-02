@@ -3,7 +3,6 @@ from pathlib import Path
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
-from scipy.integrate import trapezoid
 from scipy.fft import fft, ifft, fftfreq
 from scipy import linalg
 from scipy.linalg import expm
@@ -90,8 +89,8 @@ def globals():
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
 
     t_initial = 0
-    t_final = 3
-    delta_t = 0.01
+    t_final = 6
+    delta_t = 0.001
 
     T = 0.5
 

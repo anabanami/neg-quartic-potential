@@ -9,6 +9,10 @@ from tqdm import tqdm
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
 
+def complex_trapezoid(integrand, y, dy):
+    real = np.real(trapezoid(integrand, y, dy))
+    imaginary = np.imag(trapezoid(integrand, y, dy))
+    return real + 1j * imaginary
 
 def F_basis_vector(x, n):
     return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)
@@ -28,7 +32,7 @@ def Matrix(N):
     for m in tqdm(range(N)):
         for n in tqdm(range(N)):
             y = element_integrand(xs, m, n)
-            element = trapezoid(y, xs, delta_x)
+            element = complex_trapezoid(y, xs, delta_x)
             M[m][n] = element
     return M
 
@@ -63,29 +67,29 @@ def spatial_wavefunctions(N, x, evals, evects):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        # plt.plot(
-        #     x,
-        #     np.real(eigenfunctions[i]) + evals[i],
-        #     "-",
-        #     linewidth=1,
-        #     label=fR"$\psi_{i}$",
-        #     color=color,
-        # )
-        # plt.plot(
-        #     x, np.imag(eigenfunctions[i]) + evals[i], 
-        #     "--", linewidth=1, 
-        #     color=color
-        # )
-
-        # probability density
         plt.plot(
             x,
-            abs(eigenfunctions[i] **2 ) + evals[i],
+            np.real(eigenfunctions[i]) + evals[i],
+            "-",
             linewidth=1,
-            label=fR"$|\psi_{i}^2|$",
+            label=fR"$\psi_{i}$",
             color=color,
         )
-        plt.ylabel(r'$ |\psi_{n}|^2$')
+        plt.plot(
+            x, np.imag(eigenfunctions[i]) + evals[i], 
+            "--", linewidth=1, 
+            color=color
+        )
+
+        # # probability density
+        # plt.plot(
+        #     x,
+        #     abs(eigenfunctions[i] **2 ) + evals[i],
+        #     linewidth=1,
+        #     label=fR"$|\psi_{i}^2|$",
+        #     color=color,
+        # )
+        # plt.ylabel(r'$ |\psi_{n}|^2$')
         
 
     textstr = '\n'.join(
@@ -146,3 +150,27 @@ s_ns2 = spatial_wavefunctions(N, xs, evals2, evects2)
 plt.plot(xs, (1/2) * (xs/ l2**2) ** 2, alpha=0.4, color="black")
 plt.show()
 
+
+# Normalising F states
+normalised_F_HO = []
+for state in evects1:
+    N = np.vdot(state, state) * delta_x
+    state /= np.sqrt(N)
+    normalised_F_HO.append(state)
+
+print(np.shape(normalised_F_HO))
+# checking conventional orthogonality for normalised F states
+M = np.zeros_like(matrix1)
+for n, istate in enumerate(normalised_F_HO):
+    for m, jstate in enumerate(normalised_F_HO):
+        Orthogonality_check = (np.vdot(istate, jstate) * delta_x)
+        # print(f"{n, m = }: {Orthogonality_check}")
+        M[n][m] = Orthogonality_check
+
+plt.matshow(np.real(M))
+plt.colorbar()
+plt.show()
+
+plt.matshow(np.imag(M))
+plt.colorbar()
+plt.show()
