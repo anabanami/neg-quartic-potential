@@ -1,26 +1,22 @@
-# Ana Fabela Hinojosa, 15/04/2022
+# Ana Fabela Hinojosa, 08/01/2023
 import os
 from pathlib import Path
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft
-import scipy.special as sc
-from scipy.integrate import quad
 from matplotlib.ticker import FormatStrFormatter
 
 
 plt.rcParams['figure.dpi'] = 200
 
-# Piece-wise potential
-def V(x, t): <<<< WRONG MATHS
-    print(t)
+# Test potential
+def V(x, t):
     T = 0.001
     if t < T:
-        return (hbar / 2) * (x / l1**2) ** 2
+        return (1/2) * m * (((m * l1**2) / hbar) * x) ** 2
     else:
-        print("QUENCH")
-        return (hbar / 2) * (x / l2**2) ** 2
+        return (1/2) * m * (((m * l2**2) / hbar) * x) ** 2
 
 def Schrodinger_eqn(t, Ψ):
     # Fourier derivative theorem
@@ -52,17 +48,19 @@ def variance(x, dx, Ψ):
 
 
 def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
-    # generates simulation frame corresponding to time t (Quench occurs at t = 0.001)
-    PLOT_INTERVAL = 50
+    # generates simulation frame corresponding to time t (Quench occurs at t = 0)
+    PLOT_INTERVAL = 5000
 
     waves = []
     SIGMAS_SQUARED = []
     while t < t_final:
+        # print(i)
         if not i % PLOT_INTERVAL:
 
             waves.append(wave)
 
             # # raw plot
+            # plt.plot(x, V(x, t), color='k', linewidth=2)
             # plt.plot(x, np.real(wave), label="real part")
             # plt.plot(x, np.imag(wave), label="imaginary part")
             # plt.ylabel(R"$\psi(x,t)$")
@@ -70,6 +68,7 @@ def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
             # plt.legend()
 
             # prob. density plot
+            plt.plot(x, V(x, t), color='k', linewidth=2)
             plt.plot(x, abs(wave ** 2))
             plt.ylabel(R"$|\psi(x,t)|^2$")
             plt.title(f"state at t = {t:04f}")
@@ -79,47 +78,57 @@ def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
             # plt.ylabel(R"$\theta(x)$")
             # plt.title(f"state's phase at t = {t:04f}")
 
-            plt.plot(x, V(x, t), color="black", linewidth=2)
             plt.ylim(-0.2, 1)
             plt.xlabel("x")
-            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:04d}.png")
             plt.clf()
 
             # spatial variance
             sigma_x_squared = variance(x, dx, wave)
             SIGMAS_SQUARED.append(sigma_x_squared)
-            print(f"variance = {sigma_x_squared}\n")
+            # print(f"variance = {sigma_x_squared}\n")
 
-            # h = abs(wave) ** 2
-            # h_right = h[1:]
-            # h_left = h[:-1]
-            # print(f"wave normalisation: {dx / 2 * np.sum(h_right + h_left)}")
+            h = abs(wave) ** 2
+            h_right = h[1:]
+            h_left = h[:-1]
+            print(f"wave normalisation: {dx / 2 * np.sum(h_right + h_left)}")
 
         wave = Schrodinger_RK4(t, dt, wave)
         i += 1
         t += dt
 
     np.save(f"SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    # np.save(f"waves_list_{t_final=}.npy", waves)
+    np.save(f"waves_list.npy", waves)
+
+def variance_plot(time, sigmas_list):
+    plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
+    plt.ylabel(R"$\sigma_{x}^2$")
+    plt.title(f"Spatial variance")
+    plt.xlabel("t")
+    plt.legend()
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    plt.savefig("Variance_Quench.png")
+    plt.show()
+    plt.clf()
+
 
 
 def globals():
     #makes folder for simulation frames
-    folder = Path('RK_quench_time_evolution')
+    folder = Path('quench_time_evolution')
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
-    ## natural units according to wikipedia
     hbar = 1
     m = 1
     ω = 1
-    #lengths for HO quench
-    l1 = np.sqrt(hbar / (m * ω))
-    l2 = 2 * l1
 
+    # for test potential
+    l1 = np.sqrt(hbar/(m*ω))
+    l2 = 0.5 * l1
 
-    x_max = 10
-    x = np.linspace(-x_max/2, x_max/2, 2048, endpoint=False) # HO
+    x_max = 15
+    x = np.linspace(-x_max, x_max, 2048, endpoint=False) # HO
     n = x.size
     dx = x[1] - x[0]
 
@@ -131,32 +140,25 @@ def globals():
     wave = (m * ω / (np.pi * hbar)) ** (1 / 4) * np.exp(-m * ω * x ** 2 / (2 * hbar))
     wave = np.array(wave, dtype=complex)
 
-    t_initial = 0
-    t_final = 6
-    ## Nyquist dt
-    dt = m * dx ** 2 / (np.pi * hbar)
+    # time interval
+    t = 0
+    t_final = 40
+    # dt = 
+    dt = 1.5 * m * dx ** 2 / (np.pi * hbar)
 
     i = 0
 
-    return hbar, m, ω, l1, l2, x_max, x, dx,  n, k, wave, t_initial, t_final, dt, i, folder
+    return folder, hbar, m, ω, l1, l2, x_max, x, dx,  n, k, wave, t, t_final, dt, i
 
 
 
 if __name__ == "__main__":
 
-    hbar, m, ω, l1, l2, x_max, x, dx,  n, k, wave, t_initial, t_final, dt, i, folder = globals()
+    folder, hbar, m, ω, l1, l2, x_max, x, dx,  n, k, wave, t, t_final, dt, i = globals()
 
-    # simulate_quench(t_initial, t_final, i, x, wave, x_max, dx, folder)
+    simulate_quench(t, t_final, i, x, wave, x_max, dx, folder)
 
-    sigmas_list = np.load("SIGMAS_SQUARED.npy")
-    time = np.linspace(t_initial, t_final, len(sigmas_list))
+    # sigmas_list = np.load("SIGMAS_SQUARED.npy")
+    # time = np.linspace(t, t_final, len(sigmas_list))
     
-    plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
-    plt.ylabel(R"$\sigma_{x}^2$")
-    plt.title(f"Spatial variance")
-    plt.xlabel("t")
-    plt.legend()
-    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    plt.savefig("Variance_Quench.png")
-    plt.show()
-    plt.clf()
+    # variance_plot(time, sigmas_list)
