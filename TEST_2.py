@@ -17,8 +17,8 @@ def F_basis_vector(x, n):
     return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)
 
 def V(x):
-    return (hbar / (2 * m)) * (x / l1 ** 2) ** 2
-    # return - x ** 4
+    # return (hbar / (2 * m)) * (x / l1 ** 2) ** 2
+    return - x ** 4
 
 def Hamiltonian(x, n):
     return (-hbar ** 2 /(2 * m)) * ((1j * 2 * np.pi * n / P) ** 2) + V(x)
@@ -85,8 +85,6 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
         #     color=color,
         # )
         # plt.ylabel(r'$ |\psi_{n}|^2$')
-        
-
 
     textstr = '\n'.join(
         (
@@ -100,10 +98,10 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.ylim(-1, 6)
+    # plt.ylim(-1, 6)
 
-    # plt.ylim(-0.5, 25)
-    # plt.xlim(-10,10)
+    plt.ylim(-1, 12)
+    plt.xlim(-10,10)
 
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
     plt.legend(loc="upper right")
@@ -111,19 +109,18 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
     return s_ns
 
 
+def filter_sorting(evals, evects):
+    # filtering
+    mask = (0 < evals.real) & (evals.real < 50)
+    evals = evals[mask]
+    evects = evects[:, mask]
+    # sorting
+    order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
+    evals = evals[order]
+    evects = evects[:, order]
+    return evals, evects
+
 # ###########################################################################################
-# def filter_sorting(evals, evects):
-#     # filtering
-#     mask = (0 < evals.real) & (evals.real < 50)
-#     evals = evals[mask]
-#     evects = evects[:, mask]
-
-#     # sorting
-#     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
-#     evals = evals[order]
-#     evects = evects[:, order]
-#     return evals, evects
-
 # # Normalising F states
 # def PT_normalised_states(x, states):# <<<< PLAN THE CONSTRUCTION of THE STATES
 #     P_states = states[::-1]# <<<<<<<<<<< this operator is BASIS DEPENDENT SO THINK ABOUT THE k VALUES REQUIRED TO CORRECTLY REPRESENT THE HAMILTONIAN
@@ -171,14 +168,14 @@ hbar, m, ω, l1, P, N, L, Nx, xs, delta_x = globals()
 # np.save("matrix_HO.npy", M)
 # np.save("matrix_neg_quartic.npy", M)
 
-M = np.load("matrix_HO.npy")
-# M = np.load("matrix_neg_quartic.npy")
+# M = np.load("matrix_HO.npy")
+M = np.load("matrix_neg_quartic.npy")
 
 # remember that evects are columns!
 evals, evects = linalg.eigh(M)
 # print(f"\n{evects.shape}")
 # print(f"\n{evects[0]}")
-
+evals, evects = filter_sorting(evals, evects)
 
 s_ns = spatial_wavefunctions(N, xs, evals, evects)
 plt.plot(xs, V(xs), alpha=0.4, color="black")

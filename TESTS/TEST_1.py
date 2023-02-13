@@ -39,6 +39,7 @@ def Matrix(N):
             M[i][j] = element
     return M
 
+
 def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
     #calculating basis functions
     s_ns = []
@@ -55,8 +56,7 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
         for n in range(2 * N):
             S_jx += cj[n] * s_ns[n]
         S_jx /= np.exp(1j * np.angle(S_jx[Nx // 2]))
-        # this makes the function's height = 1. Maybe want integral mod2 = 1
-        eigenfunctions.append(S_jx / np.max(np.abs(S_jx))) 
+        eigenfunctions.append(S_jx / np.max(np.abs(S_jx))) # this makes the function's height = 1. Maybe want integral mod2 = 1
 
     for i in range(5):
         ax = plt.gca()
@@ -76,18 +76,6 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
             color=color
         )
 
-         # # probability density
-        # plt.plot(
-        #     x,
-        #     abs(eigenfunctions[i] **2 ) + evals[i],
-        #     linewidth=1,
-        #     label=fR"$|\psi_{i}^2|$",
-        #     color=color,
-        # )
-        # plt.ylabel(r'$ |\psi_{n}|^2$')
-        
-
-
     textstr = '\n'.join(
         (
             fr'$E_0 = {evals[0]:.01f}$',
@@ -102,43 +90,10 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
 
     plt.ylim(-1, 6)
 
-    # plt.ylim(-0.5, 25)
-    # plt.xlim(-10,10)
-
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
     plt.legend(loc="upper right")
     plt.xlabel(r'$x$')
     return s_ns
-
-
-# ###########################################################################################
-# def filter_sorting(evals, evects):
-#     # filtering
-#     mask = (0 < evals.real) & (evals.real < 50)
-#     evals = evals[mask]
-#     evects = evects[:, mask]
-
-#     # sorting
-#     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
-#     evals = evals[order]
-#     evects = evects[:, order]
-#     return evals, evects
-
-# # Normalising F states
-# def PT_normalised_states(x, states):# <<<< PLAN THE CONSTRUCTION of THE STATES
-#     P_states = states[::-1]# <<<<<<<<<<< this operator is BASIS DEPENDENT SO THINK ABOUT THE k VALUES REQUIRED TO CORRECTLY REPRESENT THE HAMILTONIAN
-
-#     PT_normed_states = [] 
-#     for i, P_state in enumerate(P_states): 
-#         # print(f"{i = }") 
-#         PT_state = np.conj(P_state)
-#         PT_norm = np.dot(PT_state, states[i]) 
-#         # print(f"{PT_norm = }\n") 
-#         PT_normed_state = states[i] / np.sqrt(PT_norm) 
-#         PT_normed_states.append(PT_normed_state) 
-#     return PT_normed_states 
-
-# ########################################################################################
 
 def globals():
     ## natural units according to wikipedia
@@ -160,19 +115,15 @@ def globals():
     delta_x = xs[1] - xs[0]
 
     return hbar, m, ω, l1, P, N, L, Nx, xs, delta_x
-
 ################################################################
 
 hbar, m, ω, l1, P, N, L, Nx, xs, delta_x = globals()
 
 # Make  matrix 
 # M = Matrix(N)
-
 # np.save("matrix_HO.npy", M)
-# np.save("matrix_neg_quartic.npy", M)
 
 M = np.load("matrix_HO.npy")
-# M = np.load("matrix_neg_quartic.npy")
 
 # remember that evects are columns!
 evals, evects = linalg.eigh(M)
@@ -183,34 +134,4 @@ evals, evects = linalg.eigh(M)
 s_ns = spatial_wavefunctions(N, xs, evals, evects)
 plt.plot(xs, V(xs), alpha=0.4, color="black")
 plt.show()
-
-################################################################
-
-
-# #### PT NORMALISE ###
-# # Normalising F states
-# PT_normed_states  = PT_normalised_states(xs, evects)
-# # print(np.shape(PT_normed_states))
-# # checking orthogonality for PT normalised states
-
-# M = np.zeros_like(matrix)
-# for i, istate in enumerate(PT_normed_states):
-#     # time reflection
-#     TΨi = np.conj(istate)
-#     # Spatial reflection
-#     PTΨi = TΨi[::-1]
-#     for j, jstate in enumerate(PT_normed_states):
-#         #orthogonality operation is wrong?
-#         Orthogonality_check = np.dot(PTΨi.T, jstate) * delta_x
-#         # print(f"{n, m = }: {Orthogonality_check}")
-#         M[i][j] = Orthogonality_check
-
-# plt.matshow(np.real(M))
-# plt.colorbar()
-# plt.show()
-
-# plt.matshow(np.imag(M))
-# plt.colorbar()
-# plt.show()
-
 
