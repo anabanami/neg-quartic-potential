@@ -73,7 +73,7 @@ def wavefunctions(x, N, S_ns, evects):
         # S_jx /= np.exp(1j * np.angle(S_jx[Nx // 2]))
         # this makes the function's height = 1. Maybe want integral mod2 = 1
         wavefunctions.append(S_jx / np.max(np.abs(S_jx))) 
-    return wavefunctions
+    return np.array(wavefunctions)
 
 def plot_wavefunctions(N, x, S_ns, evals, wavefunctions):
     for i in range(5):
@@ -113,26 +113,28 @@ def plot_wavefunctions(N, x, S_ns, evals, wavefunctions):
     plt.legend(loc="upper right")
     plt.xlabel(r'$x$')
 
-def P_states(S_ns):
+def P_states(states):
     # Operator is basis dependent*
-    P_S_ns = []
-    for S_n in S_ns:
+    P_states = []
+
+    for state in states:
         # apply parity inversion
-        P_S_n = S_n[::-1]
+        P_state = state[::-1]
         # append to new list
-        P_S_ns.append(P_S_n)
-    return P_S_ns
+        P_states.append(P_state)
+
+    return np.array(P_states)
 ###########################################################################################
 
-def PT_normalised_states(x, S_ns, P_S_ns):
-    # Normalising F states according to PT inner prod
+def PT_normalised_states(x, states, P_states):
+    # Normalising states according to PT inner prod
     PT_normed_states = [] 
-    for i, P_state in enumerate(P_S_ns): 
+    for i, P_state in enumerate(P_states): 
         # print(f"{i = }") 
         PT_state = np.conj(P_state)
-        PT_norm = np.dot(PT_state, S_ns[i]) 
+        PT_norm = np.dot(PT_state, states[i]) 
         # print(f"{PT_norm = }\n") 
-        PT_normed_state = S_ns[i] / np.sqrt(PT_norm) 
+        PT_normed_state = states[i] / np.sqrt(PT_norm) 
         PT_normed_states.append(PT_normed_state) 
     return PT_normed_states 
 
@@ -184,32 +186,32 @@ eigenfunctions = wavefunctions(xs, N, S_ns, evects)
 # plt.plot(xs, V(xs), alpha=0.4, color="black")
 # plt.show()
 
-P_S_ns = P_states(S_ns)
+# P_S_ns = P_states(S_ns)
 # P_eigenfunctions = wavefunctions(xs, N, P_S_ns, evects)
 # plot_wavefunctions(N, xs, P_S_ns, evals, P_eigenfunctions)
 # plt.plot(xs, V(xs), alpha=0.4, color="black")
 # plt.show()
 
+P_eigenfunctions = P_states(eigenfunctions)
 ################################################################
 
 #### PT NORMALISE ###
-# Normalising F states
-PT_normed_states  = PT_normalised_states(xs, S_ns, P_S_ns)
-print(np.shape(PT_normed_states))
 
+PT_normed_eigenfunctions  = PT_normalised_states(xs, eigenfunctions, P_eigenfunctions)
+print(np.shape(PT_normed_eigenfunctions))
 
 # checking orthogonality for PT normalised states
 M2 = np.zeros_like(M)
-for i, istate in enumerate(PT_normed_states):
+for i, istate in enumerate(PT_normed_eigenfunctions):
     # time reflection
     TΨi = np.conj(istate)
     # Spatial reflection
     PTΨi = TΨi[::-1]
-    for j, jstate in enumerate(PT_normed_states):
+    for j, jstate in enumerate(PT_normed_eigenfunctions):
         #orthogonality operation is wrong?
         Orthogonality_check = np.dot(PTΨi.T, jstate) * delta_x
         # print(f"{n, m = }: {Orthogonality_check}")
-        M2[i][j] = Orthogonality_check
+        M2[i][j] += Orthogonality_check
 
 plt.matshow(np.real(M2))
 plt.colorbar()
