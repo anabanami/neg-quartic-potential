@@ -24,11 +24,11 @@ def filter_sorting(evals, evects):
     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
     evals = evals[order]
     evects = evects[:, order]
-    return evals, evects
+    return evals, evects # (evals.shape= (300,) ), (evects.shape= (300, 300) where the column v[:, i])
 
 def F_basis_vector(x, n):
     # Fourier state (exponential form)
-    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)
+    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P) # (.shape= (2048,))
 
 def basis_functions(x, N):
     # calculating basis functions
@@ -36,7 +36,7 @@ def basis_functions(x, N):
     for n in range(-N, N):
         S_n = F_basis_vector(x, n)
         S_ns.append(S_n)
-    return np.array(S_ns)
+    return np.array(S_ns) # (S_ns.shape= (300,)
 
 def V(x):
     return (hbar / (2 * m)) * (x / l1 ** 2) ** 2
@@ -48,18 +48,17 @@ def Hamiltonian(x, n):
 def element_integrand(x, m, n):
     S_m = F_basis_vector(x, m)
     S_n = F_basis_vector(x, n)
-    return np.conj(S_m) * Hamiltonian(x, n) * S_n
+    return np.conj(S_m) * Hamiltonian(x, n) * S_n # (element.shape= (300,))
 
-# NDxND MATRIX
+# NDxND Hamiltonian MATRIX (in Fourier space)
 def Matrix(N):
-    ND = N * 2
     M = np.zeros((ND, ND), dtype="complex")
     for i, m in tqdm(enumerate(range(-N, N))):
         for j, n in tqdm(enumerate(range(-N, N))):
             y = element_integrand(xs, m, n)
             element = complex_trapezoid(y, xs, delta_x)
             M[i][j] = element
-    return M
+    return M # (M.shape= (300, 300))
 
 def wavefunctions(x, N, S_ns, evects):
     wavefunctions = []
@@ -73,9 +72,9 @@ def wavefunctions(x, N, S_ns, evects):
         # S_jx /= np.exp(1j * np.angle(S_jx[Nx // 2]))
         # this makes the function's height = 1. Maybe want integral mod2 = 1
         wavefunctions.append(S_jx / np.max(np.abs(S_jx))) 
-    return np.array(wavefunctions)
+    return np.array(wavefunctions) # (wavefunctions.shape= (300, 2048))
 
-def plot_wavefunctions(N, x, S_ns, evals, wavefunctions):
+def plot_wavefunctions(N, x, evals, wavefunctions):
     for i in range(5):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
@@ -113,32 +112,37 @@ def plot_wavefunctions(N, x, S_ns, evals, wavefunctions):
     plt.legend(loc="upper right")
     plt.xlabel(r'$x$')
 
+
+# ################################################################
+
 def P_states(states):
     # Operator is basis dependent*
     P_states = []
-
     for state in states:
-        # apply parity inversion
+        # apply parity inversion (reverse array)
         P_state = state[::-1]
         # append to new list
         P_states.append(P_state)
+    return np.array(P_states) # (P_states.shape= (300, 300) where the column v[:, i])
 
-    return np.array(P_states)
-###########################################################################################
+def PT_innerproducts(states, P_states):
+    inner_prods = np.zeros(ND, dtype="complex")
+    # print(inner_prods.shape)
+    for i, istate in enumerate(P_states): 
+        for j, jstate in enumerate(states):
+            """PT inner product: PT(Ψ) * Ψ * dx = (PΨ)^* * Ψ * dx
+            np.vdot() conjugates first input and performs a dot product of arrays"""
+            inner_prods[i] = np.vdot(istate, jstate) * delta_x
+    return inner_prods # (inner_prods.shape= (300,))
 
-def PT_normalised_states(x, states, P_states):
-    # Normalising states according to PT inner prod
-    PT_normed_states = [] 
-    for i, P_state in enumerate(P_states): 
-        # print(f"{i = }") 
-        PT_state = np.conj(P_state)
-        PT_norm = np.dot(PT_state, states[i]) 
-        # print(f"{PT_norm = }\n") 
-        PT_normed_state = states[i] / np.sqrt(PT_norm) 
-        PT_normed_states.append(PT_normed_state) 
-    return PT_normed_states 
+def PT_normalise(evects, inner_prods):
+    PT_normed_evects = np.zeros_like(evects, dtype="complex")
+    for j in range(ND):
+        PT_normed_evects[:, j] = evects[:, j] / np.sqrt(inner_prods[j])
+    return PT_normed_evects # (PT_normed_evects.shape= (300, 300) where the column v[:, i])
 
-# ########################################################################################
+
+################################################################
 
 def globals():
     ## natural units according to wikipedia
@@ -151,6 +155,7 @@ def globals():
 
     # Basis states / 2
     N = 150
+    ND = 2 * N
 
     # X-space
     L = 30
@@ -161,11 +166,11 @@ def globals():
     ks = 2 * np.pi* np.fft.fftfreq(Nx, delta_x)
 
 
-    return hbar, m, ω, l1, P, N, L, Nx, xs, delta_x, ks
+    return hbar, m, ω, l1, P, N, ND, L, Nx, xs, delta_x, ks
 
 ################################################################
 
-hbar, m, ω, l1, P, N, L, Nx, xs, delta_x, ks = globals()
+hbar, m, ω, l1, P, N, ND, L, Nx, xs, delta_x, ks = globals()
 
 S_ns = basis_functions(xs, N)
 # Make  matrix 
@@ -178,46 +183,70 @@ M = np.load("matrix_HO.npy")
 
 # remember that evects are columns!
 evals, evects = linalg.eigh(M)
-# print(f"\n{evects.shape}")
-# print(f"\n{evects[0]}")
+# print(f"\n{evects.shape=}\n")
 
-eigenfunctions = wavefunctions(xs, N, S_ns, evects)
-# plot_wavefunctions(N, xs, S_ns, evals, eigenfunctions)
+# # Plotting wavefunctions
+# eigenfunctions = wavefunctions(xs, N, S_ns, evects)
+# plot_wavefunctions(N, xs, evals, eigenfunctions)
 # plt.plot(xs, V(xs), alpha=0.4, color="black")
 # plt.show()
 
+#### PT NORMALISE in Fourier space###
+P_evects = P_states(evects)
+# print(f"{P_evects.shape=}\n")
+
+# # Plot P flipped eigenstates
 # P_S_ns = P_states(S_ns)
 # P_eigenfunctions = wavefunctions(xs, N, P_S_ns, evects)
-# plot_wavefunctions(N, xs, P_S_ns, evals, P_eigenfunctions)
+# plot_wavefunctions(N, xs, evals, P_eigenfunctions)
 # plt.plot(xs, V(xs), alpha=0.4, color="black")
 # plt.show()
 
-P_eigenfunctions = P_states(eigenfunctions)
-################################################################
 
-#### PT NORMALISE ###
+PT_inner_prods = PT_innerproducts(evects, P_evects)
+# print(f"{PT_inner_prods.shape=}\n")
 
-PT_normed_eigenfunctions  = PT_normalised_states(xs, eigenfunctions, P_eigenfunctions)
-print(np.shape(PT_normed_eigenfunctions))
+PT_evects = PT_normalise(evects, PT_inner_prods) ###################### (PT_normed_evects.shape= (300, 300) where the column v[:, i])
+print(f"{PT_evects.shape=}\n")
 
-# checking orthogonality for PT normalised states
+# # Plotting PT_normed_wavefunctions
+# PT_eigenfunctions = wavefunctions(xs, N, S_ns, PT_evects)
+# plot_wavefunctions(N, xs, evals, PT_eigenfunctions)
+# plt.plot(xs, V(xs), alpha=0.4, color="black")
+# plt.show()
+
+## checking PT orthogonality for PT normalised eigenvectors
 M2 = np.zeros_like(M)
-for i, istate in enumerate(PT_normed_eigenfunctions):
-    # time reflection
-    TΨi = np.conj(istate)
+for i in range(ND):
+    u = PT_evects[:, i]
     # Spatial reflection
-    PTΨi = TΨi[::-1]
-    for j, jstate in enumerate(PT_normed_eigenfunctions):
-        #orthogonality operation is wrong?
-        Orthogonality_check = np.dot(PTΨi.T, jstate) * delta_x
-        # print(f"{n, m = }: {Orthogonality_check}")
-        M2[i][j] += Orthogonality_check
+    Pu = u[::-1]
+    for j in range(ND):
+        v = PT_evects[:, j]
+        M2[i][j] += np.vdot(Pu, v)
 
 plt.matshow(np.real(M2))
 plt.colorbar()
 plt.show()
 
 plt.matshow(np.imag(M2))
+plt.colorbar()
+plt.show()
+
+
+## checking PT orthogonality for PT normalised eigenvectors
+M3 = np.zeros_like(M)
+for i in range(ND):
+    u = PT_evects[:, i]
+    for j in range(ND):
+        v = PT_evects[:, j]
+        M3[i][j] += np.vdot(u, v)
+
+plt.matshow(np.real(M3))
+plt.colorbar()
+plt.show()
+
+plt.matshow(np.imag(M3))
 plt.colorbar()
 plt.show()
 
