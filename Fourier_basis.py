@@ -9,85 +9,90 @@ plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
 
 def complex_trapezoid(integrand, y, dy):
+    # complex integrals
     real = np.real(trapezoid(integrand, y, dy))
     imaginary = np.imag(trapezoid(integrand, y, dy))
     return real + 1j * imaginary
 
+def filter_sorting(evals, evects):
+    # filtering
+    mask = (0 < evals.real) & (evals.real < 50)
+    evals = evals[mask]
+    evects = evects[:, mask]
+
+    # sorting
+    order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
+    evals = evals[order]
+    evects = evects[:, order]
+    return evals, evects # (evals.shape= (300,) ), (evects.shape= (300, 300) where the column v[:, i])
+
 def F_basis_vector(x, n):
-    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)
+    # Fourier state (exponential form)
+    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P) # (.shape= (2048,))
+
+def basis_functions(x, N):
+    # calculating basis functions
+    S_ns = []
+    for n in range(-N, N):
+        S_n = F_basis_vector(x, n)
+        S_ns.append(S_n)
+    return np.array(S_ns) # (S_ns.shape= (300,)
 
 def V(x):
-    return (hbar / (2 * m)) * (x / l1 ** 2) ** 2
+    # return (hbar / (2 * m)) * (x / l1 ** 2) ** 2
+    return (hbar / (2 * m)) * (x / l2 ** 2) ** 2
     # return - x ** 4
 
 def Hamiltonian(x, n):
     return (-hbar ** 2 /(2 * m)) * ((1j * 2 * np.pi * n / P) ** 2) + V(x)
 
 def element_integrand(x, m, n):
-    s_m = F_basis_vector(x, m)
-    s_n = F_basis_vector(x, n)
-    return np.conj(s_m) * Hamiltonian(x, n) * s_n
+    S_m = F_basis_vector(x, m)
+    S_n = F_basis_vector(x, n)
+    return np.conj(S_m) * Hamiltonian(x, n) * S_n # (element.shape= (300,))
 
-# NDxND MATRIX
+# NDxND Hamiltonian MATRIX (in Fourier space)
 def Matrix(N):
-    ND = N * 2
     M = np.zeros((ND, ND), dtype="complex")
     for i, m in tqdm(enumerate(range(-N, N))):
         for j, n in tqdm(enumerate(range(-N, N))):
             y = element_integrand(xs, m, n)
             element = complex_trapezoid(y, xs, delta_x)
             M[i][j] = element
-    return M
+    return M # (M.shape= (300, 300))
 
-def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
-    #calculating basis functions
-    s_ns = []
-    for n in range(-N, N):
-        s_n = F_basis_vector(x, n)
-        s_ns.append(s_n)
-    s_ns = np.array(s_ns)
-
-    eigenfunctions = []
-    for j in range(5):
+def wavefunctions(x, N, S_ns, evects):
+    wavefunctions = []
+    for j in range(2 * N):
         cj = evects[:, j]
         S_jx = np.zeros(x.shape, complex)
         # for each Fourier basis vector
         for n in range(2 * N):
-            S_jx += cj[n] * s_ns[n]
-        S_jx /= np.exp(1j * np.angle(S_jx[Nx // 2]))
+            S_jx += cj[n] * S_ns[n]
+        ## fix phase factor
+        # S_jx /= np.exp(1j * np.angle(S_jx[Nx // 2]))
         # this makes the function's height = 1. Maybe want integral mod2 = 1
-        eigenfunctions.append(S_jx / np.max(np.abs(S_jx))) 
+        wavefunctions.append(S_jx / np.max(np.abs(S_jx))) 
+    return np.array(wavefunctions) # (wavefunctions.shape= (300, 2048))
 
+def plot_wavefunctions(N, x, evals, wavefunctions):
     for i in range(5):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
         plt.plot(
             x,
-            np.real(eigenfunctions[i]) + evals[i],
+            np.real(wavefunctions[i]) + 5*evals[i], # scaled offset for visibility 
             "-",
             linewidth=1,
             label=fR"$\psi_{i}$",
             color=color,
         )
         plt.plot(
-            x, np.imag(eigenfunctions[i]) + evals[i], 
+            x, np.imag(wavefunctions[i]) + 5*evals[i], 
             "--", linewidth=1, 
             color=color
         )
-
-         # # probability density
-        # plt.plot(
-        #     x,
-        #     abs(eigenfunctions[i] **2 ) + evals[i],
-        #     linewidth=1,
-        #     label=fR"$|\psi_{i}^2|$",
-        #     color=color,
-        # )
-        # plt.ylabel(r'$ |\psi_{n}|^2$')
-        
-
-
     textstr = '\n'.join(
         (
             fr'$E_0 = {evals[0]:.01f}$',
@@ -100,117 +105,71 @@ def spatial_wavefunctions(N, x, evals, evects): # <<<  SUSPECT MY BUG IS HERE
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.ylim(-1, 6)
-
+    # plt.ylim(-1, 6)
     # plt.ylim(-0.5, 25)
     # plt.xlim(-10,10)
 
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
     plt.legend(loc="upper right")
     plt.xlabel(r'$x$')
-    return s_ns
 
 
-# ###########################################################################################
-# def filter_sorting(evals, evects):
-#     # filtering
-#     mask = (0 < evals.real) & (evals.real < 50)
-#     evals = evals[mask]
-#     evects = evects[:, mask]
-
-#     # sorting
-#     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
-#     evals = evals[order]
-#     evects = evects[:, order]
-#     return evals, evects
-
-# # Normalising F states
-# def PT_normalised_states(x, states):# <<<< PLAN THE CONSTRUCTION of THE STATES
-#     P_states = states[::-1]# <<<<<<<<<<< this operator is BASIS DEPENDENT SO THINK ABOUT THE k VALUES REQUIRED TO CORRECTLY REPRESENT THE HAMILTONIAN
-
-#     PT_normed_states = [] 
-#     for i, P_state in enumerate(P_states): 
-#         # print(f"{i = }") 
-#         PT_state = np.conj(P_state)
-#         PT_norm = np.dot(PT_state, states[i]) 
-#         # print(f"{PT_norm = }\n") 
-#         PT_normed_state = states[i] / np.sqrt(PT_norm) 
-#         PT_normed_states.append(PT_normed_state) 
-#     return PT_normed_states 
-
-# ########################################################################################
+################################################################
 
 def globals():
     ## natural units according to wikipedia
     hbar = 1
     m = 1
     ω = 1
-    # Harmonic oscillator length
+    # Harmonic oscillator length #lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
+    l2 = 0.5 * l1
+
     P = 30 # <The n harmonic makes n cycles in the function's period P 
 
     # Basis states / 2
     N = 150
+    ND = 2 * N
 
     # X-space
-    L = 30
+    x_max = 30
     Nx = 2048
-    xs = np.linspace(-L/2, L/2, Nx)
-
+    xs = np.linspace(-x_max/2, x_max/2, Nx)
     delta_x = xs[1] - xs[0]
 
-    return hbar, m, ω, l1, P, N, L, Nx, xs, delta_x
+    ks = 2 * np.pi* np.fft.fftfreq(Nx, delta_x)
+
+
+    return hbar, m, ω, l1, l2, P, N, ND, x_max, Nx, xs, delta_x, ks
 
 ################################################################
 
-hbar, m, ω, l1, P, N, L, Nx, xs, delta_x = globals()
+hbar, m, ω, l1, l2, P, N, ND, x_max, Nx, xs, delta_x, ks = globals()
 
+S_ns = basis_functions(xs, N)
 # Make  matrix 
 # M = Matrix(N)
-
 # np.save("matrix_HO.npy", M)
+# np.save("matrix_2ndHO.npy", M)
 # np.save("matrix_neg_quartic.npy", M)
 
-M = np.load("matrix_HO.npy")
+# M = np.load("matrix_HO.npy")
+M = np.load("matrix_2ndHO.npy")
 # M = np.load("matrix_neg_quartic.npy")
 
-# remember that evects are columns!
+# remember that evects are columns! v[:, j]
 evals, evects = linalg.eigh(M)
-# print(f"\n{evects.shape}")
-# print(f"\n{evects[0]}")
 
+# plt.matshow(np.real(M4))
+# plt.colorbar()
+# plt.show()
 
-s_ns = spatial_wavefunctions(N, xs, evals, evects)
+# plt.matshow(np.imag(M4))
+# plt.colorbar()
+# plt.show()
+
+# Plotting wavefunctions
+eigenfunctions = wavefunctions(xs, N, S_ns, evects)
+plot_wavefunctions(N, xs, evals, eigenfunctions)
 plt.plot(xs, V(xs), alpha=0.4, color="black")
 plt.show()
-
-################################################################
-
-
-# #### PT NORMALISE ###
-# # Normalising F states
-# PT_normed_states  = PT_normalised_states(xs, evects)
-# # print(np.shape(PT_normed_states))
-# # checking orthogonality for PT normalised states
-
-# M = np.zeros_like(matrix)
-# for i, istate in enumerate(PT_normed_states):
-#     # time reflection
-#     TΨi = np.conj(istate)
-#     # Spatial reflection
-#     PTΨi = TΨi[::-1]
-#     for j, jstate in enumerate(PT_normed_states):
-#         #orthogonality operation is wrong?
-#         Orthogonality_check = np.dot(PTΨi.T, jstate) * delta_x
-#         # print(f"{n, m = }: {Orthogonality_check}")
-#         M[i][j] = Orthogonality_check
-
-# plt.matshow(np.real(M))
-# plt.colorbar()
-# plt.show()
-
-# plt.matshow(np.imag(M))
-# plt.colorbar()
-# plt.show()
-
-

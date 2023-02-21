@@ -10,7 +10,7 @@ from matplotlib.ticker import FormatStrFormatter
 
 plt.rcParams['figure.dpi'] = 200
 
-# Test potential
+# Test potentials
 def V(x, t):
     T = 0.001
     if t < T:
@@ -124,7 +124,7 @@ def globals():
     ω = 1
 
     # for test potential
-    l1 = np.sqrt(hbar/(m*ω))
+    l1 = np.sqrt(hbar / (m * ω))
     l2 = 0.5 * l1
 
     x_max = 15
@@ -145,9 +145,7 @@ def globals():
     t_final = 40
     # dt = 
     dt = 1.5 * m * dx ** 2 / (np.pi * hbar)
-
     i = 0
-
     return folder, hbar, m, ω, l1, l2, x_max, x, dx,  n, k, wave, t, t_final, dt, i
 
 

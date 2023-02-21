@@ -1,6 +1,3 @@
-IMPLEMENT FOURIER BASIS CORRECTLY AS WITH TEST_2.py
-
-
 import os
 from pathlib import Path
 import numpy as np
@@ -15,18 +12,20 @@ plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
 
 def F_basis_vector(x, n):
-    return (1 / np.sqrt(P)) * np.exp((1j * 2 * np.pi * n * x) / P)
+    # Fourier state (exponential form)
+    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P) # (.shape= (2048,))
 
 # kinetic energy
 def K():
     return - (hbar * kx)**2 / (2 * m)
 
-# Piece-wise potential
+# Test potentials
 def V(x, t):
+    T = 0.001
     if t < T:
-        return (hbar / 2) * (x / l1**2) ** 2
+        return (1/2) * m * (((m * l1**2) / hbar) * x) ** 2
     else:
-        return (hbar / 2) * (x / l2**2) ** 2
+        return (1/2) * m * (((m * l2**2) / hbar) * x) ** 2
 
 def F_split_step2(Ψ, t, dt):
     """Evolve Ψ in time from t-> t+dt using a single step of the second order Fourier Split step method with time step dt"""
@@ -59,7 +58,6 @@ def plot_spatial_wavefunction(N, y, t, state, i):
 
         plt.legend()
         plt.xlabel("x")
-        plt.xlim(-L/2, L/2)
         plt.ylim(-0.2, 1)
 
         # plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
@@ -72,43 +70,45 @@ def globals():
     #makes folder for simulation frames
     folder = Path('QUENCH_HO-HO_F_second_order')
 
-    # os.makedirs(folder, exist_ok=True)
-    # os.system(f'rm {folder}/*.png')
-    ## natural units according to wikipedia
+    os.makedirs(folder, exist_ok=True)
+    os.system(f'rm {folder}/*.png')
+    # natural units according to wikipedia
     hbar = 1
     m = 1
     ω = 1
     #lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
-    l2 = 2 * l1
+    l2 = 0.5 * l1
 
     Nx = 2048
-    L = 10
-    P = L
+    P = 30
 
-    x = np.linspace(-L, L, Nx)
+    x_max = 15
+    x = np.linspace(-x_max, x_max, 2048, endpoint=False) # HO
+    n = x.size
     dx = x[1] - x[0]
 
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
 
     t_initial = 0
-    t_final = 6
+    t_final = 40
     ## Nyquist dt
-    dt = m * dx ** 2 / (np.pi * hbar)
+    dt = 1.5 * m * dx ** 2 / (np.pi * hbar)
 
     T = 0.001
 
 
-    return folder, hbar, m, ω, l1, l2, L, Nx, x, dx, kx, P, t_initial, t_final, dt, T
+    return folder, hbar, m, ω, l1, l2, Nx, x, dx, kx, P, t_initial, t_final, dt, T
 
 
 if __name__ == "__main__":
 
-    folder, hbar, m, ω, l1, l2, L, Nx, x, dx, kx, P, t_initial, t_final, dt, T = globals()
+    folder, hbar, m, ω, l1, l2, Nx, x, dx, kx, P, t_initial, t_final, dt, T = globals()
 
     HO_GS = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-x ** 2 /(2 * l1 ** 2))
     # plt.plot(x, HO_GS)
     # plt.plot(x, V(x, 0), color="black", linewidth=2)
+    # plt.ylim(-0.2, 1)
     # plt.show()
 
     # # split step time evolution of GS

@@ -132,7 +132,7 @@ def PT_innerproducts(states, P_states):
         for j, jstate in enumerate(states):
             """PT inner product: PT(Ψ) * Ψ * dx = (PΨ)^* * Ψ * dx
             np.vdot() conjugates first input and performs a dot product of arrays"""
-            inner_prods[i] = np.vdot(istate, jstate) * delta_x
+            inner_prods[i] = np.vdot(istate, jstate)
     return inner_prods # (inner_prods.shape= (300,))
 
 def PT_normalise(evects, inner_prods):
@@ -185,23 +185,39 @@ M = np.load("matrix_HO.npy")
 evals, evects = linalg.eigh(M)
 # print(f"\n{evects.shape=}\n")
 
-# # Plotting wavefunctions
-# eigenfunctions = wavefunctions(xs, N, S_ns, evects)
-# plot_wavefunctions(N, xs, evals, eigenfunctions)
-# plt.plot(xs, V(xs), alpha=0.4, color="black")
-# plt.show()
+## checking PT orthogonality for M eigenvectors
+M4 = np.zeros_like(M)
+for i in range(ND):
+    u = evects[:, i] # chooses specific vector i (column vector)
+    for j in range(ND):
+        v = evects[:, j]
+        M4[i][j] += np.vdot(u, v)
+
+plt.matshow(np.real(M4))
+plt.colorbar()
+plt.show()
+
+plt.matshow(np.imag(M4))
+plt.colorbar()
+plt.show()
+
+
+# Plotting wavefunctions
+eigenfunctions = wavefunctions(xs, N, S_ns, evects)
+plot_wavefunctions(N, xs, evals, eigenfunctions)
+plt.plot(xs, V(xs), alpha=0.4, color="black")
+plt.show()
 
 #### PT NORMALISE in Fourier space###
 P_evects = P_states(evects)
 # print(f"{P_evects.shape=}\n")
 
-# # Plot P flipped eigenstates
-# P_S_ns = P_states(S_ns)
-# P_eigenfunctions = wavefunctions(xs, N, P_S_ns, evects)
-# plot_wavefunctions(N, xs, evals, P_eigenfunctions)
-# plt.plot(xs, V(xs), alpha=0.4, color="black")
-# plt.show()
-
+# Plot P flipped eigenstates
+P_S_ns = P_states(S_ns)
+P_eigenfunctions = wavefunctions(xs, N, P_S_ns, evects)
+plot_wavefunctions(N, xs, evals, P_eigenfunctions)
+plt.plot(xs, V(xs), alpha=0.4, color="black")
+plt.show()
 
 PT_inner_prods = PT_innerproducts(evects, P_evects)
 # print(f"{PT_inner_prods.shape=}\n")
@@ -209,18 +225,23 @@ PT_inner_prods = PT_innerproducts(evects, P_evects)
 PT_evects = PT_normalise(evects, PT_inner_prods) ###################### (PT_normed_evects.shape= (300, 300) where the column v[:, i])
 print(f"{PT_evects.shape=}\n")
 
-# # Plotting PT_normed_wavefunctions
-# PT_eigenfunctions = wavefunctions(xs, N, S_ns, PT_evects)
-# plot_wavefunctions(N, xs, evals, PT_eigenfunctions)
-# plt.plot(xs, V(xs), alpha=0.4, color="black")
-# plt.show()
+# Plotting PT_normed_wavefunctions
+PT_eigenfunctions = wavefunctions(xs, N, S_ns, PT_evects)
+plot_wavefunctions(N, xs, evals, PT_eigenfunctions)
+plt.plot(xs, V(xs), alpha=0.4, color="black")
+plt.show()
 
+
+########################### # ################################
 ## checking PT orthogonality for PT normalised eigenvectors
 M2 = np.zeros_like(M)
 for i in range(ND):
-    u = PT_evects[:, i]
+    # print(f"\n{PT_evects[:,0]}")
+    u = PT_evects[:, i] # chooses specific vector i (column vector)
+    # print(f"\n{u = }")
     # Spatial reflection
     Pu = u[::-1]
+    # print(f"\n{Pu = }")
     for j in range(ND):
         v = PT_evects[:, j]
         M2[i][j] += np.vdot(Pu, v)
@@ -233,8 +254,7 @@ plt.matshow(np.imag(M2))
 plt.colorbar()
 plt.show()
 
-
-## checking PT orthogonality for PT normalised eigenvectors
+## checking conventional orthogonality for PT normalised eigenvectors
 M3 = np.zeros_like(M)
 for i in range(ND):
     u = PT_evects[:, i]
