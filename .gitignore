@@ -127,13 +127,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
-Energies_HO.npy
-quench_time_evolution/
-sims/
-odhobs/
-HH_RK4_time_evolution/
-HH_U_time_evolution/
-RK4_prob_dens_HH_HO_gs.mp4
-U_evolution_prob_dens_HH_HO_gs.mp4
-QUENCH_HO-HO_F_second_order
-matrix_HO.npy 
+F_SS_quench_HO-neg-quartic/
+QUENCH_HO-HO/
+HO-HO-quench/
+OG RK4/
+RK4 neg quart QUENCH/
