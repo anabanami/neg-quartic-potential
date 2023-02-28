@@ -137,3 +137,6 @@ imaginary TEv/
 SIGMAS_SQUARED.npy
 no potential/
 matrix_neg_quartic.npy
+HO-HO-quench/
+QUENCH_HO-HO/
+F_SS_quench_HO-neg-quartic/
