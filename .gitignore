@@ -132,3 +132,8 @@ QUENCH_HO-HO/
 HO-HO-quench/
 OG RK4/
 RK4 neg quart QUENCH/
+imaginary TEv HO-HO/
+imaginary TEv/
+SIGMAS_SQUARED.npy
+no potential/
+matrix_neg_quartic.npy

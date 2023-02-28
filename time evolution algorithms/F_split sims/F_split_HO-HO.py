@@ -7,6 +7,8 @@ from scipy.fft import fft, ifft, fftfreq
 from scipy import linalg
 from scipy.linalg import expm
 from tqdm import tqdm
+from matplotlib.ticker import FormatStrFormatter
+
 
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)

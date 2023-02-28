@@ -49,10 +49,9 @@ def basis_functions(x, N):
     return np.array(S_ns) # (S_ns.shape= (300,)
 
 def restricted_V(x):
-    # gassuan smooth vertices
     pts = 5
-    V = np.zeros_like(x)
-    V[128:384] = -x[128:384] ** 4
+    V = np.negative(np.ones_like(x) * x[100]** 4) 
+    V[100:412] = -x[100:412] ** 4
     return gaussian_smoothing(V, pts)
 
 def V(x):
@@ -166,10 +165,11 @@ def globals():
 hbar, m, ω, l1, l2, P, N, ND, x_max, Nx, xs, delta_x, ks = globals()
 
 S_ns = basis_functions(xs, N)
-# Make  matrix 
+
+# # Make  matrix 
 # M = Matrix(N)
-# np.save("matrix_HO.npy", M)
-# np.save("matrix_2ndHO.npy", M)
+# # np.save("matrix_HO.npy", M)
+# # np.save("matrix_2ndHO.npy", M)
 # np.save("matrix_neg_quartic.npy", M)
 
 # M = np.load("matrix_HO.npy")

@@ -18,17 +18,19 @@ def gaussian_smoothing(data, pts):
 
 
 def restricted_V(x):
-    V = np.negative(np.ones_like(x))
+    V = np.negative(np.ones_like(x) * x[100]** 4) 
     V[100:412] = -x[100:412] ** 4
     return V
 
 
-x = np.linspace(-15, 15, 512)
-y = restricted_V(x)
-plt.plot(x, y)
-plt.show()
+x = np.linspace(-10, 10, 512)
 
-pts = 5
-y = gaussian_smoothing(y, pts)
-plt.plot(x, y)
+# y = restricted_V(x)
+# plt.plot(x, y)
+# plt.show()
+
+# pts = 5
+# y = gaussian_smoothing(y, pts)
+
+plt.plot(x, -x**4)
 plt.show()
