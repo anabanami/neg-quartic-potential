@@ -17,15 +17,15 @@ def F_basis_vector(x, n):
 
 # kinetic energy
 def K():
-    return - (hbar * kx)**2 / (2 * m)
+    return (hbar * kx)**2 / (2 * m)
 
 # Test potentials
 def V(x, t):
     T = 0.001
     if t < T:
-        return (1/2) * m * (((m * l1**2) / hbar) * x) ** 2
+        return (1/2) * m * ((hbar/ (m * l1**2)) * x) ** 2
     else:
-        return (1/2) * m * (((m * l2**2) / hbar) * x) ** 2
+        return (1/2) * m * ((hbar / (m * l2**2)) * x) ** 2
 
 def F_split_step2(Ψ, t, dt):
     """Evolve Ψ in time from t-> t+dt using a single step of the second order Fourier Split step method with time step dt"""
@@ -34,9 +34,9 @@ def F_split_step2(Ψ, t, dt):
     Ψ = np.exp(-1j * V(x, t) * dt * 0.5 / hbar) * Ψ
     return Ψ
 
-def plot_spatial_wavefunction(N, y, t, state, i):
+def evolve_and_plot_spatial_wavefunction(N, y, t, state, i):
     ## state vector
-    psi = F_split_step2(state, t, dt)
+    psi = F_split_step2(state, t, dt) # np.array shape like x = (2048,)
 
     PLOT_INTERVAL = 50
     
@@ -47,7 +47,7 @@ def plot_spatial_wavefunction(N, y, t, state, i):
             plt.plot(y, V(y, t), color="black", linewidth=2)
         else:
             # final HO
-            print("QUENCH!")
+            # print("QUENCH!")
             plt.plot(y, V(y, t), color="black", linewidth=2)
 
         plt.plot(y, abs(psi) ** 2, label=fR"$\psi({t:.04f})$")
@@ -59,9 +59,9 @@ def plot_spatial_wavefunction(N, y, t, state, i):
         plt.legend()
         plt.xlabel("x")
         plt.ylim(-0.2, 1)
-
-        # plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-        # plt.clf()
+        plt.xlim(-15, 15)
+        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+        plt.clf()
         # plt.show()
 
     return psi
@@ -78,13 +78,14 @@ def globals():
     ω = 1
     #lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
-    l2 = 0.5 * l1
+    l2 =  2 * l1
 
-    Nx = 2048
+    Nx = 512
     P = 30
 
     x_max = 15
-    x = np.linspace(-x_max, x_max, 2048, endpoint=False) # HO
+
+    x = np.linspace(-x_max, x_max, Nx, endpoint=False) # HO
     n = x.size
     dx = x[1] - x[0]
 
@@ -94,9 +95,7 @@ def globals():
     t_final = 40
     ## Nyquist dt
     dt = 1.5 * m * dx ** 2 / (np.pi * hbar)
-
     T = 0.001
-
 
     return folder, hbar, m, ω, l1, l2, Nx, x, dx, kx, P, t_initial, t_final, dt, T
 
@@ -114,11 +113,21 @@ if __name__ == "__main__":
     # # split step time evolution of GS
     state = HO_GS
     time_steps = np.arange(t_initial, t_final, dt)
+    Ψs = []  # LIST of state vectors (list of row vectors shape like x = (2048,))
     i = 0
     for t in time_steps:
         print(t)
         if t < T:
-            state = plot_spatial_wavefunction(Nx, x, t, state, i)
+            state = evolve_and_plot_spatial_wavefunction(Nx, x, t, state, i)
+            Ψs.append(state)
         else:
-            state = plot_spatial_wavefunction(Nx, x, t, state, i)
+            state = evolve_and_plot_spatial_wavefunction(Nx, x, t, state, i)
+            Ψs.append(state)
         i += 1
+
+    Ψs = np.array(Ψs)
+    np.save("State_vectors.npy", Ψs)
+
+    Ψs = np.load("State_vectors.npy")
+
+    # print(Ψs[0])

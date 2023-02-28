@@ -14,9 +14,9 @@ plt.rcParams['figure.dpi'] = 200
 def V(x, t):
     T = 0.001
     if t < T:
-        return (1/2) * m * (((m * l1**2) / hbar) * x) ** 2
+        return (1/2) * m * ((hbar/ (m * l1**2)) * x) ** 2
     else:
-        return (1/2) * m * (((m * l2**2) / hbar) * x) ** 2
+        return (1/2) * m * ((hbar / (m * l2**2)) * x) ** 2
 
 def Schrodinger_eqn(t, Ψ):
     # Fourier derivative theorem
@@ -49,7 +49,7 @@ def variance(x, dx, Ψ):
 
 def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
     # generates simulation frame corresponding to time t (Quench occurs at t = 0)
-    PLOT_INTERVAL = 5000
+    PLOT_INTERVAL = 50
 
     waves = []
     SIGMAS_SQUARED = []
@@ -97,8 +97,8 @@ def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
         i += 1
         t += dt
 
-    np.save(f"SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    np.save(f"waves_list.npy", waves)
+    # np.save(f"SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    # np.save(f"waves_list.npy", waves)
 
 def variance_plot(time, sigmas_list):
     plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
@@ -125,10 +125,10 @@ def globals():
 
     # for test potential
     l1 = np.sqrt(hbar / (m * ω))
-    l2 = 0.5 * l1
+    l2 = 2 * l1
 
     x_max = 15
-    x = np.linspace(-x_max, x_max, 2048, endpoint=False) # HO
+    x = np.linspace(-x_max, x_max, 512, endpoint=False) # HO
     n = x.size
     dx = x[1] - x[0]
 
