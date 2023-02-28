@@ -136,3 +136,4 @@ HH_U_time_evolution/
 RK4_prob_dens_HH_HO_gs.mp4
 U_evolution_prob_dens_HH_HO_gs.mp4
 QUENCH_HO-HO_F_second_order
+matrix_HO.npy 
