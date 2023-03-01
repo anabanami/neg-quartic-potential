@@ -18,11 +18,11 @@ def gaussian_smoothing(data, pts):
     return smoothed / normalisation
 
 def restricted_V(x):
-    # gassuan smooth vertices
     pts = 5
-    V = np.zeros_like(x)
-    V[50:462] = -x[50:462] ** 4  # <<<< THIS IS WRONG ?
+    V = np.negative(np.ones_like(x) * x[100]** 4) 
+    V[100:412] = -x[100:412] ** 4
     return gaussian_smoothing(V, pts)
+
 
 # Potentials
 def V(x, t):
@@ -30,9 +30,9 @@ def V(x, t):
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
-        # return restricted_V(x)
+        return restricted_V(x)
         # return - x ** 4
-        return 0
+        # return 0
 
 
 def Schrodinger_eqn(t, Ψ):
@@ -81,7 +81,7 @@ def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
             # plt.legend()
 
             # prob. density plot
-            # plt.plot(x, V(x, t), color='k', linewidth=2)
+            plt.plot(x, V(x, t), color='k', linewidth=2)
             plt.plot(x, abs(wave ** 2))
             plt.ylabel(R"$|\psi(x,t)|^2$")
             plt.title(f"state at t = {t:04f}")
@@ -127,7 +127,7 @@ def variance_plot(time, sigmas_list):
 
 def globals():
     # makes folder for simulation frames
-    folder = Path('no potential')
+    folder = Path('RESTRICT V')
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
@@ -139,7 +139,7 @@ def globals():
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 10 # if this is 15 I need much smaller dt!
+    x_max = 15 # if this is =<15 then I need a much smaller dt!
     x = np.linspace(-x_max, x_max, 512, endpoint=False)  # HO
     n = x.size
     dx = x[1] - x[0]
@@ -156,7 +156,7 @@ def globals():
     t = 0
     t_final = 40
     # dt = even smaller???
-    dt = 0.5 * m * dx ** 2 / (np.pi * hbar)
+    dt = 0.1 * m * dx ** 2 / (np.pi * hbar)
     i = 0
     return folder, hbar, m, ω, l1, l2, x_max, x, dx, n, k, wave, t, t_final, dt, i
 

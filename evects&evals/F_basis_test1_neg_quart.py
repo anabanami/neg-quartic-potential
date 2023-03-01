@@ -34,7 +34,9 @@ def filter_sorting(evals, evects):
     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
     evals = evals[order]
     evects = evects[:, order]
-    return evals, evects # (evals.shape= (300,)) becomes (29,), (evects.shape= (300, 29) where the column v[:, i])
+    # (evals.shape= (300,))
+    # example: becomes (29,), (evects.shape= (300, 29) where the column v[:, i])
+    return evals, evects 
 
 def F_basis_vector(x, n):
     # Fourier state (exponential form)
@@ -57,8 +59,8 @@ def restricted_V(x):
 def V(x):
     # return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     # return (1 / 2) * m * ((hbar / (m * l2 ** 2)) * x) ** 2
-    return restricted_V(x)
     # return -x ** 4
+    return restricted_V(x)
 
 def Hamiltonian(x, n):
     return (-hbar ** 2 /(2 * m)) * ((1j * 2 * np.pi * n / P) ** 2) + V(x)
@@ -114,11 +116,11 @@ def plot_wavefunctions(N, x, evals, wavefunctions):
         )
     textstr = '\n'.join(
         (
-            fr'$E_0 = {evals[0]:.01f}$',
-            fr'$E_1 = {evals[1]:.01f}$',
-            fr'$E_2 = {evals[2]:.01f}$',
-            fr'$E_3 = {evals[3]:.01f}$',
-            fr'$E_4 = {evals[4]:.01f}$',
+            fr'$E_0 = {evals[0]:.06f}$',
+            fr'$E_1 = {evals[1]:.06f}$',
+            fr'$E_2 = {evals[2]:.06f}$',
+            fr'$E_3 = {evals[3]:.06f}$',
+            fr'$E_4 = {evals[4]:.06f}$',
         )
     )
     # place a text box in upper left in axes coords
@@ -136,10 +138,15 @@ def plot_wavefunctions(N, x, evals, wavefunctions):
 ################################################################
 
 def globals():
-    ## natural units according to wikipedia
+    ## Bender units
     hbar = 1
-    m = 1
-    ω = 1
+    m = 1/2
+    ω = 2
+    ## natural units according to wikipedia
+    # hbar = 1
+    # m = 1
+    # ω = 1
+
     # Harmonic oscillator length #lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
@@ -156,7 +163,7 @@ def globals():
     xs = np.linspace(-x_max/2, x_max/2, Nx)
     delta_x = xs[1] - xs[0]
 
-    ks = 2 * np.pi* np.fft.fftfreq(Nx, delta_x)
+    ks = 2 * np.pi * np.fft.fftfreq(Nx, delta_x)
 
     return hbar, m, ω, l1, l2, P, N, ND, x_max, Nx, xs, delta_x, ks
 
@@ -167,14 +174,21 @@ hbar, m, ω, l1, l2, P, N, ND, x_max, Nx, xs, delta_x, ks = globals()
 S_ns = basis_functions(xs, N)
 
 # # Make  matrix 
-# M = Matrix(N)
+M = Matrix(N)
 # # np.save("matrix_HO.npy", M)
 # # np.save("matrix_2ndHO.npy", M)
 # np.save("matrix_neg_quartic.npy", M)
+np.save("matrix_RESTRICTED_neg_quartic.npy", M)
+# np.save("matrix_BENDER_neg_quartic.npy", M)
+# np.save("matrix_RESTRICTED_BENDER_neg_quartic.npy", M)
+
 
 # M = np.load("matrix_HO.npy")
 # M = np.load("matrix_2ndHO.npy")
-M = np.load("matrix_neg_quartic.npy")
+# M = np.load("matrix_neg_quartic.npy")
+# M = np.load("matrix_BENDER_neg_quartic.npy")
+# M = np.load("matrix_RESTRICTED_neg_quartic.npy")
+# M = np.load("matrix_RESTRICTED_BENDER_neg_quartic.npy")
 
 # plt.matshow(np.real(M))
 # plt.colorbar()

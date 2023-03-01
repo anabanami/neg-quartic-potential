@@ -23,14 +23,15 @@ def restricted_V(x):
     return V
 
 
-x = np.linspace(-10, 10, 512)
+x = np.linspace(-15, 15, 512)
 
-# y = restricted_V(x)
-# plt.plot(x, y)
-# plt.show()
-
-# pts = 5
-# y = gaussian_smoothing(y, pts)
-
-plt.plot(x, -x**4)
+y = restricted_V(x)
+plt.plot(x, y)
 plt.show()
+
+pts = 5
+y = gaussian_smoothing(y, pts)
+
+plt.plot(x, y)
+plt.show()
+
