@@ -50,11 +50,17 @@ def basis_functions(x, N):
         S_ns.append(S_n)
     return np.array(S_ns) # (S_ns.shape= (300,)
 
+# def restricted_V(x):
+#     pts = 5
+#     V = np.negative(np.ones_like(x) * x[100]** 4) 
+#     V[100:412] = -x[100:412] ** 4
+#     return gaussian_smoothing(V, pts)
+
+# BENDER's Scattering paper potential
 def restricted_V(x):
-    pts = 5
-    V = np.negative(np.ones_like(x) * x[100]** 4) 
+    V = np.zeros_like(x)
     V[100:412] = -x[100:412] ** 4
-    return gaussian_smoothing(V, pts)
+    return V
 
 def V(x):
     # return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
@@ -142,6 +148,7 @@ def globals():
     hbar = 1
     m = 1/2
     ω = 2
+    
     ## natural units according to wikipedia
     # hbar = 1
     # m = 1
@@ -178,7 +185,7 @@ M = Matrix(N)
 # # np.save("matrix_HO.npy", M)
 # # np.save("matrix_2ndHO.npy", M)
 # np.save("matrix_neg_quartic.npy", M)
-np.save("matrix_RESTRICTED_neg_quartic.npy", M)
+# np.save("matrix_RESTRICTED_neg_quartic.npy", M)
 # np.save("matrix_BENDER_neg_quartic.npy", M)
 # np.save("matrix_RESTRICTED_BENDER_neg_quartic.npy", M)
 
