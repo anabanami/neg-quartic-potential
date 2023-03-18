@@ -112,6 +112,8 @@ F_SS_quench_HO-neg-quartic/
 QUENCH_HO-HO/
 HO-HO-quench/
 OG RK4/
+RK4_quench_HO-neg-quartic/
+FSS_quench_HO-neg-quartic/
 RK4 neg quart QUENCH/
 imaginary TEv HO-HO/
 imaginary TEv/
@@ -120,6 +122,6 @@ no potential/
 matrix_neg_quartic.npy
 HO-HO-quench/
 QUENCH_HO-HO/
-F_SS_quench_HO-neg-quartic/
 RESTRICT V/
 imagggg/
+comparing methods/

@@ -1,4 +1,4 @@
-# comparying RK4&F_split step
+# comparing RK4&F_split step
 # Ana Fabela 16/03/2023
 
 import os
@@ -17,33 +17,6 @@ from tqdm import tqdm
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
 
-# Calculate Spatial variance of wavefunction (Ψ) per unit time
-def variance(x, dx, Ψ):
-    f = x * abs(Ψ ** 2)
-    f_right = f[1:]  # right endpoints
-    f_left = f[:-1]  # left endpoints
-    expectation_value_x = (dx / 2) * np.sum(f_right + f_left)
-    print(f"{expectation_value_x =}")
-
-    g = (x - expectation_value_x) ** 2 * abs(Ψ ** 2)
-    g_right = g[1:]
-    g_left = g[:-1]
-
-    return dx / 2 * np.sum(g_right + g_left)
-
-
-# plot spatial variance of wavefunction (Ψ) vs time
-def variance_plot(time, sigmas_list):
-    plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
-    plt.ylabel(R"$\sigma_{x}^2$")
-    plt.title(f"Spatial variance")
-    plt.xlabel("t")
-    plt.legend()
-    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    plt.savefig("Variance_Quench.png")
-    plt.show()
-    plt.clf()
-
 
 """
 THE FOLLOWING BLOCK OF FUNCTIONS CORRESPONDS TO _F_split_step QUENCH
@@ -54,11 +27,9 @@ def F_basis_vector(x, n):
     # Fourier state (exponential form)
     return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)  # (.shape= (512,))
 
-
 # kinetic energy for F_split_step
 def K():
     return (hbar * kx) ** 2 / (2 * m)
-
 
 # Potentials for F_split_step QUENCH
 def V(x, t):
@@ -67,7 +38,6 @@ def V(x, t):
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
         return -(x ** 4)
-
 
 # Second order F_split_step
 def F_split_step2(Ψ, t, dt):
@@ -78,81 +48,41 @@ def F_split_step2(Ψ, t, dt):
     Ψ = np.exp(-1j * V(x, t) * dt * 0.5 / hbar) * Ψ
     return Ψ
 
-
-def F_split_step_Quench(N, y, t, state, i):
-    ## state vector
-    psi = F_split_step2(state, t, dt)  # np.array shape like x = (512,)
-
-    PLOT_INTERVAL = 50
-
-    if not i % PLOT_INTERVAL:
-        if t < T:
-            # initial HO
-            plt.plot(y, V(y, t), color="black", linewidth=2)
-        else:
-            # final HO
-            plt.plot(y, V(y, t), color="black", linewidth=2)
-
-        plt.plot(y, abs(psi) ** 2, label=fR"$\psi({t:.04f})$")
-        plt.ylabel(R"$|\psi(x, t)|^2$")
-        # plt.plot(y, np.real(psi), label=fR"Re($\psi$)")
-        # plt.plot(y, np.imag(psi), label=fR"Im($\psi$)")
-        # plt.ylabel(R"$\psi(t)$")
-
-        plt.legend()
-        plt.xlabel("x")
-        plt.ylim(-1, 1)
-        # plt.xlim(-15, 15)
-        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-        plt.clf()
-        # plt.show()
-    return psi
-
 def FSS():# # split step time evolution of GS
-    state = HO_GS
+    state = wave
     time_steps = np.arange(t_initial, t_final, dt)
     Ψs = []  # LIST of state vectors (list of row vectors shape like x = (512,))
     SIGMAS_SQUARED = []  # spatial variance
     i = 0
-    for t in time_steps:
-        print(t)
-        if t < T:
-            state = F_split_step_Quench(Nx, x, t, state, i)
+    for time in time_steps:
+        print(f"t = {time}")
+        if time < T:
+            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
             sigma_x_squared = variance(x, dx, state)
             Ψs.append(state)
         else:
-            state = F_split_step_Quench(Nx, x, t, state, i)
+            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
             sigma_x_squared = variance(x, dx, state)
             Ψs.append(state)
 
         SIGMAS_SQUARED.append(sigma_x_squared)
         i += 1
 
-    # Ψs = np.array(Ψs)
-    # np.save("State_vectors.npy", Ψs)
+    Ψs = np.array(Ψs)
+    np.save("F_states.npy", Ψs)
 
     SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    np.save(f"SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    Ψs = np.load("State_vectors.npy")
-    # print(Ψs[0])
+    np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    Ψs = np.load("F_states.npy")
+
 
 """ END """
 
+######################################################################
 
 """
 THE FOLLOWING BLOCK OF FUNCTIONS CORRESPONDS TO RK4 QUENCH
 """
-
-# Potential energy. Changes at t = T.
-def V(x, t):
-    T = 0.001
-    if t < T:
-        return (
-            (1 / 2) * m * ω ** 2 * x ** 2
-        )  # <<<< CHECK THIS LINE VS WHAT IS IN F_split_step
-    else:
-        return -(x ** 4)
-
 
 # Schrodinger equation
 def Schrodinger_eqn(t, Ψ):
@@ -160,7 +90,6 @@ def Schrodinger_eqn(t, Ψ):
     KΨ = -(hbar ** 2) / (2 * m) * ifft(-(kx ** 2) * fft(Ψ))
     VΨ = V(x, t) * Ψ
     return (-1j / hbar) * (KΨ + VΨ)
-
 
 # TEv: Runga - Kutta 4 on Schrodinger equation
 def Schrodinger_RK4(t, dt, Ψ):
@@ -170,71 +99,127 @@ def Schrodinger_RK4(t, dt, Ψ):
     k4 = Schrodinger_eqn(t + dt, Ψ + k3 * dt)
     return Ψ + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
+def RK4():# RK4 time evolution of HO GS
+    state = wave
+    time_steps = np.arange(t_initial, t_final, dt)
+    Ψs = []  # LIST of state vectors (list of row vectors shape like x = (1024,))
+    SIGMAS_SQUARED = []  # spatial variance
+    i = 0
+    for time in time_steps:
+        print(f"t = {time}")
+        if time < T:
+            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
+            sigma_x_squared = variance(x, dx, state)
+            Ψs.append(state)
+        else:
+            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
+            sigma_x_squared = variance(x, dx, state)
+            Ψs.append(state)
 
-def RK4_Quench(t, t_final, i, x, wave, x_max, dx, folder):
-    """generates simulation frame corresponding to time t (Quench occurs at t = T). 
-    The function only plots the state every 50 frames of sim."""
-    PLOT_INTERVAL = 50
-
-    waves = []
-    SIGMAS_SQUARED = []
-    while t < t_final:
-        # print(i)
-        if not i % PLOT_INTERVAL:
-
-            waves.append(wave)
-
-            # # raw plot
-            # plt.plot(x, np.real(wave), label="real part")
-            # plt.plot(x, np.imag(wave), label="imaginary part")
-            # plt.ylabel(R"$\psi(x,t)$")
-            # plt.title(f"state at t = {t:04f}")
-            # plt.legend()
-
-            # prob. density plot
-            plt.plot(x, abs(wave ** 2))
-            plt.ylabel(R"$|\psi(x,t)|^2$")
-            plt.title(f"state at t = {t:04f}")
-
-            # # phase plot
-            # plt.plot(x, np.angle(wave))
-            # plt.ylabel(R"$\theta(x)$")
-            # plt.title(f"state's phase at t = {t:04f}")
-
-            plt.xlabel("x")
-            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-            plt.clf()
-
-            # spatial variance
-            sigma_x_squared = variance(x, dx, wave)
-            SIGMAS_SQUARED.append(sigma_x_squared)
-            print(f"variance = {sigma_x_squared}\n")
-
-            h = abs(wave ** 2)
-            h_right = h[1:]
-            h_left = h[:-1]
-            print(f"wave normalisation: {dx / 2 * np.sum(h_right + h_left)}")
-
-        wave = Schrodinger_RK4(t, dt, wave)
+        SIGMAS_SQUARED.append(sigma_x_squared)
         i += 1
-        t += dt
 
-    np.save("SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    np.save("waves_list.npy", waves)
+    Ψs = np.array(Ψs)
+    np.save("RK4_states.npy", Ψs)
 
+    SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    Ψs = np.load("RK4_states.npy")
 """ END """
 
 
+######################################################################
+
+# Calculate Spatial variance of wavefunction (Ψ) per unit time
+def variance(x, dx, Ψ):
+    f = x * abs(Ψ ** 2)
+    f_right = f[1:]  # right endpoints
+    f_left = f[:-1]  # left endpoints
+    expectation_value_x = (dx / 2) * np.sum(f_right + f_left)
+
+    g = (x - expectation_value_x) ** 2 * abs(Ψ ** 2)
+    g_right = g[1:]
+    g_left = g[:-1]
+
+    return dx / 2 * np.sum(g_right + g_left)
+
+# plot spatial variance of wavefunction (Ψ) vs time
+def variance_plot(t, sigmas_list):
+    plt.plot(t, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
+    plt.ylabel(R"$\sigma_{x}^2$")
+    plt.title(f"Spatial variance")
+    plt.xlabel("t")
+    plt.legend()
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    plt.savefig("Variance_Quench.png")
+    plt.show()
+    plt.clf()
 
 
+def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
+    """generates simulation frame corresponding to time t (Quench occurs at t = T). 
+    The function only plots the state every 50 frames of sim."""
+
+    PLOT_INTERVAL = 500
+
+    states = []
+    SIGMAS_SQUARED = []
+
+    if method == "FSS":
+        ## state vector
+        state = F_split_step2(state, t, dt)  # np.array shape like x = (1024,)
+
+        if not i % PLOT_INTERVAL:
+            if t < T:
+                # initial HO
+                plt.plot(y, V(y, t), color="black", linewidth=2)
+            else:
+                # final HO
+                plt.plot(y, V(y, t), color="black", linewidth=2)
+
+            plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
+            plt.ylabel(R"$|\psi(x, t)|^2$")
+            plt.legend()
+            plt.xlabel("x")
+            plt.ylim(-1, 1)
+            # plt.xlim(-15, 15)
+            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+            plt.clf()
+            # plt.show()
+        return state
+
+
+    if method == "RK4":
+        # state vector
+        state = Schrodinger_RK4(t, dt, state) # np.array shape like x = (1024,)
+
+        if not i % PLOT_INTERVAL:
+            if t < T:
+                states.append(state)
+                plt.plot(y, V(y, t), color="black", linewidth=2)
+            else:
+                plt.plot(y, V(y, t), color="black", linewidth=2)
+
+            # prob. density plot
+            plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
+            plt.ylabel(R"$|\psi(x, t)|^2$")
+            plt.title(f"state at t = {t:04f}")
+            plt.xlabel("x")
+            plt.legend()
+            plt.ylim(-1, 1)
+            # plt.xlim(-15, 15)
+            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+            plt.clf()
+            # plt.show()
+        return state
 
 
 def globals(method):
     # makes folder for simulation frames
-    if method=="RK4"
-        folder = Path('OG RK4')
-    elif method=="FSS"       ###########################################REFORMULATE THIS
-        folder = Path('F_SS_quench_HO-neg-quartic')
+    if method=="RK4":
+        folder = Path('RK4_quench_HO-neg-quartic')
+    elif method=="FSS":
+        folder = Path('FSS_quench_HO-neg-quartic')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -247,13 +232,11 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    Nx = 512 # RK4 is 1024
+    Nx = 1024
     P = 30
 
-    x_max = 15 # RK4 is 15
-
+    x_max = 15
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
-    n = x.size
     dx = x[1] - x[0]
 
     # for Fourier space
@@ -261,9 +244,9 @@ def globals(method):
 
     # time dimension
     t_initial = 0
-    t_final = 40
+    t_final = 10
     ## Nyquist dt
-    dt = 0.5 * m * dx ** 2 / (np.pi * hbar) # RK4 is m * dx ** 2 / (np.pi * hbar)
+    dt = 0.2 * m * dx ** 2 / (np.pi * hbar)
     # quench time
     T = 0.001
 
@@ -275,7 +258,7 @@ def globals(method):
     wave = np.array(wave, dtype=complex)
 
     i = 0
-    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, n, kx, P, t_initial, t_final, t, dt, T, HO_GS, wave, i
+    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i
 
 
 
@@ -284,24 +267,57 @@ def globals(method):
 if __name__ == "__main__":
     """FUNCTION CALLS"""
 
-    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, n, kx, P, t_initial, t_final, t, dt, T, HO_GS, wave, i = globals(method="FSS")
+    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
+
     # FSS()
 
-    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, n, kx, P, t_initial, t_final, t, dt, T, HO_GS, wave, i = globals(method="RK4")
-    # RK4_Quench(t, t_final, i, x, wave, x_max, delta_x, folder)
+    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
+    # time = np.linspace(t_initial, t_final, len(F_sigmas_list))
 
+    # variance_plot(time, F_sigmas_list)
 
-    sigmas_squared_list = np.load("SIGMAS_SQUARED.npy")
-    sigmas_list = np.sqrt(sigmas_squared_list)
+    # #######################################################################
 
-    time = np.linspace(t, t_final, len(sigmas_list))
+    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
 
-    plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
-    plt.ylabel(R"$\sigma_{x}^2$")
-    plt.title(f"Spatial variance")
+    # RK4()
+
+    # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
+    # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
+    # time = np.linspace(t_initial, t_final, len(RK4_sigmas_list))
+
+    # variance_plot(time, RK4_sigmas_list)
+
+    ##########################################################################
+
+    F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
+    F_sigmas_list = np.sqrt(F_sigmas_squared_list)
+    RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
+
+    time = np.linspace(0, 10, len(F_sigmas_list))
+
+    # plt.plot(time, F_sigmas_list, label=R"FSS: $\sigma_{x}$")
+    # plt.title(f"Spatial variance Fourier Split Step ")
+
+    # plt.plot(time, RK4_sigmas_list, label=R"RK4: $\sigma_{x}$")
+    # plt.title(f"Spatial variance Runge-Kutta 4 ")
+
+    # plt.ylabel(R"$\sigma_{x}$")
+    # plt.xlabel("t")
+    # plt.legend()
+    # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    # plt.savefig("VARIANCE_COMPARISON.png")
+    # plt.show()
+
+    variance_diff = F_sigmas_list - RK4_sigmas_list
+
+    plt.plot(time, variance_diff, label=R"Difference between $\sigma_{x}$")
+    plt.ylabel(R"$\sigma_{x}$")
+    plt.title(f"Spatial variance difference between methods")
     plt.xlabel("t")
     plt.legend()
     plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    plt.savefig("OG_RK4_Variance_Quench.png")
+    plt.savefig("VARIANCE_Difference.png")
     plt.show()
-    plt.clf()
