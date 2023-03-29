@@ -22,11 +22,6 @@ np.set_printoptions(linewidth=200)
 THE FOLLOWING BLOCK OF FUNCTIONS CORRESPONDS TO _F_split_step QUENCH
 """
 
-# BASIS STATES (FOURIER -- EXPONENTIAL FORM)
-def F_basis_vector(x, n):
-    # Fourier state (exponential form)
-    return (1 / np.sqrt(P)) * np.exp(1j * 2 * np.pi * n * x / P)  # (.shape= (512,))
-
 # kinetic energy for F_split_step
 def K():
     return (hbar * kx) ** 2 / (2 * m)
@@ -232,12 +227,11 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    Nx = 1024
-    P = 30
-
     x_max = 15
+    dx = 0.029
+    Nx = int(2 * x_max / dx)
+
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
-    dx = x[1] - x[0]
 
     # for Fourier space
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
@@ -246,7 +240,7 @@ def globals(method):
     t_initial = 0
     t_final = 10
     ## Nyquist dt
-    dt = 0.2 * m * dx ** 2 / (np.pi * hbar)
+    dt = 0.4 * m * dx ** 2 / (np.pi * hbar)
     # quench time
     T = 0.001
 
@@ -258,18 +252,17 @@ def globals(method):
     wave = np.array(wave, dtype=complex)
 
     i = 0
-    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i
-
-
-
+    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i
 
 
 if __name__ == "__main__":
     """FUNCTION CALLS"""
 
-    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
+    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
 
     # FSS()
+    # print(f"\n{Nx = }")
+
 
     # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
     # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
@@ -279,9 +272,11 @@ if __name__ == "__main__":
 
     # #######################################################################
 
-    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, P, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
+    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
 
-    # RK4()
+    RK4()
+    print(f"\n{Nx = }")
+
 
     # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
     # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
@@ -291,12 +286,12 @@ if __name__ == "__main__":
 
     ##########################################################################
 
-    F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
-    RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
-    F_sigmas_list = np.sqrt(F_sigmas_squared_list)
-    RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
+    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
+    # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
+    # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
 
-    time = np.linspace(0, 10, len(F_sigmas_list))
+    # time = np.linspace(0, 10, len(F_sigmas_list))
 
     # plt.plot(time, F_sigmas_list, label=R"FSS: $\sigma_{x}$")
     # plt.title(f"Spatial variance Fourier Split Step ")
@@ -311,13 +306,13 @@ if __name__ == "__main__":
     # plt.savefig("VARIANCE_COMPARISON.png")
     # plt.show()
 
-    variance_diff = F_sigmas_list - RK4_sigmas_list
+    # variance_diff = F_sigmas_list - RK4_sigmas_list
 
-    plt.plot(time, variance_diff, label=R"Difference between $\sigma_{x}$")
-    plt.ylabel(R"$\sigma_{x}$")
-    plt.title(f"Spatial variance difference between methods")
-    plt.xlabel("t")
-    plt.legend()
-    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    plt.savefig("VARIANCE_Difference.png")
-    plt.show()
+    # plt.plot(time, variance_diff, label=R"Difference between $\sigma_{x}$")
+    # plt.ylabel(R"$\sigma_{x}$")
+    # plt.title(f"Spatial variance difference between methods")
+    # plt.xlabel("t")
+    # plt.legend()
+    # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    # plt.savefig("VARIANCE_Difference.png")
+    # plt.show()
