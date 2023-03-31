@@ -60,7 +60,7 @@ def FSS():# # split step time evolution of GS
     # np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
 
     states = np.array(states)
-    np.save(f"states_{method}.npy", states)
+    np.save(f"states_FSS.npy", states)
 
 
 """ END """
@@ -107,7 +107,7 @@ def RK4():# RK4 time evolution of HO GS
     # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
     
     states = np.array(states)
-    np.save(f"states_{method}.npy", states)
+    np.save(f"states_RK4.npy", states)
 
 """ END """
 
@@ -218,7 +218,7 @@ def globals(method):
     l2 = 2 * l1
 
     x_max = 16
-    dx = 0.01
+    dx = 0.005
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
