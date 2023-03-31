@@ -7,12 +7,8 @@ import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft, fftfreq
-from scipy import linalg
-from scipy.linalg import expm
 import scipy.special as sc
-from scipy.integrate import quad
 from matplotlib.ticker import FormatStrFormatter
-from tqdm import tqdm
 
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
@@ -46,29 +42,25 @@ def F_split_step2(Ψ, t, dt):
 def FSS():# # split step time evolution of GS
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
-    # Ψs = []  # LIST of state vectors (list of row vectors shape like x = (512,))
     SIGMAS_SQUARED = []  # spatial variance
     i = 0
     for time in time_steps:
         print(f"t = {time}")
         if time < T:
-            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
+            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
             sigma_x_squared = variance(x, dx, state)
-            # Ψs.append(state)
         else:
-            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
+            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
             sigma_x_squared = variance(x, dx, state)
-            # Ψs.append(state)
 
         SIGMAS_SQUARED.append(sigma_x_squared)
         i += 1
 
-    # Ψs = np.array(Ψs)
-    # np.save("F_states.npy", Ψs)
+    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    # np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
 
-    SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    # Ψs = np.load("F_states.npy")
+    states = np.array(states)
+    np.save(f"states_{method}.npy", states)
 
 
 """ END """
@@ -97,29 +89,26 @@ def Schrodinger_RK4(t, dt, Ψ):
 def RK4():# RK4 time evolution of HO GS
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
-    # Ψs = []  # LIST of state vectors (list of row vectors shape like x = (1024,))
     SIGMAS_SQUARED = []  # spatial variance
     i = 0
     for time in time_steps:
         print(f"t = {time}")
         if time < T:
-            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
+            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
             sigma_x_squared = variance(x, dx, state)
-            # Ψs.append(state)
         else:
-            state = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
+            state, states  = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
             sigma_x_squared = variance(x, dx, state)
-            # Ψs.append(state)
 
         SIGMAS_SQUARED.append(sigma_x_squared)
         i += 1
 
-    # Ψs = np.array(Ψs)
-    # np.save("RK4_states.npy", Ψs)
+    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    
+    states = np.array(states)
+    np.save(f"states_{method}.npy", states)
 
-    SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    # Ψs = np.load("RK4_states.npy")
 """ END """
 
 
@@ -155,14 +144,14 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     """generates simulation frame corresponding to time t (Quench occurs at t = T). 
     The function only plots the state every 500 frames of sim."""
 
-    PLOT_INTERVAL = 500
-
+    PLOT_INTERVAL = 1000
     states = []
     SIGMAS_SQUARED = []
 
     if method == "FSS":
         ## state vector
-        state = F_split_step2(state, t, dt)  # np.array shape like x = (1024,)
+        state = F_split_step2(state, t, dt)  # np.array shape like x = (Nx,)
+        states.append(state)
 
         if not i % PLOT_INTERVAL:
             if t < T:
@@ -177,16 +166,17 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
             plt.legend()
             plt.xlabel("x")
             plt.ylim(-1, 1)
-            plt.xlim(-11, 11)
+            # plt.xlim(-15, 15)
             plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-            plt.clf()
             # plt.show()
-        return state
+            plt.clf()
+        return state, states
 
 
     if method == "RK4":
         # state vector
-        state = Schrodinger_RK4(t, dt, state) # np.array shape like x = (1024,)
+        state = Schrodinger_RK4(t, dt, state) # np.array shape like x = (Nx,)
+        states.append(state)
 
         if not i % PLOT_INTERVAL:
             if t < T:
@@ -202,11 +192,11 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
             plt.xlabel("x")
             plt.legend()
             plt.ylim(-1, 1)
-            plt.xlim(-15, 15)
+            # plt.xlim(-15, 15)
             plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
             # plt.show()
             plt.clf()
-        return state
+        return state, states
 
 
 def globals(method):
@@ -227,8 +217,8 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 11
-    dx = RK4 
+    x_max = 16
+    dx = 0.01
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -238,7 +228,7 @@ def globals(method):
 
     # time dimension
     t_initial = 0
-    t_final = 10
+    t_final = 5
     ## Nyquist dt
     dt = 0.4 * m * dx ** 2 / (np.pi * hbar)
     # quench time
