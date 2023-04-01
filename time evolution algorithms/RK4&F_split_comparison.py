@@ -24,7 +24,6 @@ def K():
 
 # Potentials for F_split_step QUENCH
 def V(x, t):
-    T = 0.001
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
@@ -38,29 +37,6 @@ def F_split_step2(Ψ, t, dt):
     Ψ = ifft(np.exp(-1j * K() * dt / hbar) * fft(Ψ))
     Ψ = np.exp(-1j * V(x, t) * dt * 0.5 / hbar) * Ψ
     return Ψ
-
-def FSS():# # split step time evolution of GS
-    state = wave
-    time_steps = np.arange(t_initial, t_final, dt)
-    SIGMAS_SQUARED = []  # spatial variance
-    i = 0
-    for time in time_steps:
-        print(f"t = {time}")
-        if time < T:
-            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
-            sigma_x_squared = variance(x, dx, state)
-        else:
-            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "FSS", Nx)
-            sigma_x_squared = variance(x, dx, state)
-
-        SIGMAS_SQUARED.append(sigma_x_squared)
-        i += 1
-
-    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    # np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-
-    states = np.array(states)
-    np.save(f"states_FSS.npy", states)
 
 
 """ END """
@@ -86,30 +62,8 @@ def Schrodinger_RK4(t, dt, Ψ):
     k4 = Schrodinger_eqn(t + dt, Ψ + k3 * dt)
     return Ψ + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
-def RK4():# RK4 time evolution of HO GS
-    state = wave
-    time_steps = np.arange(t_initial, t_final, dt)
-    SIGMAS_SQUARED = []  # spatial variance
-    i = 0
-    for time in time_steps:
-        print(f"t = {time}")
-        if time < T:
-            state, states = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
-            sigma_x_squared = variance(x, dx, state)
-        else:
-            state, states  = Quench(time, t_final, i, x, state, x_max, dx, folder, "RK4", Nx)
-            sigma_x_squared = variance(x, dx, state)
-
-        SIGMAS_SQUARED.append(sigma_x_squared)
-        i += 1
-
-    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    
-    states = np.array(states)
-    np.save(f"states_RK4.npy", states)
-
 """ END """
+
 
 
 ######################################################################
@@ -145,58 +99,54 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     The function only plots the state every 500 frames of sim."""
 
     PLOT_INTERVAL = 1000
-    states = []
-    SIGMAS_SQUARED = []
 
     if method == "FSS":
         ## state vector
         state = F_split_step2(state, t, dt)  # np.array shape like x = (Nx,)
-        states.append(state)
 
-        if not i % PLOT_INTERVAL:
-            if t < T:
-                # initial HO
-                plt.plot(y, V(y, t), color="black", linewidth=2)
-            else:
-                # final HO
-                plt.plot(y, V(y, t), color="black", linewidth=2)
-
-            plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
-            plt.ylabel(R"$|\psi(x, t)|^2$")
-            plt.legend()
-            plt.xlabel("x")
-            plt.ylim(-1, 1)
-            # plt.xlim(-15, 15)
-            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-            # plt.show()
-            plt.clf()
-        return state, states
-
-
-    if method == "RK4":
+    elif method == "RK4":
         # state vector
         state = Schrodinger_RK4(t, dt, state) # np.array shape like x = (Nx,)
-        states.append(state)
 
-        if not i % PLOT_INTERVAL:
-            if t < T:
-                states.append(state)
-                plt.plot(y, V(y, t), color="black", linewidth=2)
-            else:
-                plt.plot(y, V(y, t), color="black", linewidth=2)
+    if not i % PLOT_INTERVAL:
+        if t < T:
+            plt.plot(y, V(y, t), color="black", linewidth=2)
+        else:
+            plt.plot(y, V(y, t), color="black", linewidth=2)    
 
-            # prob. density plot
-            plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
-            plt.ylabel(R"$|\psi(x, t)|^2$")
-            plt.title(f"state at t = {t:04f}")
-            plt.xlabel("x")
-            plt.legend()
-            plt.ylim(-1, 1)
-            # plt.xlim(-15, 15)
-            plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-            # plt.show()
-            plt.clf()
-        return state, states
+        # prob. density plot
+        plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
+        plt.ylabel(R"$|\psi(x, t)|^2$")
+        plt.title(f"state at t = {t:04f}")
+        plt.xlabel("x")
+        plt.legend()
+        plt.ylim(-1, 1)
+        # plt.xlim(-15, 15)
+        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+        # plt.show()
+        plt.clf()
+    return state
+
+
+def evolve(method="RK4", label=""):# RK4 time evolution of HO GS
+    state = wave
+    time_steps = np.arange(t_initial, t_final, dt)
+    SIGMAS_SQUARED = []  # spatial variance
+    i = 0
+    for time in time_steps:
+        print(f"t = {time}")
+        state = Quench(time, t_final, i, x, state, x_max, dx, folder, method, Nx)
+        sigma_x_squared = variance(x, dx, state)
+
+        if i == len(time_steps)//2:
+            np.save(f"state_{method}_{label}", state)
+
+        SIGMAS_SQUARED.append(sigma_x_squared)
+        i += 1
+
+    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+
 
 
 def globals(method):
@@ -248,23 +198,9 @@ def globals(method):
 if __name__ == "__main__":
     """FUNCTION CALLS"""
 
-    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
-
-    # FSS()
-    # print(f"\n{Nx = }")
-
-
-    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
-    # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
-    # time = np.linspace(t_initial, t_final, len(F_sigmas_list))
-
-    # variance_plot(time, F_sigmas_list)
-
-    # #######################################################################
-
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
 
-    RK4()
+    evolve(method="RK4", label=f"{dx=}")
     print(f"\n{Nx = }")
 
 
