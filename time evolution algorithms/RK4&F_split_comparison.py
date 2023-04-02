@@ -1,5 +1,5 @@
 # comparing RK4&F_split step
-# Ana Fabela 16/03/2023
+# Ana Fabela 31/03/2023
 
 import os
 from pathlib import Path
@@ -64,8 +64,6 @@ def Schrodinger_RK4(t, dt, Ψ):
 
 """ END """
 
-
-
 ######################################################################
 
 # Calculate Spatial variance of wavefunction (Ψ) per unit time
@@ -128,7 +126,7 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     return state
 
 
-def evolve(method="RK4", label=""):# RK4 time evolution of HO GS
+def evolve(method="RK4", label=""):#  time evolution
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
     SIGMAS_SQUARED = []  # spatial variance
@@ -168,7 +166,7 @@ def globals(method):
     l2 = 2 * l1
 
     x_max = 16
-    dx = 0.005
+    dx = 0.010
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -179,8 +177,9 @@ def globals(method):
     # time dimension
     t_initial = 0
     t_final = 5
-    ## Nyquist dt
-    dt = 0.4 * m * dx ** 2 / (np.pi * hbar)
+    dt =  5 * m * (0.005) ** 2 / (np.pi * hbar)
+
+
     # quench time
     T = 0.001
 
@@ -198,17 +197,14 @@ def globals(method):
 if __name__ == "__main__":
     """FUNCTION CALLS"""
 
+    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
+    # evolve(method="FSS", label=f"{dx=}")
+    evolve(method="FSS", label=f"{dt=}")
+
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
+    # evolve(method="RK4", label=f"{dx=}")
+    evolve(method="RK4", label=f"{dt=}")
 
-    evolve(method="RK4", label=f"{dx=}")
-    print(f"\n{Nx = }")
-
-
-    # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
-    # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
-    # time = np.linspace(t_initial, t_final, len(RK4_sigmas_list))
-
-    # variance_plot(time, RK4_sigmas_list)
 
     ##########################################################################
 
