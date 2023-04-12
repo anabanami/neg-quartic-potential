@@ -28,6 +28,9 @@ def V(x, t):
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
         return -(x ** 4)
+        ## testing an inverted HO for refocusing (we full expect dissipation)
+        # return -(x ** 2)
+
 
 # Second order F_split_step
 def F_split_step2(Ψ, t, dt):
@@ -94,9 +97,7 @@ def variance_plot(t, sigmas_list):
 
 def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     """generates simulation frame corresponding to time t (Quench occurs at t = T). 
-    The function only plots the state every 500 frames of sim."""
-
-    PLOT_INTERVAL = 1000
+    The function only plots the state every PLOT_INTERVAL."""
 
     if method == "FSS":
         ## state vector
@@ -105,6 +106,8 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     elif method == "RK4":
         # state vector
         state = Schrodinger_RK4(t, dt, state) # np.array shape like x = (Nx,)
+
+    PLOT_INTERVAL = 1000
 
     if not i % PLOT_INTERVAL:
         if t < T:
@@ -119,14 +122,14 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
         plt.xlabel("x")
         plt.legend()
         plt.ylim(-1, 1)
-        # plt.xlim(-15, 15)
+        plt.xlim(-20, 20)
         plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
         # plt.show()
         plt.clf()
     return state
 
 
-def evolve(method="RK4", label=""):#  time evolution
+def evolve(method="FSS", label=""):#  time evolution
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
     SIGMAS_SQUARED = []  # spatial variance
@@ -136,14 +139,17 @@ def evolve(method="RK4", label=""):#  time evolution
         state = Quench(time, t_final, i, x, state, x_max, dx, folder, method, Nx)
         sigma_x_squared = variance(x, dx, state)
 
-        if i == len(time_steps)//2:
-            np.save(f"state_{method}_{label}", state)
+        if i == 3 * len(time_steps)//4:
+            np.save(f"state_{method}_{time}_{x_max=}", state)
 
         SIGMAS_SQUARED.append(sigma_x_squared)
         i += 1
 
-    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    if method == "FSS":
+        np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    else:
+        np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
 
 
 
@@ -165,7 +171,7 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 16
+    x_max = 50
     dx = 0.010
     Nx = int(2 * x_max / dx)
 
@@ -199,16 +205,18 @@ if __name__ == "__main__":
 
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
     # evolve(method="FSS", label=f"{dx=}")
-    evolve(method="FSS", label=f"{dt=}")
+    # evolve(method="FSS", label=f"{dt=}")
+    evolve(method="FSS", label="")
 
-    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
-    # evolve(method="RK4", label=f"{dx=}")
-    evolve(method="RK4", label=f"{dt=}")
+
+    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
+    # # evolve(method="RK4", label=f"{dx=}")
+    # evolve(method="RK4", label=f"{dt=}")
 
 
     ##########################################################################
 
-    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
     # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
     # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
     # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
