@@ -29,9 +29,9 @@ def V(x, t):
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
-        # return -(x ** 4)
-        ## testing an inverted HO for refocusing (we full expect dissipation)
-        return -(x ** 2)
+        return -(x ** 4)
+        # ## testing an inverted HO for refocusing (we full expect dissipation)
+        # return -(x ** 2)
 
 
 # Second order FSS_step
@@ -117,7 +117,7 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 39
+    x_max = 50
     dx = 0.010
     Nx = int(2 * x_max / dx)
 
@@ -151,9 +151,9 @@ if __name__ == "__main__":
     # evolve(method="FSS", label=f"{dt=}")
 
     time_range = np.arange(t_initial, t_final, dt)
-    i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
+    # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
 
-    # i_rand = 
+    i_rand = 116877
 
     evolve(method="FSS", label="")
 

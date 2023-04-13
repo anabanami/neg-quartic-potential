@@ -106,8 +106,7 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
-# Pyre type checker
-.pyre/
+
 F_SS_quench_HO-neg-quartic/
 QUENCH_HO-HO/
 HO-HO-quench/
@@ -124,8 +123,9 @@ HO-HO-quench/
 QUENCH_HO-HO/
 RESTRICT V/
 imagggg/
-comparing methods/
 states/
+old/
+tests_robustness/
 
 complex_integration.py
 
