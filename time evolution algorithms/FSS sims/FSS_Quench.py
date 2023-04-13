@@ -29,9 +29,10 @@ def V(x, t):
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
-        return -(x ** 4)
-        # ## testing an inverted HO for refocusing (we full expect dissipation)
+        # ## testing an inverted HO for refocusing (we expect full dissipation)
         # return -(x ** 2)
+        return - α * (x ** 4)
+        # return - β * (x ** 8)
 
 
 # Second order FSS_step
@@ -104,7 +105,9 @@ def evolve(method="FSS", label=""):#  time evolution
 def globals(method):
     # makes folder for simulation frames
     if method=="FSS":
-        folder = Path('FSS_quench_HO-neg-quartic')
+        # folder = Path('FSS_quench_HO-neg_HO')
+        folder = Path('FSS_quench_HO-neg_quartic')
+        # folder = Path('FSS_quench_HO-neg_octic')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -117,7 +120,7 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 50
+    x_max = 30
     dx = 0.010
     Nx = int(2 * x_max / dx)
 
@@ -140,20 +143,22 @@ def globals(method):
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
 
     i = 0
-    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i
+
+    α = 1 
+    β = 1
+
+    return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β
 
 
 if __name__ == "__main__":
     """FUNCTION CALLS"""
 
-    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i = globals(method="FSS")
-    # evolve(method="FSS", label=f"{dx=}")
-    # evolve(method="FSS", label=f"{dt=}")
+    folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β = globals(method="FSS")
 
     time_range = np.arange(t_initial, t_final, dt)
-    # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
+    i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
 
-    i_rand = 116877
+    # i_rand = 116877
 
     evolve(method="FSS", label="")
 
