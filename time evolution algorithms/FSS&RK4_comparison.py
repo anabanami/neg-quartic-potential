@@ -4,11 +4,13 @@
 import os
 from pathlib import Path
 import numpy as np
+import random
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft, fftfreq
 import scipy.special as sc
 from matplotlib.ticker import FormatStrFormatter
+
 
 plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
@@ -132,24 +134,24 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
 def evolve(method="FSS", label=""):#  time evolution
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
-    SIGMAS_SQUARED = []  # spatial variance
+    # SIGMAS_SQUARED = []  # spatial variance
     i = 0
     for time in time_steps:
         print(f"t = {time}")
         state = Quench(time, t_final, i, x, state, x_max, dx, folder, method, Nx)
-        sigma_x_squared = variance(x, dx, state)
+        # sigma_x_squared = variance(x, dx, state)
 
-        if i == 3 * len(time_steps)//4:
+        if i == i_rand:
             np.save(f"state_{method}_{time}_{x_max=}", state)
-
-        SIGMAS_SQUARED.append(sigma_x_squared)
+        
         i += 1
+        # SIGMAS_SQUARED.append(sigma_x_squared)
 
-    SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    if method == "FSS":
-        np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    else:
-        np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
+    # if method == "FSS":
+        # np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    # else:
+        # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
 
 
 
@@ -171,7 +173,7 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 50
+    x_max = 20
     dx = 0.010
     Nx = int(2 * x_max / dx)
 
@@ -206,17 +208,20 @@ if __name__ == "__main__":
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="FSS")
     # evolve(method="FSS", label=f"{dx=}")
     # evolve(method="FSS", label=f"{dt=}")
+
+    time_range = np.arange(t_initial, t_final, dt)
+    i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
+
+    # i_rand = 
+
     evolve(method="FSS", label="")
 
-
-    # folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, HO_GS, wave, i = globals(method="RK4")
-    # # evolve(method="RK4", label=f"{dx=}")
-    # evolve(method="RK4", label=f"{dt=}")
-
+    print(f"\n{i_rand = }")
+    print(f"{time_range[i_rand] = }")
 
     ##########################################################################
 
-    F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
     # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
     # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
     # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
