@@ -1,4 +1,4 @@
-# comparing RK4&FSS step
+# comparing FSS
 # Ana Fabela 13/04/2023
 
 import os
