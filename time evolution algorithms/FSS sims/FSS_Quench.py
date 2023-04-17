@@ -1,4 +1,4 @@
-# comparing FSS
+# FSS
 # Ana Fabela 13/04/2023
 
 import os
@@ -45,17 +45,14 @@ def FSS_2(Ψ, t, dt):
     return Ψ
 
 
-
-######################################################################
-
 def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     """generates simulation frame corresponding to time t (Quench occurs at t = T). 
     The function only plots the state every PLOT_INTERVAL."""
-
     if method == "FSS":
         ## state vector
         state = FSS_2(state, t, dt)  # np.array shape like x = (Nx,)
 
+    # def plot_evolution(y, t, state):
     PLOT_INTERVAL = 1000
 
     if not i % PLOT_INTERVAL:
@@ -78,28 +75,23 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     return state
 
 
+
 def evolve(method="FSS", label=""):#  time evolution
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
-    # SIGMAS_SQUARED = []  # spatial variance
     i = 0
     for time in time_steps:
         print(f"t = {time}")
+
         state = Quench(time, t_final, i, x, state, x_max, dx, folder, method, Nx)
-        # sigma_x_squared = variance(x, dx, state)
+
+        ## reformat this
+        # plot_evolution(x, time, state) # plot state
 
         if i == i_rand:
-            np.save(f"state_{method}_{time}_{x_max}", state)
+            np.save(f"state_{method}_{time}_{α=}", state)
         
         i += 1
-        # SIGMAS_SQUARED.append(sigma_x_squared)
-
-    # SIGMAS_SQUARED = np.array(SIGMAS_SQUARED)
-    # if method == "FSS":
-        # np.save(f"FSS_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-    # else:
-        # np.save(f"RK4_SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
-
 
 
 def globals(method):
@@ -120,8 +112,8 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 30
-    dx = 0.010
+    x_max = 25
+    dx = 0.007
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -144,7 +136,7 @@ def globals(method):
 
     i = 0
 
-    α = 1 
+    α = 3.82
     β = 1
 
     return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β
@@ -156,9 +148,9 @@ if __name__ == "__main__":
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β = globals(method="FSS")
 
     time_range = np.arange(t_initial, t_final, dt)
-    i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
+    # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
 
-    # i_rand = 116877
+    i_rand = 114000
 
     evolve(method="FSS", label="")
 

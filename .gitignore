@@ -1,17 +1,21 @@
-HO-HO-quench/
+states/
+
+FSS_quench_HO-negHO/
+FSS_quench_HO-neg_quartic/
+FSS_quench_HO-neg_octic/
+alpha=3.82_quench_HO-neg_quartic/
+
 OG RK4/
-RK4_quench_HO-neg-quartic/
-FSS_quench_HO-neg-quartic/
 no potential/
 HO-HO-quench/
 RESTRICT V/
+RK4_quench_HO-neg-quartic/
+
 imagggg/
-states/
 old/
 tests_robustness/
-
 complex_integration.py
-FSS_quench_HO-negHO
+
 
 # reformulate this later
 GPE/
