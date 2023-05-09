@@ -1,6 +1,11 @@
 states/
+betas/
+alphas/
+neg_x4_potential.nb
+restricted_V_test.py
+variance/
 
-FSS_quench_HO-negHO/
+HO-neg_HO/
 FSS_quench_HO-neg_quartic/
 FSS_quench_HO-neg_octic/
 alpha=3.82_quench_HO-neg_quartic/
@@ -16,6 +21,10 @@ old/
 tests_robustness/
 complex_integration.py
 
+x=35/
+x=45/
+x=65/
+restricted_V_α=4/
 
 # reformulate this later
 GPE/

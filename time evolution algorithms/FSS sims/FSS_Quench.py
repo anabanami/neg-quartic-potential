@@ -1,5 +1,5 @@
 # FSS
-# Ana Fabela 13/04/2023
+# Ana Fabela 02/05/2023
 
 import os
 from pathlib import Path
@@ -8,6 +8,7 @@ import random
 import matplotlib
 import matplotlib.pyplot as plt
 from scipy.fft import fft, ifft, fftfreq
+from scipy.signal import convolve 
 import scipy.special as sc
 from matplotlib.ticker import FormatStrFormatter
 
@@ -16,26 +17,73 @@ plt.rcParams['figure.dpi'] = 200
 np.set_printoptions(linewidth=200)
 
 
-"""
-THE FOLLOWING BLOCK OF FUNCTIONS CORRESPONDS TO _FSS_step QUENCH
-"""
+###############################################################################
+def x_variance(x, dx, Ψ):
+# Calculate Spatial variance of wavefunction (Ψ) per unit time
+    f = x * abs(Ψ ** 2)
+    f_right = f[1:]  # right endpoints
+    f_left = f[:-1]  # left endpoints
+    expectation_value_x = (dx / 2) * np.sum(f_right + f_left)
 
-# kinetic energy for FSS_step
+    g = (x - expectation_value_x) ** 2 * abs(Ψ ** 2)
+    g_right = g[1:]
+    g_left = g[:-1]
+    return dx / 2 * np.sum(g_right + g_left)
+
+###############################################################################
+
+def gaussian_smoothing(data, pts): 
+    """gaussian smooth an array by given number of points""" 
+    x = np.arange(-4 * pts, 4 * pts + 1, 1) 
+    kernel = np.exp(-(x ** 2) / (2 * pts ** 2)) 
+    smoothed = convolve(data, kernel, mode='same') 
+    normalisation = convolve(np.ones_like(data), kernel, mode='same') 
+    return smoothed / normalisation 
+
+
+def smooth_restricted_V(x): 
+    V = np.ones_like(x) * x[1500]** 4
+    V[1500:8500] = x[1500:8500] ** 4 
+    ## smoooth by pts=3
+    V = gaussian_smoothing(V, 3) 
+    return V 
+
+
 def K():
     return (hbar * kx) ** 2 / (2 * m)
 
-# Potentials for FSS_step QUENCH
+
 def V(x, t):
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
         # ## testing an inverted HO for refocusing (we expect full dissipation)
         # return -(x ** 2)
-        return - α * (x ** 4)
+        # return - α * (x ** 4)
         # return - β * (x ** 8)
+        return - α * smooth_restricted_V(x)
 
 
-# Second order FSS_step
+def plot_evolution_frame(y, t, i, state):
+    PLOT_INTERVAL = 1000
+    if not i % PLOT_INTERVAL:
+        if t < T:
+            plt.plot(y, V(y, t), color="black", linewidth=2)
+        else:
+            plt.plot(y, V(y, t), color="black", linewidth=2)    
+
+        # prob. density plot
+        plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
+        plt.ylabel(R"$|\psi(x, t)|^2$")
+        plt.title(f"state at t = {t:04f}")
+        plt.xlabel("x")
+        plt.legend()
+        plt.ylim(-1, 1)
+        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
+        # plt.show()
+        plt.clf()
+
+
 def FSS_2(Ψ, t, dt):
     """Evolve Ψ in time from t-> t+dt using a single step
     of the second order Fourier Split step method with time step dt"""
@@ -51,55 +99,44 @@ def Quench(t, t_final, i, y, state, y_max, dy, folder, method, N):
     if method == "FSS":
         ## state vector
         state = FSS_2(state, t, dt)  # np.array shape like x = (Nx,)
-
-    # def plot_evolution(y, t, state):
-    PLOT_INTERVAL = 1000
-
-    if not i % PLOT_INTERVAL:
-        if t < T:
-            plt.plot(y, V(y, t), color="black", linewidth=2)
-        else:
-            plt.plot(y, V(y, t), color="black", linewidth=2)    
-
-        # prob. density plot
-        plt.plot(y, abs(state) ** 2, label=fR"$\psi({t:.04f})$")
-        plt.ylabel(R"$|\psi(x, t)|^2$")
-        plt.title(f"state at t = {t:04f}")
-        plt.xlabel("x")
-        plt.legend()
-        plt.ylim(-1, 1)
-        plt.xlim(-20, 20)
-        plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
-        # plt.show()
-        plt.clf()
     return state
-
 
 
 def evolve(method="FSS", label=""):#  time evolution
     state = wave
     time_steps = np.arange(t_initial, t_final, dt)
+
+    SIGMAS_x_SQUARED = []  # spatial variance
+
     i = 0
+
     for time in time_steps:
         print(f"t = {time}")
-
         state = Quench(time, t_final, i, x, state, x_max, dx, folder, method, Nx)
+        plot_evolution_frame(x, time, i, state)
 
-        ## reformat this
-        # plot_evolution(x, time, state) # plot state
+        sigma_x_squared = x_variance(x, dx, state)
+        SIGMAS_x_SQUARED.append(sigma_x_squared)
 
-        if i == i_rand:
-            np.save(f"state_{method}_{time}_{α=}", state)
+        # if i == i_rand:
+            # np.save(f"state_{method}_{time}_{α=}", state)
         
         i += 1
+    SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
+    np.save(f"FSS_SIGMAS_x_SQUARED_{α=}.npy", SIGMAS_x_SQUARED)
 
 
 def globals(method):
+    α = 4
+    β = 1
+
     # makes folder for simulation frames
     if method=="FSS":
         # folder = Path('FSS_quench_HO-neg_HO')
-        folder = Path('FSS_quench_HO-neg_quartic')
-        # folder = Path('FSS_quench_HO-neg_octic')
+        # folder = Path(f'{α=}')
+        # folder = Path(f'{β=}')
+        folder = Path(f'restricted_V_{α=}')
+
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -112,7 +149,7 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 25
+    x_max = 35
     dx = 0.007
     Nx = int(2 * x_max / dx)
 
@@ -126,18 +163,13 @@ def globals(method):
     t_final = 5
     dt =  5 * m * (0.005) ** 2 / (np.pi * hbar)
 
-
     # quench time
     T = 0.001
 
-    # initial conditions
-    # HO ground state For FSS
+    # initial conditions: HO ground state For FSS
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
 
     i = 0
-
-    α = 3.82
-    β = 1
 
     return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β
 
@@ -148,8 +180,8 @@ if __name__ == "__main__":
     folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β = globals(method="FSS")
 
     time_range = np.arange(t_initial, t_final, dt)
-    # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
 
+    # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
     i_rand = 114000
 
     evolve(method="FSS", label="")
