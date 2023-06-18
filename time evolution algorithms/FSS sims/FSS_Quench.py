@@ -42,8 +42,8 @@ def gaussian_smoothing(data, pts):
 
 
 def smooth_restricted_V(x): 
-    V = np.ones_like(x) * x[1500]** 4
-    V[1500:8500] = x[1500:8500] ** 4 
+    V = np.ones_like(x) * x[250]** 4
+    V[250:Nx-250] = x[250:Nx-250] ** 4 
     ## smoooth by pts=3
     V = gaussian_smoothing(V, 3) 
     return V 
@@ -57,8 +57,8 @@ def V(x, t):
     if t < T:
         return (1 / 2) * m * ((hbar / (m * l1 ** 2)) * x) ** 2
     else:
-        # ## testing an inverted HO for refocusing (we expect full dissipation)
-        # return -(x ** 2)
+        # return np.zeros_like(x)
+        # return -(x ** 2) # testing an inverted HO for refocusing (we expect full dissipation)
         # return - α * (x ** 4)
         # return - β * (x ** 8)
         return - α * smooth_restricted_V(x)
@@ -79,6 +79,7 @@ def plot_evolution_frame(y, t, i, state):
         plt.xlabel("x")
         plt.legend()
         plt.ylim(-1, 1)
+        plt.xlim(-20, 20)
         plt.savefig(f"{folder}/{i // PLOT_INTERVAL:06d}.png")
         # plt.show()
         plt.clf()
@@ -119,11 +120,13 @@ def evolve(method="FSS", label=""):#  time evolution
         SIGMAS_x_SQUARED.append(sigma_x_squared)
 
         # if i == i_rand:
-            # np.save(f"state_{method}_{time}_{α=}", state)
+            # np.save(f"state_{method}_{time}_{α=}_{dx=}", state)
         
         i += 1
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"FSS_SIGMAS_x_SQUARED_{α=}.npy", SIGMAS_x_SQUARED)
+    # np.save(f"FSS_SIGMAS_x_SQUARED_no_potential_{dx=}.npy", SIGMAS_x_SQUARED)
+    np.save(f"FSS_SIGMAS_x_SQUARED_{α=}_{dx=}.npy", SIGMAS_x_SQUARED)
+
 
 
 def globals(method):
@@ -132,10 +135,12 @@ def globals(method):
 
     # makes folder for simulation frames
     if method=="FSS":
+        # folder = Path('FSS_no_potential')
         # folder = Path('FSS_quench_HO-neg_HO')
         # folder = Path(f'{α=}')
         # folder = Path(f'{β=}')
-        folder = Path(f'restricted_V_{α=}')
+        # folder = Path(f'restricted_V_{α=}')
+        folder = Path(f'test2')
 
 
     os.makedirs(folder, exist_ok=True)
@@ -149,8 +154,8 @@ def globals(method):
     l1 = np.sqrt(hbar / (m * ω))
     l2 = 2 * l1
 
-    x_max = 35
-    dx = 0.007
+    x_max = 45
+    dx = 0.001
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -160,15 +165,15 @@ def globals(method):
 
     # time dimension
     t_initial = 0
-    t_final = 5
-    dt =  5 * m * (0.005) ** 2 / (np.pi * hbar)
+    t_final = 2
+    dt = 5 * m * (dx) ** 2 / (np.pi * hbar) #### this was not updating when I changed dx
 
     # quench time
     T = 0.001
 
     # initial conditions: HO ground state For FSS
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
-
+    # print(f"{np.sum(abs(wave)**2)*dx = }") #normalised???
     i = 0
 
     return folder, hbar, m, ω, l1, l2, Nx, x_max, x, dx, kx, t_initial, t_final, dt, T, wave, i, α, β
@@ -182,11 +187,30 @@ if __name__ == "__main__":
     time_range = np.arange(t_initial, t_final, dt)
 
     # i_rand = int(np.floor(random.uniform(1,  len(time_range)))) - 1
-    i_rand = 114000
+    # i_rand = 16209 # t_final = 2
+    # i_rand = 114000 # t_final = 5
 
     evolve(method="FSS", label="")
 
-    print(f"\n{i_rand = }")
-    print(f"{time_range[i_rand] = }")
+    print(f"\n{x_max = }")
+    # # x_cut1
+    # print(f"x_cut_left = {x[2900]= }")
+    # print(f"x_cut_right = {x[Nx-2900]= }")
+
+    # # x_cut2
+    # print(f"x_cut_left = {x[1500]= }")
+    # print(f"x_cut_right = {x[Nx-1500]= }")
+
+    # x_cut3
+    # print(f"x_cut_left = {x[250]= }")
+    # print(f"x_cut_right = {x[Nx-250]= }")
+
+    ####
+
+    print(f"x_cut_left = {x[250]= }")
+    print(f"x_cut_right = {x[Nx-250]= }")
+    print(f"{dx=}")
+  
+
 
     ##########################################################################

@@ -9,6 +9,7 @@ HO-neg_HO/
 FSS_quench_HO-neg_quartic/
 FSS_quench_HO-neg_octic/
 alpha=3.82_quench_HO-neg_quartic/
+FSS_no_potential/
 
 OG RK4/
 no potential/
@@ -25,6 +26,8 @@ x=35/
 x=45/
 x=65/
 restricted_V_α=4/
+test/
+test2/
 
 # reformulate this later
 GPE/

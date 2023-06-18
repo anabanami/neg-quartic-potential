@@ -174,7 +174,7 @@ def globals(method):
     l2 = 2 * l1
 
     x_max = 20
-    dx = 0.010
+    dx = 0.01
     Nx = int(2 * x_max / dx)
 
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -184,7 +184,7 @@ def globals(method):
 
     # time dimension
     t_initial = 0
-    t_final = 5
+    t_final = 2
     dt =  5 * m * (0.005) ** 2 / (np.pi * hbar)
 
 
@@ -221,33 +221,33 @@ if __name__ == "__main__":
 
     ##########################################################################
 
-    # F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
-    # RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
-    # F_sigmas_list = np.sqrt(F_sigmas_squared_list)
-    # RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
+    F_sigmas_squared_list = np.load("FSS_SIGMAS_SQUARED.npy")
+    RK4_sigmas_squared_list = np.load("RK4_SIGMAS_SQUARED.npy")
+    F_sigmas_list = np.sqrt(F_sigmas_squared_list)
+    RK4_sigmas_list = np.sqrt(RK4_sigmas_squared_list)
 
-    # time = np.linspace(0, 10, len(F_sigmas_list))
+    time = np.linspace(0, 10, len(F_sigmas_list))
 
-    # plt.plot(time, F_sigmas_list, label=R"FSS: $\sigma_{x}$")
-    # plt.title(f"Spatial variance Fourier Split Step ")
+    plt.plot(time, F_sigmas_list, label=R"FSS: $\sigma_{x}$")
+    plt.title(f"Spatial variance Fourier Split Step ")
 
-    # plt.plot(time, RK4_sigmas_list, label=R"RK4: $\sigma_{x}$")
-    # plt.title(f"Spatial variance Runge-Kutta 4 ")
+    plt.plot(time, RK4_sigmas_list, label=R"RK4: $\sigma_{x}$")
+    plt.title(f"Spatial variance Runge-Kutta 4 ")
 
-    # plt.ylabel(R"$\sigma_{x}$")
-    # plt.xlabel("t")
-    # plt.legend()
-    # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    # plt.savefig("VARIANCE_COMPARISON.png")
-    # plt.show()
+    plt.ylabel(R"$\sigma_{x}$")
+    plt.xlabel("t")
+    plt.legend()
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    plt.savefig("VARIANCE_COMPARISON.png")
+    plt.show()
 
-    # variance_diff = F_sigmas_list - RK4_sigmas_list
+    variance_diff = F_sigmas_list - RK4_sigmas_list
 
-    # plt.plot(time, variance_diff, label=R"Difference between $\sigma_{x}$")
-    # plt.ylabel(R"$\sigma_{x}$")
-    # plt.title(f"Spatial variance difference between methods")
-    # plt.xlabel("t")
-    # plt.legend()
-    # plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    # plt.savefig("VARIANCE_Difference.png")
-    # plt.show()
+    plt.plot(time, variance_diff, label=R"Difference between $\sigma_{x}$")
+    plt.ylabel(R"$\sigma_{x}$")
+    plt.title(f"Spatial variance difference between methods")
+    plt.xlabel("t")
+    plt.legend()
+    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
+    plt.savefig("VARIANCE_Difference.png")
+    plt.show()
