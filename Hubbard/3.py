@@ -24,7 +24,7 @@ def Bose_Hubbard_Hamiltonian(n_sites, t, U, ω, α):
 hbar = 1
 m = 1
 ω = 1
-α = 0.01  # coefficient for quartic potential
+α = 4  # coefficient for quartic potential
 
 n_sites = 50
 t = 1

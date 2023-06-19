@@ -42,8 +42,8 @@ def gaussian_smoothing(data, pts):
 
 
 def smooth_restricted_V(x): 
-    V = np.ones_like(x) * x[250]** 4
-    V[250:Nx-250] = x[250:Nx-250] ** 4 
+    V = np.ones_like(x) * x[2900]** 4
+    V[2900:Nx-2900] = x[2900:Nx-2900] ** 4 
     ## smoooth by pts=3
     V = gaussian_smoothing(V, 3) 
     return V 
@@ -60,12 +60,13 @@ def V(x, t):
         # return np.zeros_like(x)
         # return -(x ** 2) # testing an inverted HO for refocusing (we expect full dissipation)
         # return - α * (x ** 4)
-        # return - β * (x ** 8)
         return - α * smooth_restricted_V(x)
 
 
 def plot_evolution_frame(y, t, i, state):
-    PLOT_INTERVAL = 1000
+
+    PLOT_INTERVAL = 10000
+
     if not i % PLOT_INTERVAL:
         if t < T:
             plt.plot(y, V(y, t), color="black", linewidth=2)
@@ -124,7 +125,6 @@ def evolve(method="FSS", label=""):#  time evolution
         
         i += 1
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    # np.save(f"FSS_SIGMAS_x_SQUARED_no_potential_{dx=}.npy", SIGMAS_x_SQUARED)
     np.save(f"FSS_SIGMAS_x_SQUARED_{α=}_{dx=}.npy", SIGMAS_x_SQUARED)
 
 
@@ -137,10 +137,8 @@ def globals(method):
     if method=="FSS":
         # folder = Path('FSS_no_potential')
         # folder = Path('FSS_quench_HO-neg_HO')
-        # folder = Path(f'{α=}')
-        # folder = Path(f'{β=}')
         # folder = Path(f'restricted_V_{α=}')
-        folder = Path(f'test2')
+        folder = Path(f'test')
 
 
     os.makedirs(folder, exist_ok=True)
@@ -155,9 +153,16 @@ def globals(method):
     l2 = 2 * l1
 
     x_max = 45
-    dx = 0.001
-    Nx = int(2 * x_max / dx)
+    x_cut = 24.7
+    abs_V_min = abs(- α * x_cut ** 4)
 
+    # de Broigle wavelength & grid spacing
+    λ = 1 / (np.sqrt(2 * abs_V_min)) 
+    dx = λ / 2
+
+    dt = (1/4) * m * dx ** 2 / (np.pi * hbar)  #???
+
+    Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     # for Fourier space
@@ -166,7 +171,6 @@ def globals(method):
     # time dimension
     t_initial = 0
     t_final = 2
-    dt = 5 * m * (dx) ** 2 / (np.pi * hbar) #### this was not updating when I changed dx
 
     # quench time
     T = 0.001
@@ -193,24 +197,8 @@ if __name__ == "__main__":
     evolve(method="FSS", label="")
 
     print(f"\n{x_max = }")
-    # # x_cut1
-    # print(f"x_cut_left = {x[2900]= }")
-    # print(f"x_cut_right = {x[Nx-2900]= }")
-
-    # # x_cut2
-    # print(f"x_cut_left = {x[1500]= }")
-    # print(f"x_cut_right = {x[Nx-1500]= }")
-
-    # x_cut3
-    # print(f"x_cut_left = {x[250]= }")
-    # print(f"x_cut_right = {x[Nx-250]= }")
-
-    ####
-
-    print(f"x_cut_left = {x[250]= }")
-    print(f"x_cut_right = {x[Nx-250]= }")
-    print(f"{dx=}")
-  
-
+    # x_cut1
+    print(f"x_cut_left = {x[2900]= }")
+    print(f"x_cut_right = {x[Nx-2900]= }")
 
     ##########################################################################

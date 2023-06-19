@@ -14,7 +14,7 @@ def Hubbard_Hamiltonian_Harmonic(n_sites, t, U, ω):
         H[(i+1)%n_sites, i] = -t
 
         # On-site interaction term with harmonic oscillator potential
-        H[i, i] = U + 0.5 * ω **2 * (i - n_sites//2)**2  # assuming the potential is centred in the middle of the lattice
+        H[i, i] = U + 0.5 * m * ω**2 * (i - n_sites//2)**2  # assuming the potential is centred in the middle of the lattice
 
     return H
 
