@@ -9,16 +9,15 @@ def Hubbard_Hamiltonian_neg_quartic(n_sites, t, U, ω):
     H = np.zeros((n_sites, n_sites))
 
     # Define the hopping and interaction terms
-    for i in range(n_sites-1):
+    # PERIODIC BCS
+    for i in range(n_sites):
         # Hopping terms
-        H[i, i+1] = -t
-        H[i+1, i] = -t
+        H[i, (i+1)%n_sites] = -t
+        H[(i+1)%n_sites, i] = -t
 
         # On-site interaction term with negative quartic potential
         H[i, i] = U - (i - n_sites//2)**4 
 
-    # open BCS
-    H[-1, -1] = U - ((n_sites-1) - n_sites//2)**4
     return H
 
 
@@ -26,10 +25,6 @@ def Hubbard_Hamiltonian_neg_quartic(n_sites, t, U, ω):
 hbar = 1
 m = 1
 ω = 1
-# # lengths for HO quench
-# l1 = np.sqrt(hbar / (m * ω))
-# l2 = 2 * l1
-
 
 n_sites = 50
 t = 1
@@ -46,8 +41,6 @@ plt.title('Hubbard Hamiltonian')
 plt.xlabel('Site index')
 plt.ylabel('Site index')
 plt.show()
-
-
 
 # Calculate absolute values and add a small constant to avoid log(0)
 H_abs = np.abs(H) + 1e-9

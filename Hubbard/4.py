@@ -34,7 +34,7 @@ def V(x):
 
 
 def plot_evolution_frame(y, states):
-    i=0
+    i = 0
     for state in states:
         # potential
         plt.plot(y, V(y), color="black", linewidth=2)
@@ -44,8 +44,8 @@ def plot_evolution_frame(y, states):
         plt.ylabel(R"$|\psi(x, t)|^2$")
         plt.xlabel("x")
         # plt.legend()
-        plt.ylim(-1, 1)
-        plt.xlim(-20, 20)
+        plt.ylim(-1.5, 4)
+        plt.xlim(-5, 5)
         plt.savefig(f"{folder}/{i}.png")
         # plt.show()
         plt.clf()
@@ -56,24 +56,15 @@ def Bose_Hubbard_Hamiltonian():
     # Initialize the Hamiltonian as a zero matrix
     H = np.zeros((n_sites, n_sites))
 
-    for i in range(n_sites - 1):
+    # Define the hopping and interaction terms
+    # PERIODIC BCS
+    for i in range(n_sites):
         # Hopping terms
-        H[i, i + 1] = -t
-        H[i + 1, i] = -t
+        H[i, (i + 1) % n_sites] = -t
+        H[(i + 1) % n_sites, i] = -t
 
-        # On-site interaction. quartic potential
-        H[i, i] = (
-            0.5 * U * n_i * (n_i - 1)
-            - α * x[i] ** 4
-        )
-
-    # # open BCS
-    # H[-1, -1] = (
-    #     U * ((n_sites - 1) ** 2)
-    #     - α * ((n_sites - 1 - n_sites // 2) ** 4)
-    # )
-
-    np.save(f"{n_sites}x{n_sites}_BHH.npy", H)
+        # On-site interaction term with negative quartic potential
+        H[i, i] = 0.5 * U * n_i * (n_i - 1) - α * x[i] ** 4 <<<<< I THINK THAT THIS IS WRONG! THE LATTICE SITES ARE SET AS NEG QUARTIC POTENTIALS NOT OVERALL LATTICE>
 
     return H
 
@@ -84,11 +75,13 @@ def Unitary(M):
 
 
 def TEV(wave):
+
     H = Bose_Hubbard_Hamiltonian()
     U = Unitary(H)
+    # U = np.load(f"{n_sites}x{n_sites}_BHH.npy")
 
     WAVES = []
-    for step in range(1000):
+    for step in range(2000):
         wave = U @ wave  ### wave NEEDS TO MATCH DIMENSIONALITY OF unitary
         WAVES.append(wave)
     return WAVES
@@ -111,24 +104,27 @@ def globals():
     # coefficient for quartic potential
     α = 4
 
-    n_sites = 500
-    n_i = 2 # Lets think better what kind of initial conditions because it will depend on the number of particles in each site THINK READ 
+    # CHOOSING THESEEEEEEE IS TRICKY
+    n_sites = 5000
+    n_i = 2
     t = 1
     U = 1
 
-    dx = 0.1
+    dx = 0.01
     x_max = 25
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     # time dimension
-    dt = 0.01
+    dt = 0.1
     t_initial = 0
-    t_final = 2
+    t_final = 4
 
     # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2)) # project into HM basis
-    # print(f"{np.sum(abs(wave)**2)*dx = }") #normalised???
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(
+        -(x ** 2) / (2 * l1 ** 2)
+    )  # project into HM basis
+    print(f"\n{np.sum(abs(wave)**2)*dx = }")  # is IC normalised???
 
     return (
         folder,
@@ -177,4 +173,5 @@ if __name__ == "__main__":
     ) = globals()
 
     states = TEV(wave)
+
     plot_evolution_frame(x, states)
