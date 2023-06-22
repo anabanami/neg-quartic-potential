@@ -1,5 +1,5 @@
 # Time evolution using Hubbard Hamiltonian with unitary operator
-# Ana Fabela 19/06/2023
+# Ana Fabela 22/06/2023
 
 import os
 from pathlib import Path
@@ -7,8 +7,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
 
-plt.rcParams['figure.dpi'] = 200
 
+#######################################################################################################
 
 def gaussian_smoothing(data, pts):
     """gaussian smooth an array by given number of points"""
@@ -23,13 +23,13 @@ def smooth_restricted_V(x):
     V = np.ones_like(x) * x[2900] ** 4
     V[2900 : Nx - 2900] = x[2900 : Nx - 2900] ** 4
     ## smoooth by pts=3
-    V = gaussian_smoothing(V, 3)
+    V = gaussian_smoothing(V, 3) # ??? make sure pts make sense
     return V
 
 
 def V(x):
     # return np.zeros_like(x)
-    return -α * (x ** 4)
+    return - α * (x ** 4)
     # return - α * smooth_restricted_V(x)
 
 
@@ -51,20 +51,24 @@ def plot_evolution_frame(y, states):
         plt.clf()
         i += 1
 
+#######################################################################################################
 
 def Bose_Hubbard_Hamiltonian():
     # Initialize the Hamiltonian as a zero matrix
-    H = np.zeros((n_sites, n_sites))
+    H = np.zeros((N_sites, N_sites))
 
     # Define the hopping and interaction terms
     # PERIODIC BCS
-    for i in range(n_sites):
+    for i in range(N_sites):
         # Hopping terms
-        H[i, (i + 1) % n_sites] = -t
-        H[(i + 1) % n_sites, i] = -t
+        H[i, (i + 1) % N_sites] = -t
+        H[(i + 1) % N_sites, i] = -t
+
+        # # On-site no potential.
+        # H[i, i] = 0
 
         # On-site interaction term with negative quartic potential
-        H[i, i] = 0.5 * U * n_i * (n_i - 1) - α * x[i] ** 4 <<<<< I THINK THAT THIS IS WRONG! THE LATTICE SITES ARE SET AS NEG QUARTIC POTENTIALS NOT OVERALL LATTICE>
+        H[i, i] =  - α * x[i] ** 4
 
     return H
 
@@ -87,9 +91,10 @@ def TEV(wave):
     return WAVES
 
 
+
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'TEV_unitary_Hubbard')
+    folder = Path(f'Hubbard_Unitary')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -104,19 +109,17 @@ def globals():
     # coefficient for quartic potential
     α = 4
 
-    # CHOOSING THESEEEEEEE IS TRICKY
-    n_sites = 5000
-    n_i = 2
-    t = 1
-    U = 1
+    N_sites = 1024
+    t = 1 # Need to find dis
+    U = 0
 
-    dx = 0.01
-    x_max = 25
+    dx = 0.05
+    x_max = 25.6 
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     # time dimension
-    dt = 0.1
+    dt = 1
     t_initial = 0
     t_final = 2
 
@@ -133,10 +136,8 @@ def globals():
         ω,
         l1,
         α,
-        n_sites,
-        n_i,
+        N_sites,
         t,
-        U,
         x_max,
         dx,
         Nx,
@@ -158,10 +159,8 @@ if __name__ == "__main__":
         ω,
         l1,
         α,
-        n_sites,
-        n_i,
+        N_sites,
         t,
-        U,
         x_max,
         dx,
         Nx,
@@ -173,5 +172,4 @@ if __name__ == "__main__":
     ) = globals()
 
     states = TEV(wave)
-
     plot_evolution_frame(x, states)

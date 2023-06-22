@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 
-def Hubbard_Hamiltonian_Harmonic(n_sites, t, U, ω):
+def Hubbard_Hamiltonian_Harmonic(n_sites, t, ω):
     # Initialize the Hamiltonian as a zero matrix
     H = np.zeros((n_sites, n_sites))
 
@@ -14,7 +14,7 @@ def Hubbard_Hamiltonian_Harmonic(n_sites, t, U, ω):
         H[(i+1)%n_sites, i] = -t
 
         # On-site interaction term with harmonic oscillator potential
-        H[i, i] = U + 0.5 * m * ω**2 * (i - n_sites//2)**2
+        H[i, i] = 0.5 * m * ω**2 * (i - n_sites//2)**2
 
     return H
 
@@ -30,11 +30,10 @@ l2 = 2 * l1
 
 n_sites = 50
 t = 1
-U = 10
 
 
 # Generate the Hamiltonian
-H = Hubbard_Hamiltonian_Harmonic(n_sites, t, U, ω)
+H = Hubbard_Hamiltonian_Harmonic(n_sites, t, ω)
 
 # Plot the Hamiltonian as a heat map
 plt.imshow(H, cmap='hot', interpolation='nearest')
