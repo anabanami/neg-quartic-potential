@@ -6,20 +6,41 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
+from scipy.signal import convolve 
 
 plt.rcParams['figure.dpi'] = 200
 
 #######################################################################################################
 
+
+def gaussian_smoothing(data, pts):
+    """gaussian smooth an array by given number of points"""
+    x = np.arange(-4 * pts, 4 * pts + 1, 1)
+    kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
+    smoothed = convolve(data, kernel, mode='same')
+    normalisation = convolve(np.ones_like(data), kernel, mode='same')
+    return smoothed / normalisation
+
+
+def smooth_restricted_V(x):
+    V = np.ones_like(x) * x[cut] ** 4
+    V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
+    ## smoooth by pts=3
+    V = gaussian_smoothing(V, 3)  # ??? make sure pts make sense
+    return V
+
+
 def V(x):
     # return np.zeros_like(x)
-    return - α * (x ** 4)
+    # return - α * (x ** 4)
+    return - α * smooth_restricted_V(x)
+
 
 def plot_evolution_frame(y, states):
     i = 0
     for state in states:
         # potential
-        # plt.plot(y, V(y), color="black", linewidth=2)
+        plt.plot(y, V(y), color="black", linewidth=2)
 
         # prob. density plot
         plt.plot(y, abs(state) ** 2)
@@ -33,11 +54,17 @@ def plot_evolution_frame(y, states):
         plt.clf()
         i += 1
 
+
 #######################################################################################################
+
 
 def Bose_Hubbard_Hamiltonian():
     # Initialize the Hamiltonian as a zero matrix
+    
     H = np.zeros((N_sites, N_sites))
+
+    #lattice potential
+    Vx = smooth_restricted_V(x)
 
     # Define the hopping and interaction terms
     # PERIODIC BCS
@@ -50,7 +77,8 @@ def Bose_Hubbard_Hamiltonian():
         # H[i, i] = 0
 
         # On-site interaction term with negative quartic potential
-        H[i, i] =  - α * x[i] ** 4
+
+        H[i, i] = - α * Vx[i] ** 4
 
     return H
 
@@ -73,7 +101,6 @@ def TEV(wave):
     return WAVES
 
 
-
 def globals():
     # makes folder for simulation frames
     folder = Path(f'Hubbard_Unitary')
@@ -92,12 +119,14 @@ def globals():
     α = 4
 
     N_sites = 1024
-    t = 1 # Need to find dis
+    t = 1  # Need to find dis
     U = 0
 
+    cut = 255
     dx = 0.01
     x_max = 5.12
     Nx = int(2 * x_max / dx)
+    # print(f"{Nx=}")
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     # time dimension
@@ -106,9 +135,7 @@ def globals():
     t_final = 2
 
     # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(
-        -(x ** 2) / (2 * l1 ** 2)
-)
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     print(f"\n{np.sum(abs(wave)**2)*dx = }")  # is IC normalised???
 
     return (
@@ -120,6 +147,7 @@ def globals():
         α,
         N_sites,
         t,
+        cut,
         x_max,
         dx,
         Nx,
@@ -143,6 +171,7 @@ if __name__ == "__main__":
         α,
         N_sites,
         t,
+        cut,
         x_max,
         dx,
         Nx,

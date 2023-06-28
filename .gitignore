@@ -2,7 +2,6 @@ states/
 betas/
 alphas/
 neg_x4_potential.nb
-restricted_V_test.py
 variance/
 
 HO-neg_HO/
@@ -33,6 +32,8 @@ comparing variance for dx/
 TEV_unitary_Hubbard/
 working on 4.py/
 working on 5.py/
+working on 6.py/
+working on 7.py/
 
 
 
