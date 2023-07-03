@@ -10,11 +10,11 @@ def Hubbard_Hamiltonian_Harmonic(n_sites, t, ω):
     # PERIODIC BCS
     for i in range(n_sites):
         # Hopping term
-        H[i, (i+1)%n_sites] = -t
-        H[(i+1)%n_sites, i] = -t
+        H[i, (i + 1) % n_sites] = -t
+        H[(i + 1) % n_sites, i] = -t
 
         # On-site interaction term with harmonic oscillator potential
-        H[i, i] = 0.5 * m * ω**2 * (i - n_sites//2)**2
+        H[i, i] = 0.5 * m * ω ** 2 * (i - n_sites // 2) ** 2
 
     return H
 
@@ -42,7 +42,6 @@ plt.title('Hubbard Hamiltonian')
 plt.xlabel('Site index')
 plt.ylabel('Site index')
 plt.show()
-5
 
 # Calculate absolute values and add a small constant to avoid log(0)
 H_abs = np.abs(H) + 1e-9
