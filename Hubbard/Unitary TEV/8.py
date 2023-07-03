@@ -124,7 +124,7 @@ def TEV(x, wave):
         i += 1
 
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"FSS_Hubbard_variance.npy", SIGMAS_x_SQUARED)
+    np.save(f"8._variance.npy", SIGMAS_x_SQUARED)
 
 
 

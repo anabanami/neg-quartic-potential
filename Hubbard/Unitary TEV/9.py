@@ -1,4 +1,5 @@
 # Time evolution using Hubbard Hamiltonian with unitary operator
+# HDF5 protocol
 # Ana Fabela 22/06/2023
 
 import os
@@ -7,6 +8,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
 from scipy.signal import convolve
+import h5py
 
 
 plt.rcParams['figure.dpi'] = 200
@@ -52,6 +54,7 @@ def plot_evolution_frame(y, state, time, i):
     # plt.show()
     plt.clf()
 
+
 ###############################################################################
 def x_variance(x, dx, Ψ):
     # Calculate Spatial variance of wavefunction (Ψ) per unit time
@@ -96,22 +99,30 @@ def Unitary(M):
 
 
 def TEV(x, wave):
+    # Create a new HDF5 file
+    file = h5py.File('Hubbard_Unitary.hdf5', 'w')
+
     # time evolution
     H = Bose_Hubbard_Hamiltonian()
     U = Unitary(H)
 
     state = wave
-    time_steps = np.arange(t_initial, t_final, dt)
+    timesteps = np.arange(t_initial, t_final, dt)
 
     # spatial variance
     SIGMAS_x_SQUARED = []
 
     states = []
     times = []
-    for time in time_steps:
+    for n, time in enumerate(timesteps):
         times.append(time)
         state = U @ state
         states.append(state)
+        # create a new dataset for each frame
+        dset = file.create_dataset(f"timestep_{n}", data=state)
+
+    # Close the hdf5 file
+    file.close()
 
     i = 0
     PLOT_INTERVAL = 12
@@ -124,8 +135,7 @@ def TEV(x, wave):
         i += 1
 
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"FSS_Hubbard_variance.npy", SIGMAS_x_SQUARED)
-
+    np.save(f"9._variance.npy", SIGMAS_x_SQUARED)
 
 
 def plot_matrices():
@@ -186,8 +196,10 @@ def globals():
     t_initial = 0
     t_final = 1
 
+    ## initial conditions: HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,
@@ -233,7 +245,9 @@ if __name__ == "__main__":
         wave,
     ) = globals()
 
-    plot_matrices()
+
+
+    # plot_matrices()
 
     TEV(x, wave)
 
@@ -247,3 +261,16 @@ if __name__ == "__main__":
 
     print(f"\n{dx = }")
     print(f"{dt = }")
+
+
+    """USING A STATE of the unitary hubbard simulation is easy given that its stored as 
+    a separate dataset within the HDF5."""
+
+    # file = h5py.File('Hubbard_Unitary.hdf5', 'r')
+    # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
+    # file.close()
+
+    
+    # file = h5py.File('9.?.hdf5', 'r')
+    # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
+    # file.close()

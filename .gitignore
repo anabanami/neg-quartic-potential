@@ -4,12 +4,6 @@ alphas/
 neg_x4_potential.nb
 variance/
 
-HO-neg_HO/
-FSS_quench_HO-neg_quartic/
-FSS_quench_HO-neg_octic/
-alpha=3.82_quench_HO-neg_quartic/
-FSS_no_potential/
-
 OG RK4/
 no potential/
 HO-HO-quench/
@@ -29,20 +23,19 @@ test/
 test2/
 comparing variance for dx/
 
-TEV_unitary_Hubbard/
-working on 1.py/
-working on 2.py/
-working on 3.py/
-working on 4.py/
-working on 5.py/
-working on 6.py/
-working on 7.py/
-working on 8.py/
+*.png
+*.mp4
+*.npy
 
-7/
-8/
-9/
-
+1.py
+1.5.py
+2.py
+3.py
+4.py
+5.py
+6.py
+7.py
+8.py
 
 
 # reformulate this later

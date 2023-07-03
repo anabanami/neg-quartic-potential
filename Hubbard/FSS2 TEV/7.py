@@ -88,7 +88,7 @@ def FSS_2(Ψ, t, dt):
 def evolve():
     # time evolution
     state = wave
-    time_steps = np.arange(t_initial, t_final, dt)
+    timesteps = np.arange(t_initial, t_final, dt)
     
     # spatial variance
     SIGMAS_x_SQUARED = []
@@ -96,7 +96,7 @@ def evolve():
     i = 0
     PLOT_INTERVAL = 12
 
-    for time in time_steps:
+    for time in timesteps:
         print(f"t = {time}")
         state = FSS_2(state, t, dt)  # np.array shape like x = (Nx,)
 
