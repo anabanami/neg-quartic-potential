@@ -34,9 +34,10 @@ def smooth_restricted_V(x):
 
 
 def V(x):
-    # return np.zeros_like(x)
+    # return - α * smooth_restricted_V(x)
+    return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
-    return -α * smooth_restricted_V(x)
+    
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -100,12 +101,11 @@ def Unitary(M):
 
 def TEV(x, wave):
     # Create a new HDF5 file
-    file = h5py.File('Hubbard_Unitary.hdf5', 'w')
+    file = h5py.File('9.2.hdf5', 'w')
 
     # time evolution
     H = Bose_Hubbard_Hamiltonian()
     U = Unitary(H)
-
     state = wave
     timesteps = np.arange(t_initial, t_final, dt)
 
@@ -114,28 +114,30 @@ def TEV(x, wave):
 
     states = []
     times = []
+
     for n, time in enumerate(timesteps):
+        print(f"t = {time}")
         times.append(time)
         state = U @ state
         states.append(state)
         # create a new dataset for each frame
-        dset = file.create_dataset(f"timestep_{n}", data=state)
+        dset = file.create_dataset(f"{time}", data=state)
+        # store variance
+        sigma_x_squared = x_variance(x, dx, state)
+        SIGMAS_x_SQUARED.append(sigma_x_squared)
 
     # Close the hdf5 file
     file.close()
+    SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
+    np.save(f"9.2_variance.npy", SIGMAS_x_SQUARED)
 
     i = 0
-    PLOT_INTERVAL = 12
+    PLOT_INTERVAL = 20
     for j, state in enumerate(states):
         if i % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
             plot_evolution_frame(x, state, times[j], i)
-        sigma_x_squared = x_variance(x, dx, state)
-        SIGMAS_x_SQUARED.append(sigma_x_squared)
         i += 1
-
-    SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"9._variance.npy", SIGMAS_x_SQUARED)
 
 
 def plot_matrices():
@@ -164,7 +166,7 @@ def plot_matrices():
 
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'Hubbard_Unitary_TEV')
+    folder = Path(f'9.2')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -194,12 +196,12 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 1
+    t_final = 2
 
     ## initial conditions: HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,

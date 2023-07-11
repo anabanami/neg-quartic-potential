@@ -38,9 +38,10 @@ def smooth_restricted_V(x):
 
 
 def V(x):
+    return - α * smooth_restricted_V(x)
     # return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
-    return - α * smooth_restricted_V(x)
+    
 
 
 def plot_evolution_frame(y, state, t, i):
@@ -87,42 +88,49 @@ def FSS_2(Ψ, t, dt):
     return Ψ
 
 
-def evolve():
+def TEV(x, wave):
     # Create a new HDF5 file
-    file = h5py.File('Hubbard_FSS2.hdf5', 'w')
+    file = h5py.File('10.1.hdf5', 'w')
 
     # time evolution
     state = wave
     timesteps = np.arange(t_initial, t_final, dt)
-    
+
     # spatial variance
     SIGMAS_x_SQUARED = []
 
-    i = 0
-    PLOT_INTERVAL = 12
+    states = []
+    times = []
 
     for n, time in enumerate(timesteps):
         print(f"t = {time}")
+        times.append(time)
         state = FSS_2(state, t, dt)  # np.array shape like x = (Nx,)
+        states.append(state)
+
         # create a new dataset for each frame
-        dset = file.create_dataset(f"timestep_{n}", data=state)
-
-        if not i % PLOT_INTERVAL:
-            plot_evolution_frame(x, state, time, i)
-
+        dset = file.create_dataset(f"{time}", data=state)
+        # store variance
         sigma_x_squared = x_variance(x, dx, state)
         SIGMAS_x_SQUARED.append(sigma_x_squared)
-        i += 1
 
-    SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"10.?_variance.npy", SIGMAS_x_SQUARED)
     # Close the hdf5 file
     file.close()
+    SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
+    np.save(f"10.1_variance.npy", SIGMAS_x_SQUARED)
+
+    i = 0
+    PLOT_INTERVAL = 20
+    for j, state in enumerate(states):
+        if i % PLOT_INTERVAL == 0:
+            print(f"t = {times[j]}")
+            plot_evolution_frame(x, state, times[j], i)
+        i += 1
 
 
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'Hubbard_FSS2')
+    folder = Path(f'10.1')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -152,12 +160,12 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 1
+    t_final = 2
 
     ## initial conditions: HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
-    # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    # # initial conditions: HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
     
     return (
         folder,
@@ -202,7 +210,7 @@ if __name__ == "__main__":
         wave,
     ) = globals()
 
-    evolve()
+    TEV(x, wave)
 
     print(f"\n{np.sum(abs(wave)**2)*dx = }")  # is IC normalised???
 
