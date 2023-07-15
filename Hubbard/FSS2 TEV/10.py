@@ -17,7 +17,7 @@ plt.rcParams['figure.dpi'] = 200
 
 
 def K(kx):
-    return -2 * t * np.cos(kx)
+    return -2 * t * np.cos(kx) # MEAN FIELD??? mod psi sqrd in FS? SHOULD THIS BE A NON LINEAR TERM?
 
 
 def gaussian_smoothing(data, pts):
@@ -90,10 +90,11 @@ def FSS_2(Ψ, t, dt):
 
 def TEV(x, wave):
     # Create a new HDF5 file
-    file = h5py.File('10.1.hdf5', 'w')
+    file = h5py.File('10.4.hdf5', 'w')
 
     # time evolution
     state = wave
+    dset = file.create_dataset("0.0", data=state)
     timesteps = np.arange(t_initial, t_final, dt)
 
     # spatial variance
@@ -117,7 +118,7 @@ def TEV(x, wave):
     # Close the hdf5 file
     file.close()
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"10.1_variance.npy", SIGMAS_x_SQUARED)
+    np.save(f"10.4_variance.npy", SIGMAS_x_SQUARED)
 
     i = 0
     PLOT_INTERVAL = 20
@@ -130,7 +131,7 @@ def TEV(x, wave):
 
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'10.1')
+    folder = Path(f'10.4')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -239,3 +240,7 @@ if __name__ == "__main__":
     # file = h5py.File('10.?.hdf5', 'r')
     # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
     # file.close()
+
+
+    AM I DOING MANIPULATIONS IN BOTH FSPACE AND SPACE?
+    WHEN AM I DOING A MEAN FIELD APPROX IF I AM?

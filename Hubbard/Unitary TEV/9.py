@@ -16,6 +16,30 @@ plt.rcParams['figure.dpi'] = 200
 #######################################################################################################
 
 
+def plot_matrices():
+    # Generate the Hamiltonian
+    H = Bose_Hubbard_Hamiltonian()
+
+    # Plot the Hamiltonian as a heat map
+    plt.imshow(H, cmap='magma', interpolation='nearest')
+    plt.colorbar(label='Matrix element value')
+    plt.title('Hubbard Hamiltonian')
+    plt.xlabel('Site index')
+    plt.ylabel('Site index')
+    plt.show()
+
+    # Calculate absolute values and add a small constant to avoid log(0)
+    H_abs = np.abs(H) + 1e-9
+
+    # Plot the absolute value of the Hamiltonian as a heat map on a logarithmic scale
+    plt.imshow(np.log(H_abs), cmap='magma', interpolation='nearest')
+    plt.colorbar(label='Log of absolute matrix element value')
+    plt.title('Absolute value of Hubbard Hamiltonian\n(log scale)')
+    plt.xlabel('Site index')
+    plt.ylabel('Site index')
+    plt.show()
+
+
 def gaussian_smoothing(data, pts):
     """gaussian smooth an array by given number of points"""
     x = np.arange(-4 * pts, 4 * pts + 1, 1)
@@ -34,10 +58,9 @@ def smooth_restricted_V(x):
 
 
 def V(x):
-    # return - α * smooth_restricted_V(x)
-    return np.zeros_like(x)
+    return -α * smooth_restricted_V(x)
+    # return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
-    
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -46,10 +69,28 @@ def plot_evolution_frame(y, state, time, i):
     # prob. density plot
     plt.plot(y, abs(state) ** 2, label=R"$|\psi(x, t)|^2$")
     plt.ylabel(R"$|\psi(x, t)|^2$")
-    plt.xlabel("x")
+    plt.xlabel(R"$x$")
     plt.legend()
     plt.ylim(-1.5, 3)
     plt.xlim(-5, 5)
+    plt.title(f"t = {time:05f}")
+    plt.savefig(f"{folder}/{i}.png")
+    # plt.show()
+    plt.clf()
+
+
+def plot_vs_k(state, time, i):
+    # for Fourier space
+    kx = np.fft.fftshift(2 * np.pi * np.fft.fftfreq(Nx, dx))
+    state = np.fft.fftshift(np.fft.fft(state))
+
+    # prob. density plot
+    plt.plot(kx, abs(state) ** 2, label=R"$|\psi(k_x, t)|^2$")
+    plt.ylabel(R"$|\psi(k_x, t)|^2$")
+    plt.xlabel(R"$k_x$")
+    plt.legend()
+    # plt.ylim(-1.5, 3)
+    # plt.xlim(-5, 5)
     plt.title(f"t = {time:05f}")
     plt.savefig(f"{folder}/{i}.png")
     # plt.show()
@@ -100,24 +141,30 @@ def Unitary(M):
 
 
 def TEV(x, wave):
-    # Create a new HDF5 file
-    file = h5py.File('9.2.hdf5', 'w')
-
-    # time evolution
-    H = Bose_Hubbard_Hamiltonian()
-    U = Unitary(H)
-    state = wave
-    timesteps = np.arange(t_initial, t_final, dt)
-
     # spatial variance
     SIGMAS_x_SQUARED = []
 
     states = []
-    times = []
 
-    for n, time in enumerate(timesteps):
+    # Create a new HDF5 file
+    file = h5py.File('9.5.hdf5', 'w')
+
+    # time evolution
+    H = Bose_Hubbard_Hamiltonian()
+    U = Unitary(H)
+
+    state = wave
+    states.append(state)
+    sigma_x_squared = x_variance(x, dx, state)
+    SIGMAS_x_SQUARED.append(sigma_x_squared)
+    dset = file.create_dataset("0.0", data=state)
+
+    # generate timesteps
+    times = np.arange(t_initial, t_final, dt)
+
+    # ALL OTHER ts
+    for time in times[1:]:
         print(f"t = {time}")
-        times.append(time)
         state = U @ state
         states.append(state)
         # create a new dataset for each frame
@@ -129,44 +176,19 @@ def TEV(x, wave):
     # Close the hdf5 file
     file.close()
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"9.2_variance.npy", SIGMAS_x_SQUARED)
+    np.save(f"9.5_variance.npy", SIGMAS_x_SQUARED)
 
-    i = 0
     PLOT_INTERVAL = 20
     for j, state in enumerate(states):
-        if i % PLOT_INTERVAL == 0:
+        if j % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
-            plot_evolution_frame(x, state, times[j], i)
-        i += 1
-
-
-def plot_matrices():
-    # Generate the Hamiltonian
-    H = Bose_Hubbard_Hamiltonian()
-
-    # Plot the Hamiltonian as a heat map
-    plt.imshow(H, cmap='magma', interpolation='nearest')
-    plt.colorbar(label='Matrix element value')
-    plt.title('Hubbard Hamiltonian')
-    plt.xlabel('Site index')
-    plt.ylabel('Site index')
-    plt.show()
-
-    # Calculate absolute values and add a small constant to avoid log(0)
-    H_abs = np.abs(H) + 1e-9
-
-    # Plot the absolute value of the Hamiltonian as a heat map on a logarithmic scale
-    plt.imshow(np.log(H_abs), cmap='magma', interpolation='nearest')
-    plt.colorbar(label='Log of absolute matrix element value')
-    plt.title('Absolute value of Hubbard Hamiltonian\n(log scale)')
-    plt.xlabel('Site index')
-    plt.ylabel('Site index')
-    plt.show()
+            # plot_evolution_frame(x, state, times[j], j)
+            plot_vs_k(state, times[j], j)
 
 
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'9.2')
+    folder = Path(f'9.5')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -198,10 +220,11 @@ def globals():
     t_initial = 0
     t_final = 2
 
-    ## initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     # initial conditions: HO ground state
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    ## initial conditions: shifted HO ground state
     # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    
 
     return (
         folder,
@@ -247,9 +270,7 @@ if __name__ == "__main__":
         wave,
     ) = globals()
 
-
-
-    # plot_matrices()
+    plot_matrices()
 
     TEV(x, wave)
 
@@ -263,16 +284,3 @@ if __name__ == "__main__":
 
     print(f"\n{dx = }")
     print(f"{dt = }")
-
-
-    """USING A STATE of the unitary hubbard simulation is easy given that its stored as 
-    a separate dataset within the HDF5."""
-
-    # file = h5py.File('Hubbard_Unitary.hdf5', 'r')
-    # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
-    # file.close()
-
-    
-    # file = h5py.File('9.?.hdf5', 'r')
-    # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
-    # file.close()
