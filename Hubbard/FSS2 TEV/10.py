@@ -38,8 +38,8 @@ def smooth_restricted_V(x):
 
 
 def V(x):
-    return - α * smooth_restricted_V(x)
-    # return np.zeros_like(x)
+    # return - α * smooth_restricted_V(x)
+    return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
     
 
@@ -79,7 +79,7 @@ def x_variance(x, dx, Ψ):
 #######################################################################################################
 
 
-def FSS_2(Ψ, t, dt):
+def FSS_2(Ψ, dt):
     """Evolve Ψ in time from t-> t+dt using a single step
     of the second order Fourier Split step method with time step dt"""
     Ψ = np.exp(-1j * V(x) * dt * 0.5 / hbar) * Ψ
@@ -88,29 +88,35 @@ def FSS_2(Ψ, t, dt):
     return Ψ
 
 
+
 def TEV(x, wave):
-    # Create a new HDF5 file
-    file = h5py.File('10.4.hdf5', 'w')
-
-    # time evolution
-    state = wave
-    dset = file.create_dataset("0.0", data=state)
-    timesteps = np.arange(t_initial, t_final, dt)
-
-    # spatial variance
+     # spatial variance
     SIGMAS_x_SQUARED = []
 
     states = []
-    times = []
 
-    for n, time in enumerate(timesteps):
+    # Create a new HDF5 file
+    file = h5py.File('TEST.hdf5', 'w')
+
+    # time evolution
+    state = wave
+    states.append(state)
+    # store variance
+    sigma_x_squared = x_variance(x, dx, state)
+    SIGMAS_x_SQUARED.append(sigma_x_squared)
+    dset = file.create_dataset("0.0", data=state)
+
+    # generate timesteps
+    times = np.arange(t_initial, t_final, dt)
+
+    # ALL OTHER ts
+    for time in times[1:]:
         print(f"t = {time}")
-        times.append(time)
-        state = FSS_2(state, t, dt)  # np.array shape like x = (Nx,)
+        state = FSS_2(state, time)
         states.append(state)
-
         # create a new dataset for each frame
         dset = file.create_dataset(f"{time}", data=state)
+
         # store variance
         sigma_x_squared = x_variance(x, dx, state)
         SIGMAS_x_SQUARED.append(sigma_x_squared)
@@ -118,10 +124,10 @@ def TEV(x, wave):
     # Close the hdf5 file
     file.close()
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"10.4_variance.npy", SIGMAS_x_SQUARED)
+    np.save(f"TEST_variance.npy", SIGMAS_x_SQUARED)
 
     i = 0
-    PLOT_INTERVAL = 20
+    PLOT_INTERVAL = 1
     for j, state in enumerate(states):
         if i % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
@@ -131,7 +137,7 @@ def TEV(x, wave):
 
 def globals():
     # makes folder for simulation frames
-    folder = Path(f'10.4')
+    folder = Path(f'TEST')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
@@ -144,12 +150,12 @@ def globals():
     l1 = np.sqrt(hbar / (m * ω))
 
     # coefficient for quartic potential
-    α = 4
+    α = 1
 
     x_max = 45
     cut = 225
 
-    dx = 0.1
+    dx = 0.01
     # hopping strength approximation
     t = 1 / (2 * dx ** 2)
     Nx = int(2 * x_max / dx)
@@ -159,9 +165,9 @@ def globals():
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
 
     # time dimension
-    dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
+    dt = m * dx ** 2 / (np.pi * hbar) * (1 / 16)
     t_initial = 0
-    t_final = 2
+    t_final = 0.4
 
     ## initial conditions: HO ground state
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
@@ -242,5 +248,5 @@ if __name__ == "__main__":
     # file.close()
 
 
-    AM I DOING MANIPULATIONS IN BOTH FSPACE AND SPACE?
-    WHEN AM I DOING A MEAN FIELD APPROX IF I AM?
+    # AM I DOING MANIPULATIONS IN BOTH FSPACE AND SPACE? Instead of one and then the other?
+    # WHEN AM I DOING A MEAN FIELD APPROX IF I AM?
