@@ -144,15 +144,15 @@ def plot_wavefunctions(N, x, evals, wavefunctions):
 ################################################################
 
 def globals():
-    ## Bender units
-    hbar = 1
-    m = 1/2
-    ω = 2
-    
-    ## natural units according to wikipedia
+    # ## Bender units
     # hbar = 1
-    # m = 1
-    # ω = 1
+    # m = 1/2
+    # ω = 2
+    
+    # natural units according to wikipedia
+    hbar = 1
+    m = 1
+    ω = 1
 
     # Harmonic oscillator length #lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))

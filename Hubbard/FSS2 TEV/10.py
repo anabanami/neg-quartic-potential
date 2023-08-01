@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.signal import convolve
-from scipy.fft import fft, ifft, fftfreq
+from numpy.fft import fft, ifft, fftfreq
 import h5py
 
 plt.rcParams['figure.dpi'] = 200
@@ -16,8 +16,9 @@ plt.rcParams['figure.dpi'] = 200
 #######################################################################################################
 
 
-def K(kx):
-    return -2 * t * np.cos(kx) # MEAN FIELD??? mod psi sqrd in FS? SHOULD THIS BE A NON LINEAR TERM?
+def K(x):
+    return fft(- t )
+    # return -2 * t * np.cos(kx)
 
 
 def gaussian_smoothing(data, pts):
@@ -52,8 +53,8 @@ def plot_evolution_frame(y, state, t, i):
     plt.ylabel(R"$|\psi(x, t)|^2$")
     plt.xlabel("x")
     plt.legend()
-    plt.ylim(-1.5, 3)
-    plt.xlim(-5, 5)
+    # plt.ylim(-1.5, 3)
+    # plt.xlim(-5, 5)
     plt.title(f"t = {t:05f}")
     plt.savefig(f"{folder}/{i}.png")
     # plt.show()
@@ -80,13 +81,17 @@ def x_variance(x, dx, Ψ):
 
 
 def FSS_2(Ψ, dt):
-    """Evolve Ψ in time from t-> t+dt using a single step
-    of the second order Fourier Split step method with time step dt"""
-    Ψ = np.exp(-1j * V(x) * dt * 0.5 / hbar) * Ψ
-    Ψ = ifft(np.exp(-1j * K(kx) * dt / hbar) * fft(Ψ))
-    Ψ = np.exp(-1j * V(x) * dt * 0.5 / hbar) * Ψ
-    return Ψ
+    V_real = V(x)
+    K_fourier = K(kx) # MEAN FIELD??? mod psi sqrd in FS? SHOULD THIS BE A NON LINEAR TERM?
+    # First evolve using the potential term for half a timestep:
+    Ψ = np.exp(-1j/hbar * V_real * 0.5 * dt) * Ψ
+    # Then evolve using the kinetic term for a whole timestep, transforming to
+    # and from Fourier space where the kinetic term is diagonal:
+    Ψ = ifft(np.exp(-1j/hbar * K_fourier * dt) * fft(Ψ))
+    # Then evolve with the potential term again for half a timestep:
+    Ψ = np.exp(-1j/hbar * V_real * 0.5 * dt) * Ψ
 
+    return Ψ
 
 
 def TEV(x, wave):
@@ -142,22 +147,28 @@ def globals():
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
+    # # Bender units
+    # m = 1/2
+    # ω = 2
+
     # natural units
-    hbar = 1
     m = 1
     ω = 1
+    hbar = 1
+
     # lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
 
     # coefficient for quartic potential
     α = 1
 
-    x_max = 45
-    cut = 225
+    cut = 5
 
-    dx = 0.01
+    dx = 0.1
     # hopping strength approximation
     t = 1 / (2 * dx ** 2)
+
+    x_max = 45
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
@@ -165,9 +176,9 @@ def globals():
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
 
     # time dimension
-    dt = m * dx ** 2 / (np.pi * hbar) * (1 / 16)
+    dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 0.4
+    t_final = 2
 
     ## initial conditions: HO ground state
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))

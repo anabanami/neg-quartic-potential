@@ -58,8 +58,8 @@ def smooth_restricted_V(x):
 
 
 def V(x):
-    return -α * smooth_restricted_V(x)
-    # return np.zeros_like(x)
+    # return -α * smooth_restricted_V(x)
+    return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
 
 
@@ -182,8 +182,8 @@ def TEV(x, wave):
     for j, state in enumerate(states):
         if j % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
-            # plot_evolution_frame(x, state, times[j], j)
-            plot_vs_k(state, times[j], j)
+            plot_evolution_frame(x, state, times[j], j)
+            # plot_vs_k(state, times[j], j)
 
 
 def globals():
@@ -193,10 +193,16 @@ def globals():
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
+
+    # # Bender units
+    # m = 1/2
+    # ω = 2
+
     # natural units
-    hbar = 1
     m = 1
     ω = 1
+    hbar = 1
+
     # lengths for HO quench
     l1 = np.sqrt(hbar / (m * ω))
 
@@ -204,7 +210,7 @@ def globals():
     α = 4
 
     N_sites = 900
-    cut = 225
+    cut = 5
 
     dx = 0.1
     # Hopping strength

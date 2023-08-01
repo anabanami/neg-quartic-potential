@@ -32,24 +32,24 @@ def smooth_restricted_V(x):
 
 def V(x):
     # return 0.5 * m * (ω * x) ** 2
-    return - α * (x ** 4)
-    # return - α * smooth_restricted_V(x)
+    # return - α * (x ** 4)
+    return - α * smooth_restricted_V(x)
 
 #######################################################################################################
 
 
 def Bose_Hubbard_Hamiltonian():
     # Initialize the Hamiltonian as a zero matrix
-    H = np.zeros((N_sites, N_sites))
+    H = np.zeros((Nx, Nx))
     # On-site interaction potential
     V_values = V(x)
 
     # Define the hopping and interaction terms
     # PERIODIC BCS
-    for i in range(N_sites):
+    for i in range(Nx):
         # Hopping terms
-        H[i, (i + 1) % N_sites] = -t
-        H[(i + 1) % N_sites, i] = -t
+        H[i, (i + 1) % Nx] = -t
+        H[(i + 1) % Nx, i] = -t
 
         # On-site interaction
         H[i, i] = V_values[i]
@@ -88,8 +88,8 @@ def filter_sorting(evals, evects):
     order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
     evals = evals[order]
     evects = evects[:, order]
-    # (evals.shape= (N_sites,))
-    # example: becomes (29,), (evects.shape= (N_sites, 29) where the column v[:, i])
+    # (evals.shape= (Nx,))
+    # example: becomes (29,), (evects.shape= (Nx, 29) where the column v[:, i])
     return evals, evects
 
 
@@ -134,7 +134,7 @@ def plot_wavefunctions(N, x, evals, evects):
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
 
     # plt.ylim()
-    plt.xlim(-10, 10)
+    # plt.xlim(-10, 10)
 
     plt.legend(loc="upper right")
     plt.xlabel(R'$x$')
@@ -159,17 +159,17 @@ def globals():
 
     # coefficient for quartic potential
     α = 1
-
-    N_sites = 900
-    cut = 5
-
-    dx = 0.1
+ 
+    dx = 0.05
     # Hopping strength
     t = 1 / (2 * dx ** 2)
+    # t = 1 / dx ** 2
+    # t = 1 / dx
 
     # space dimension
-    x_max = 45
+    x_max = 10
     Nx = int(2 * x_max / dx)
+    cut = 5
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     return (
@@ -178,7 +178,7 @@ def globals():
         ω,
         l1,
         α,
-        N_sites,
+        Nx,
         cut,
         t,
         x_max,
@@ -196,7 +196,7 @@ if __name__ == "__main__":
         ω,
         l1,
         α,
-        N_sites,
+        Nx,
         cut,
         t,
         x_max,
@@ -206,17 +206,17 @@ if __name__ == "__main__":
     ) = globals()
 
     print("TESTING PARAMETERS:")
+    print("\n")
+    print(f"{dx = }")
+    print(f"{t = }")
     print(f"\n{Nx = }")
-    print(f"{N_sites = }")
-    print(f"\n{x_max = }")
+    print(f"{x_max = }")
     print(f"{x[cut] = }")
     print(f"{cut = }")
-    print(f"\n{dx = }")
-    print(f"{t = }")
-    print("\n")
 
 
-    #####################################################################################################################
+
+    # #####################################################################################################################
 
     # Create a new HDF5 file
     file = h5py.File('evals.hdf5', 'w')
@@ -241,4 +241,13 @@ if __name__ == "__main__":
     # Close the hdf5 file
     file.close()
 
-    plot_wavefunctions(N_sites, x, evals, evects)
+    print(f"\nDifferences between eigenvalues:\n")
+    for i, value in enumerate(evals[:5]):
+        print(f"{value=}")
+        print(f"value_i+1={evals[i+1]}")
+
+        diff =  evals[i+1]- value 
+        # diff =  evals[i+1]- value 
+        print(f"{diff=}\n")
+    
+    plot_wavefunctions(Nx, x, evals, evects)
