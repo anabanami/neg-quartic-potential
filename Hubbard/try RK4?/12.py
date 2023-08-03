@@ -1,4 +1,4 @@
-# Time evolution using Hubbard Hamiltonian with FSS2
+# Time evolution using Hubbard Hamiltonian with RK4
 # HDF5 protocol
 # Ana Fabela 03/07/2023
 
@@ -12,12 +12,8 @@ import h5py
 
 plt.rcParams['figure.dpi'] = 200
 
-#######################################################################################################
 
-
-def K(x):
-    # return fft(-t)
-    return -2 * t * np.cos(kx)
+####################################################################################################### 
 
 
 def gaussian_smoothing(data, pts):
@@ -37,11 +33,17 @@ def smooth_restricted_V(x):
     return V
 
 
+def K_ft(kx):
+    # # x - space:
+    # return - t (second quantization matrix kinetic term?????)
+    # # According to me:
+    return - 2 * t * np.cos(kx)
+
 def V(x):
     # return - α * smooth_restricted_V(x)
     return np.zeros_like(x)
     # return - 0.5 * (x ** 2)
-
+    
 
 def plot_evolution_frame(y, state, t, i):
     # potential
@@ -75,27 +77,26 @@ def x_variance(x, dx, Ψ):
 
 ###############################################################################
 
-#######################################################################################################
+
+# Schrodinger equation
+def Schrodinger_eqn(t, Ψ):
+    # Fourier transform of the second quantisation of the hubbard kinetic term
+    KΨ = ifft(np.exp(-1j * K_ft(kx) * t / hbar) * fft(Ψ))
+    VΨ = V(x) * Ψ
+    return (-1j / hbar) * (KΨ + VΨ)
 
 
-def FSS_2(Ψ, dt):
-    V_real = V(x)
-    K_fourier = K(
-        kx
-    )  # MEAN FIELD??? mod psi sqrd in FS? SHOULD THIS BE A NON LINEAR TERM?
-    # First evolve using the potential term for half a timestep:
-    Ψ = np.exp(-1j / hbar * V_real * 0.5 * dt) * Ψ
-    # Then evolve using the kinetic term for a whole timestep, transforming to
-    # and from Fourier space where the kinetic term is diagonal:
-    Ψ = ifft(np.exp(-1j / hbar * K_fourier * dt) * fft(Ψ))
-    # Then evolve with the potential term again for half a timestep:
-    Ψ = np.exp(-1j / hbar * V_real * 0.5 * dt) * Ψ
-
-    return Ψ
+# TEv: Runge - Kutta 4 on Schrodinger equation
+def RK4(t, Ψ):
+    k1 = Schrodinger_eqn(t, Ψ)
+    k2 = Schrodinger_eqn(t + dt / 2, Ψ + k1 * dt / 2)
+    k3 = Schrodinger_eqn(t + dt / 2, Ψ + k2 * dt / 2)
+    k4 = Schrodinger_eqn(t + dt, Ψ + k3 * dt)
+    return Ψ + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
 
 def TEV(x, wave):
-    # spatial variance
+     # spatial variance
     SIGMAS_x_SQUARED = []
 
     states = []
@@ -103,7 +104,7 @@ def TEV(x, wave):
     # Create a new HDF5 file
     file = h5py.File('TEST.hdf5', 'w')
 
-    # time evolution
+    # time evolution initial step
     state = wave
     states.append(state)
     # store variance
@@ -115,9 +116,9 @@ def TEV(x, wave):
     times = np.arange(t_initial, t_final, dt)
 
     # ALL OTHER ts
+    print(f"TEV in progress")
     for time in times[1:]:
-        print(f"t = {time}")
-        state = FSS_2(state, time)
+        state =  RK4(time, state)
         states.append(state)
         # create a new dataset for each frame
         dset = file.create_dataset(f"{time}", data=state)
@@ -132,6 +133,7 @@ def TEV(x, wave):
     np.save(f"TEST_variance.npy", SIGMAS_x_SQUARED)
 
     i = 0
+    print(f"Plotting simulation frames")
     PLOT_INTERVAL = 1
     for j, state in enumerate(states):
         if i % PLOT_INTERVAL == 0:
@@ -165,7 +167,7 @@ def globals():
     cut = 5
 
     dx = 0.1
-    # hopping strength approximation
+    # hopping strength approximation from mean-field????
     t = 1 / (2 * dx ** 2)
 
     x_max = 45
@@ -176,15 +178,16 @@ def globals():
     kx = 2 * np.pi * np.fft.fftfreq(Nx, dx)
 
     # time dimension
-    dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
+    # dt = 1
+    dt = (m * dx ** 2 / (np.pi * hbar))# * (1/10)
     t_initial = 0
-    t_final = 2
+    t_final = 4
 
     ## initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     # # initial conditions: HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
-
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    
     return (
         folder,
         hbar,
@@ -245,6 +248,7 @@ if __name__ == "__main__":
     print(f"\n{kx.max() * dx = }")
     print(f"{kx.min() * dx = }")
 
+
     """USING A STATE of the unitary hubbard simulation is easy given that its stored as 
     a separate dataset within the HDF5."""
 
@@ -252,9 +256,11 @@ if __name__ == "__main__":
     # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
     # file.close()
 
+    
     # file = h5py.File('10.?.hdf5', 'r')
     # state_t10 = file['timestep_10'][:]  # Load the state at timestep 10 into memory
     # file.close()
+
 
     # AM I DOING MANIPULATIONS IN BOTH FSPACE AND SPACE? Instead of one and then the other?
     # WHEN AM I DOING A MEAN FIELD APPROX IF I AM?
