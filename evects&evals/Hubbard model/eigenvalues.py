@@ -14,6 +14,7 @@ plt.rcParams['figure.dpi'] = 200
 
 #######################################################################################################
 
+
 def gaussian_smoothing(data, pts):
     """gaussian smooth an array by given number of points"""
     x = np.arange(-4 * pts, 4 * pts + 1, 1)
@@ -33,8 +34,10 @@ def smooth_restricted_V(x):
 
 def V(x):
     # return 0.5 * m * (ω * x) ** 2
-    # return - α * (x ** 4)
-    return - α * smooth_restricted_V(x)
+    return - α * (x ** 4)
+    # return - α * smooth_restricted_V(x)
+
+
 
 #######################################################################################################
 
@@ -49,8 +52,8 @@ def Bose_Hubbard_Hamiltonian():
     # PERIODIC BCS
     for i in range(Nx):
         # Hopping terms
-        H[i, (i + 1) % Nx] = -t
-        H[(i + 1) % Nx, i] = -t
+        H[i, (i + 1) % Nx] = -β * t
+        H[(i + 1) % Nx, i] = -β * t
 
         # On-site interaction
         H[i, i] = V_values[i]
@@ -86,7 +89,7 @@ def filter_sorting(evals, evects):
     evects = evects[:, mask]
 
     # sorting
-    order = np.argsort(np.round(evals.real,3) + np.round(evals.imag, 3) / 1e6)
+    order = np.argsort(np.round(evals.real, 3) + np.round(evals.imag, 3) / 1e6)
     evals = evals[order]
     evects = evects[:, order]
     # (evals.shape= (Nx,))
@@ -117,7 +120,9 @@ def plot_wavefunctions(N, x, evals, evects):
             label=fR"$\psi_{i}(x)$",
             color=color,
         )
-        plt.plot(x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color)
+        plt.plot(
+            x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color
+        )
 
     textstr = '\n'.join(
         (
@@ -148,14 +153,12 @@ def plot_wavefunctions(N, x, evals, evects):
 def globals():
 
     os.system(f'rm *.hdf5')
-    
+
     # # natural units
     m = 1
     ω = 1
 
     hbar = 1
-    # lengths for HO quench
-    l1 = np.sqrt(hbar / (m * ω))
 
     dx = 0.1
     # Hopping strength
@@ -171,7 +174,6 @@ def globals():
         hbar,
         m,
         ω,
-        l1,
         Nx,
         cut,
         t,
@@ -188,7 +190,6 @@ if __name__ == "__main__":
         hbar,
         m,
         ω,
-        l1,
         Nx,
         cut,
         t,
@@ -207,23 +208,35 @@ if __name__ == "__main__":
     print(f"{x[cut] = }")
     print(f"{cut = }")
 
-    # coefficient for quartic potential
-    αlphas = np.linspace(1e-6, 1.5, 15)
-    for α in αlphas:
+    # scaling coefficient for kinetic energy
+    β = 1.8
+
+    # scaling coefficients for quartic potential
+    alphas = np.linspace(0.4, 1, 100)
+    # rescale alphas to scale energy according to our resonance condition
+    alphas = 0.5 * (2 * alphas) ** (1 / 3)
+
+    # # only α = 1/2 case
+    # alphas = 0.5 * np.ones_like(alphas) ** (1 / 3)
+
+    print(alphas)
+
+
+    for i, α in enumerate(alphas):
         # Create a new HDF5 file
-        file = h5py.File(f'evals{α:.3f}.hdf5', 'w')
+        file = h5py.File(f'evals{i}_{α:.3f}.hdf5', 'w')
 
         # generate Hubbard matrix
         M = Bose_Hubbard_Hamiltonian()
         # plot_matrix(M)
 
-        evals, evects = linalg.eig(M) # remember that evects are columns! v[:, j]
+        evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
 
         # fix Energy shift of - 2t
         for i, value in enumerate(evals):
-                evals[i] = np.real(value) + 2 * t 
+            evals[i] = np.real(value) + 2 * t
 
-        # filter and sort 
+        # filter and sort
         evals, evects = filter_sorting(evals, evects)
 
         # Create datasets for eigenvalues and eigenvectors in hdf5 file
@@ -232,11 +245,6 @@ if __name__ == "__main__":
 
         # Close the hdf5 file
         file.close()
-        
+
         # plot eigenfunctions
         # plot_wavefunctions(Nx, x, evals, evects)
-
-
-
-
-
