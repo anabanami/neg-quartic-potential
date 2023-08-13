@@ -34,8 +34,8 @@ def smooth_restricted_V(x):
 
 def V(x):
     # return 0.5 * m * (ω * x) ** 2
-    return - α * (x ** 4)
-    # return - α * smooth_restricted_V(x)
+    # return - α * (x ** 4)
+    return - α * smooth_restricted_V(x)
 
 
 
@@ -160,7 +160,7 @@ def globals():
 
     hbar = 1
 
-    dx = 0.1
+    dx = 0.01
     # Hopping strength
     t = 1 / (2 * dx ** 2)
 
@@ -203,48 +203,51 @@ if __name__ == "__main__":
     print("\n")
     print(f"{dx = }")
     print(f"{t = }")
-    print(f"\n{Nx = }")
+    print(f"\nEigenvalues = {Nx = }")
     print(f"{x_max = }")
     print(f"{x[cut] = }")
     print(f"{cut = }")
 
-    # scaling coefficient for kinetic energy
-    β = 1.8
+    # # scaling coefficient for kinetic energy
+    β = 1
+    # β = 1.8
 
     # scaling coefficients for quartic potential
-    alphas = np.linspace(0.4, 1, 100)
-    # rescale alphas to scale energy according to our resonance condition
-    alphas = 0.5 * (2 * alphas) ** (1 / 3)
+    # alphas = np.linspace(0.4, 1, 100)
+    # # rescale alphas to scale energy according to our resonance condition
+    # alphas = 0.5 * (2 * alphas) ** (1 / 3)
 
-    # # only α = 1/2 case
+    # only α = 1/2 case
+    α = 1 / 2
     # alphas = 0.5 * np.ones_like(alphas) ** (1 / 3)
 
-    print(alphas)
+    # print(alphas)
 
 
-    for i, α in enumerate(alphas):
-        # Create a new HDF5 file
-        file = h5py.File(f'evals{i}_{α:.3f}.hdf5', 'w')
+    # for i, α in enumerate(alphas):
+    #     # Create a new HDF5 file
+    #     file = h5py.File(f'evals{i}_{α:.3f}.hdf5', 'w')
 
-        # generate Hubbard matrix
-        M = Bose_Hubbard_Hamiltonian()
-        # plot_matrix(M)
+    #     # generate Hubbard matrix
+    M = Bose_Hubbard_Hamiltonian()
+    plot_matrix(M)
 
-        evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
+    evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
 
-        # fix Energy shift of - 2t
-        for i, value in enumerate(evals):
-            evals[i] = np.real(value) + 2 * t
+    # fix Energy shift of - 2t
+    for i, value in enumerate(evals):
+        evals[i] = np.real(value) + 2 * t
 
+    #     FILTER AND SORT PROBABLY SHOULDN" BE USED CAUSE IT"S NOT SHOWING ME THE TRUTH
         # filter and sort
         evals, evects = filter_sorting(evals, evects)
 
-        # Create datasets for eigenvalues and eigenvectors in hdf5 file
-        evals_dset = file.create_dataset('eigenvalues', data=evals)
-        evects_dset = file.create_dataset('eigenvectors', data=evects)
+    #     # Create datasets for eigenvalues and eigenvectors in hdf5 file
+    #     evals_dset = file.create_dataset('eigenvalues', data=evals)
+    #     evects_dset = file.create_dataset('eigenvectors', data=evects)
 
-        # Close the hdf5 file
-        file.close()
+    #     # Close the hdf5 file
+    #     file.close()
 
         # plot eigenfunctions
-        # plot_wavefunctions(Nx, x, evals, evects)
+        plot_wavefunctions(Nx, x, evals, evects)

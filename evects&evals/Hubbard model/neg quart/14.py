@@ -24,8 +24,6 @@ def generate_file_names():
 
     # list into array
     eigenvalues = np.array(eigenvalues)
-    # print(f"\n{alphas=}\n")
-    # print(f"\n {eigenvalues=}\n")
     return eigenvalues
 
 
@@ -34,6 +32,8 @@ def globals():
     dx = 0.1
     # # Hopping strength
     # t = 1 / (2 * dx ** 2)
+    # scaling coefficient for kinetic energy
+    # β = 1.8
     x_max = 40
     Nx = int(2 * x_max / dx)
     cut = 5
@@ -49,18 +49,13 @@ if __name__ == "__main__":
     # number of eigenvalues to check
     evals_no = 5
 
-    # HO energies to compare
-    E_HO = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
-
     # Bender energies to compare
     E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
 
     # scaling coefficients for quartic potential
     alphas = np.linspace(0.4, 1, 100)
-    # # rescale alphas to scale energy according to our resonance condition
+    # rescale alphas to scale energy according to our resonance condition
     alphas = 0.5 * (2 * alphas) ** (1 / 3)
-    # # only α = 1/2 case
-    # alphas = 0.5 * np.ones_like(alphas) ** (1 / 3)
 
     eigenvalues = generate_file_names()
 
@@ -71,7 +66,6 @@ if __name__ == "__main__":
         ]
         plt.scatter(alphas, eigenvalue_i, marker='.', color='k', linewidth=1,)# label=fR"$E_{i}$")
 
-    # for i, ref_val in enumerate(E_HO):
     for i, ref_val in enumerate(E_bender):
         if i == 0:  # Only assign a label to the first line
             plt.hlines(
@@ -87,7 +81,6 @@ if __name__ == "__main__":
                 ref_val, alphas[0], alphas[-1], linewidth=0.5, linestyles='dashed'
             )
 
-    # plt.title(R'Comparing eigenvalues (HO vs eigenvalues.py)')
     plt.title(R'Comparing eigenvalues (Bender vs eigenvalues.py)')
     plt.xlabel(R'$\frac{1}{2}(2\alpha)^{\frac{1}{3}}$')
     plt.ylabel('Energy')

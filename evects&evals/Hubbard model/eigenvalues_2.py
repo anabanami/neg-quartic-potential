@@ -28,16 +28,15 @@ def smooth_restricted_V(x):
     V = np.ones_like(x) * x[cut] ** 4
     V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
     ## smoooth by pts=3
-    V = gaussian_smoothing(V, 3)
+    V = gaussian_smoothing(V, 2)
     return V
 
 
 def V(x):
     # return 0.5 * m * (ω * x) ** 2
     # return - 0.5 * (ω * x) ** 2 # TEST: continuum states
-    return - 0.5 * x ** 4
+    return -0.5 * x ** 4
     # return - 0.5 * smooth_restricted_V(x)
-
 
 
 #######################################################################################################
@@ -53,8 +52,8 @@ def Bose_Hubbard_Hamiltonian():
     # PERIODIC BCS
     for i in range(Nx):
         # Hopping terms
-        H[i, (i + 1) % Nx] = - t
-        H[(i + 1) % Nx, i] = - t
+        H[i, (i + 1) % Nx] = -t
+        H[(i + 1) % Nx, i] = -t
 
         # On-site interaction
         H[i, i] = V_values[i]
@@ -109,35 +108,53 @@ def plot_wavefunctions(N, x, evals, evects):
     grid (x) by treating the index of the eigenvector's
     components as corresponding to the index in the x array."""
 
-    for i in range(5):
+    for i in range(10):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(
-            x,
-            np.real(evects[:, i] + evals[i]),
-            "-",
-            linewidth=1,
+        if i < 6:
+            plt.plot(
+                x,
+                np.real(evects[:, i] + evals[i]),
+                "-",
+                linewidth=1,
+                color=color,
+            )
+            plt.plot(
+                x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color
+            )
+
+        else:
+            plt.plot(
+                x,
+                np.real(evects[:, i] + evals[i]),
+                "-",
+                linewidth=1,
             label=fR"$\psi_{i}(x)$",
             color=color,
-        )
-        plt.plot(
+            )
+            plt.plot(
             x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color
-        )
+            )
 
     textstr = '\n'.join(
         (
-            fr'$E_0 = {np.real(evals[0]):.06f}$',
-            fr'$E_1 = {np.real(evals[1]):.06f}$',
-            fr'$E_2 = {np.real(evals[2]):.06f}$',
-            fr'$E_3 = {np.real(evals[3]):.06f}$',
-            fr'$E_4 = {np.real(evals[4]):.06f}$',
+            # fr'$E_0 = {np.real(evals[0]):.06f}$',
+            # fr'$E_1 = {np.real(evals[1]):.06f}$',
+            # fr'$E_2 = {np.real(evals[2]):.06f}$',
+            # fr'$E_3 = {np.real(evals[3]):.06f}$',
+            # fr'$E_4 = {np.real(evals[4]):.06f}$',
+            # fr'$E_5 = {np.real(evals[5]):.06f}$',
+            fr'$E_6 = {np.real(evals[6]):.06f}$',
+            fr'$E_7 = {np.real(evals[7]):.06f}$',
+            fr'$E_8 = {np.real(evals[8]):.06f}$',
+            fr'$E_9 = {np.real(evals[9]):.06f}$',
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+    plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
 
     # plt.ylim()
@@ -201,18 +218,20 @@ if __name__ == "__main__":
     ) = globals()
 
     print("TESTING PARAMETERS:")
+
     print("\n")
     print(f"{dx = }")
     print(f"{t = }")
     print(f"\nEigenvalues = {Nx = }")
     print(f"{x_max = }")
+
+    print("\nONLY for restricted V(x):")
     print(f"{x[cut] = }")
     print(f"index {cut = }")
 
-
     # generate Hubbard matrix
     M = Bose_Hubbard_Hamiltonian()
-    plot_matrix(M)
+    # plot_matrix(M)
 
     evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
 
@@ -220,28 +239,46 @@ if __name__ == "__main__":
     for i, value in enumerate(evals):
         evals[i] = np.real(value) + 2 * t
 
-    # # FILTER AND SORT
-    # evals, evects = filter_sorting(evals, evects)
+    # FILTER AND SORT
+    evals, evects = filter_sorting(evals, evects)
 
-        # # plot eigenfunctions
+    # plot eigenfunctions
     plot_wavefunctions(Nx, x, evals, evects)
 
-    # Create a new HDF5 file
-    # file = h5py.File(f'evals_V(x)=0.5m(ωx)**2', 'w')
-    # file = h5py.File(f'evals_V(x)=-0.5m(ωx)**2', 'w')
-    file = h5py.File(f'evals_V(x)=-0.5x**4.hdf5', 'w')
+    # # Create a new HDF5 file
+    # # file = h5py.File(f'evals_V(x)=0.5m(ωx)**2', 'w')
+    # # file = h5py.File(f'evals_V(x)=-0.5m(ωx)**2', 'w')
+    # # file = h5py.File(f'evals_V(x)=-0.5x**4.hdf5', 'w')
     # file = h5py.File(f'evals_V(x)=-0.5smooth_restricted_V(x).hdf5', 'w')
 
-    # Create datasets for eigenvalues and eigenvectors in hdf5 file
-    evals_dset = file.create_dataset('eigenvalues', data=evals)
-    evects_dset = file.create_dataset('eigenvectors', data=evects)
-    # Close the hdf5 file
-    file.close()
+    # # Create datasets for eigenvalues and eigenvectors in hdf5 file
+    # evals_dset = file.create_dataset('eigenvalues', data=evals)
+    # evects_dset = file.create_dataset('eigenvectors', data=evects)
+
+    # # Close the hdf5 file
+    # file.close()
 
     print("\nComparing with Bender's spectrum")
-    Bender_evals = 2 * evals
-    print("\n")
-    for i in range(5):
-        print(f"{Bender_evals[i]=:.06f}")
+    _2evals = 2 * evals
+
+    # Bender energies to compare
+    E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
+
+    ax = plt.gca()
+    color = next(ax._get_lines.prop_cycler)['color']
+    textstr = '\n'.join(
+        (
+            fr'$E_0 = {np.real(evals[6]):.06f}~\rightarrow~2E_0 = {np.real(_2evals[6]):.06f}~~\mathrm{{vs.}}~~E_{{B, 0}}= {np.real(E_bender[0]):.06f}$',
+            fr'$E_1 = {np.real(evals[7]):.06f}~\rightarrow~2E_1 = {np.real(_2evals[7]):.06f}~~\mathrm{{vs.}}~~E_{{B, 1}} = {np.real(E_bender[1]):.06f}$',
+            fr'$E_2 = {np.real(evals[8]):.06f}~\rightarrow~2E_2 = {np.real(_2evals[8]):.06f}~~\mathrm{{vs.}}~~E_{{B, 2}} = {np.real(E_bender[2]):.06f}$',
+            fr'$E_3 = {np.real(evals[9]):.06f}~\rightarrow~2E_3 = {np.real(_2evals[9]):.06f}~~\mathrm{{vs.}}~~E_{{B, 3}} = {np.real(E_bender[3]):.06f}$',
+            fr'$E_4 = {np.real(evals[10]):.06f}~\rightarrow~2E_4 = {np.real(_2evals[10]):.06f}~~\mathrm{{vs.}}~~E_{{B, 4}} = {np.real(E_bender[4]):.06f}$',
+        )
+    )
+    # place a text box in upper left in axes coords
+    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+
+    plt.title("Comparing eigenvalues with Bender's")
+    plt.show()
 
 
