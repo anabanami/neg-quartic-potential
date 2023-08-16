@@ -27,7 +27,7 @@ def gaussian_smoothing(data, pts):
 def smooth_restricted_V(x):
     V = np.ones_like(x) * x[cut] ** 4
     V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
-    ## smoooth by pts=3
+    ## smoooth by pts=2
     V = gaussian_smoothing(V, 2)
     return V
 
@@ -245,18 +245,18 @@ if __name__ == "__main__":
     # plot eigenfunctions
     plot_wavefunctions(Nx, x, evals, evects)
 
-    # # Create a new HDF5 file
-    # # file = h5py.File(f'evals_V(x)=0.5m(ωx)**2', 'w')
-    # # file = h5py.File(f'evals_V(x)=-0.5m(ωx)**2', 'w')
-    # # file = h5py.File(f'evals_V(x)=-0.5x**4.hdf5', 'w')
+    # Create a new HDF5 file
+    # file = h5py.File(f'evals_V(x)=0.5m(ωx)**2', 'w')
+    # file = h5py.File(f'evals_V(x)=-0.5m(ωx)**2', 'w')
+    file = h5py.File(f'evals_V(x)=-0.5x**4.hdf5', 'w')
     # file = h5py.File(f'evals_V(x)=-0.5smooth_restricted_V(x).hdf5', 'w')
 
-    # # Create datasets for eigenvalues and eigenvectors in hdf5 file
-    # evals_dset = file.create_dataset('eigenvalues', data=evals)
-    # evects_dset = file.create_dataset('eigenvectors', data=evects)
+    # Create datasets for eigenvalues and eigenvectors in hdf5 file
+    evals_dset = file.create_dataset('eigenvalues', data=evals)
+    evects_dset = file.create_dataset('eigenvectors', data=evects)
 
-    # # Close the hdf5 file
-    # file.close()
+    # Close the hdf5 file
+    file.close()
 
     print("\nComparing with Bender's spectrum")
     _2evals = 2 * evals
