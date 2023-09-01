@@ -8,8 +8,9 @@ from matplotlib.ticker import FormatStrFormatter
 import h5py
 
 
-plt.rcParams['figure.dpi'] = 200
-np.set_printoptions(linewidth=200)
+def save_to_hdf5(filename, eigenvalues):
+    with h5py.File(filename, 'w') as hf:
+        hf.create_dataset("eigenvalues", data=eigenvalues)
 
 
 def V(x):
@@ -20,7 +21,7 @@ def V(x):
 def Schrödinger_eqn(x, Ψ, Φ, E):
     """Ψ is the state, Φ is the fist spatial derivative of the state."""
     dΨ = Φ
-    # my specific negative quartic PROBLEM
+    # my specific negative quartic problem. This applies 2E_A = E_B scaling to match Bender's energy
     dΦ = -2 * (V(x) + E) * Ψ
     return dΨ, dΦ
 
@@ -54,114 +55,53 @@ def integrate(E, Ψ, Φ, dx):
     return Ψ, Φ
 
 
-def solve_tise(E1, E2, tolerance=1e-6):
-    max_iterations = 1000
-    iteration = 0
-
-    intervals = [(E1, E2)]
-    eigenvalues_found = []
-    wavefunctions_found = []
-
-    # Initial values: (Ψ, dΨ/dx) ~ BASED ON WKB ASYMPTOTIC SOLUTION
-    y = x_max ** 3 / (3 * np.sqrt(2))
-    # ONLY 2 Real(Ψ) =  2 B cos(y) solutions
-    Ψ1_init, Φ1_init = (np.cos(y), - x_max**2 * np.sin(y) * np.sqrt(2))
-
-    while intervals and iteration < max_iterations:
-        E1, E2 = intervals.pop(0)
-
+def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
+    while abs(E1 - E2) > tolerance:
+        # bisect interval
         E_new = (E1 + E2) / 2
+        Ψ_new, Φ_new = integrate(E_new, Ψ1, Φ1, dx) # integrate from boundary to zero
 
-        Ψ1, Φ1 = Ψ1_init, Φ1_init
-        Ψ2, Φ2 = Ψ1_init, Φ1_init
-        wavefunction = []  # store wavefunction solution
+        # find sign of solution and derivative
+        A_new = np.sign(Ψ_new)
+        AΦ_new = np.sign(Φ_new)
+        
 
-        # Integrate for given E values
-        Ψ1, Φ1 = integrate(E1, Ψ1, Φ1, dx)
-        Ψ2, Φ2 = integrate(E2, Ψ2, Φ2, dx)
-        wavefunction.append(Ψ2)
-
-        # Test condition at the origin
-        A1 = Ψ1
-        A2 = Ψ2
-
-        # POTENTIAL ROOT CASE
-        if np.sign(A1) != np.sign(A2):
-            if abs(E_new - E2) < tolerance:
-                # normalise wavefunction
-                wavefunction = np.array(wavefunction)
-                integral = np.sum(np.abs(wavefunction) ** 2) * dx
-                Ψ_normalised = wavefunction / np.sqrt(integral)
-                print(
-                    f"wavefunction is normalised? {np.sum(np.abs(Ψ_normalised) ** 2) * dx}"
-                )
-
-                print(f"\nEIGENVALUE FOUND! {E_new = }\n")
-                eigenvalues_found.append(E_new)  # store the eigenvalue
-                wavefunctions_found.append(Ψ_normalised)
-
-                # split the interval to search for other potential roots
-                intervals.append((E1, E_new - tolerance))
-                intervals.append((E_new + tolerance, E2))
-            else:
-                # REFINING TEH SEARCH
-                intervals.append((E1, E_new))
-                intervals.append((E_new, E2))
-
-        iteration += 1
-
-    if not intervals:
-        print("No more energy intervals to check")
-
-    if iteration >= max_iterations:
-        print(
-            "\nNO EIGENVALUE FOUND YET...\n<<<<Maximum number of iterations reached without convergence>>>>\n"
-        )
-        return None
-
-    return np.array(eigenvalues_found), np.array(wavefunctions_found)
+        if A_new != A1 or AΦ_new == AΦ1:
+            E2 = E_new
+        else:
+            E1 = E_new
+            
+        A = A_new
+        AΦ = AΦ_new
+    return E_new
 
 
-def find_eigenvalues(E_min, E_max, num_intervals, tolerance):
-    # initialise lists for hdf5 files
+def find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
-    solutions = []
-
-    # define energy range to search
-    E_range = np.linspace(E_min, E_max, num_intervals + 1)
-
-    for i in range(num_intervals):
-        E1 = E_range[i]
-        E2 = E_range[i + 1]
-
-        print(f"shooting between {E1 = } and {E2 = }")
-
-        eigenvalues_found, wavefunctions_found = solve_tise(E1, E2, tolerance)
-        if eigenvalues_found.size > 0:
-            for idx, eigenvalue in enumerate(eigenvalues_found):
-                if not any(
-                    abs(eigenvalue - E_existing) < tolerance
-                    for E_existing in eigenvalues
-                ):
-                    eigenvalues.append(eigenvalue)
-                    solutions.append(wavefunctions_found[idx])
-
-    eigenvalues = np.array(eigenvalues)
-    eigenvalues = np.sort(eigenvalues)
-    save_to_hdf5("HO_eigenvalues_and_solutions.h5", eigenvalues, solutions)
+    
+    E1 = E_min
+    while E1 < E_max:
+        E2 = E1 + dE
+        Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
+        Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
+        
+        A1 = np.sign(Ψ1)
+        A2 = np.sign(Ψ2)
+        AΦ1 = np.sign(Φ1)
+        AΦ2 = np.sign(Φ2)
+        
+        if A1 != A2 or AΦ1 == AΦ2:
+            eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ_init, Φ_init, dx)
+            eigenvalues.append(eigenvalue)
+            E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
+        else:
+            E1 = E2  # no eigenvalue in this range, move to next interval
+    
     return eigenvalues
-
-
-def save_to_hdf5(filename, eigenvalues, solutions):
-    with h5py.File(filename, 'w') as hf:
-        hf.create_dataset("eigenvalues", data=eigenvalues)
-        for i, solution in enumerate(solutions):
-            hf.create_dataset(f"solution_{i}", data=solution)
-
 
 def initialisation_parameters():
 
-    tolerance = 1e-6
+    tolerance = 1e-3
 
     dx = 0.01
 
@@ -183,27 +123,24 @@ if __name__ == "__main__":
 
     tolerance, dx, x_max, Nx, x = initialisation_parameters()
 
-    # Analytical HO energies to compare to
-    E_HO = np.array([0.5, 1.5, 2.5, 3.5, 4.5])
-
-    # HO frequency
-    ω = 1  ### MAYBE need TO CHANGE THIS UP (make variable)
-
+    # * ~ENERGY~ *
     E_min = 0
-    E_max = 26
-    num_intervals = 2000
-    eigenvalues = find_eigenvalues(E_min, E_max, num_intervals, tolerance)
+    E_max = 5
+    dE = 0.5
 
-    print(f"\n{eigenvalues = }")
-    print(f"\nThese are the energies that we expect:\n{E_HO =}")
+    # HO POTENTIAL I.V.:
+    y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
+    Ψ_init, Φ_init = (np.exp(y), np.exp(y) * (np.sqrt(x_max ** 2) / np.sqrt(2)))
 
-    print("\nTESTING PARAMETERS:")
-    print(f"{tolerance = }")
-    print("\n*~ spatial space ~*")
-    print(f"{x_max = }")
-    print(f"{dx = }")
-    print(f"{Nx = }")
-    print("\n*~ Energy ~*")
-    print(f"{ω = }")
-    print(f"{E_min = }, {E_max = }")
-    print(f"{num_intervals = }")
+    Ψ1, Φ1 = Ψ_init, Φ_init
+    Ψ2, Φ2 = Ψ_init, Φ_init
+
+    # Integrate for given E values
+
+    Ψ1, Φ1 = integrate(E_min, Ψ1, Φ1, dx)
+    Ψ2, Φ2 = integrate(E_max, Ψ2, Φ2, dx)
+
+    evals = find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx)
+
+    print(f"\n{evals = }")
+    print(f"{np.shape(evals) = }")
