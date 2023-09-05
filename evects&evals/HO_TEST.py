@@ -27,7 +27,7 @@ def Schrödinger_eqn(x, Ψ, Φ, E):
 
 
 # Algorithm Runge-Kutta 4 for integrating TISE eigenvalue problem
-def Schrödinger_RK4(x, Ψ, Φ, E, dx):
+def Schrödinger_RK4(x, Ψ, Φ, E, dx): # maybe an error creeping in here!!!!!
     k1_Ψ, k1_Φ = Schrödinger_eqn(x, Ψ, Φ, E)
     k2_Ψ, k2_Φ = Schrödinger_eqn(
         x + 0.5 * dx, Ψ + 0.5 * dx * k1_Ψ, Φ + 0.5 * dx * k1_Φ, E
@@ -56,7 +56,10 @@ def integrate(E, Ψ, Φ, dx):
 
 
 def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
+    i=0
     while abs(E1 - E2) > tolerance:
+        i+=1
+        print(f"{i = }")
         # bisect interval
         E_new = (E1 + E2) / 2
         Ψ_new, Φ_new = integrate(E_new, Ψ1, Φ1, dx) # integrate from boundary to zero
@@ -66,19 +69,21 @@ def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
         AΦ_new = np.sign(Φ_new)
         
 
-        if A_new != A1 or AΦ_new == AΦ1:
+        if A_new != A1:#or AΦ_new == AΦ1:
             E2 = E_new
         else:
             E1 = E_new
             
+        # print(f"{Ψ_new, = }")
         A = A_new
         AΦ = AΦ_new
+    print(f"{Ψ_new, = }")
     return E_new
 
 
 def find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
-    
+    j=0
     E1 = E_min
     while E1 < E_max:
         E2 = E1 + dE
@@ -89,27 +94,37 @@ def find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx)
         A2 = np.sign(Ψ2)
         AΦ1 = np.sign(Φ1)
         AΦ2 = np.sign(Φ2)
-        
-        if A1 != A2 or AΦ1 == AΦ2:
+
+        # print(f"{j =}")
+        # print(f"{Ψ1 = }")
+        # print(f"{Ψ2 = }")
+        # j+=1
+
+        if A1 != A2: #or AΦ1 == AΦ2:
+            print("lets a go")
+            print(f"{E1 = }")
+            print(f"{E2 = }")
             eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ_init, Φ_init, dx)
             eigenvalues.append(eigenvalue)
             E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
         else:
             E1 = E2  # no eigenvalue in this range, move to next interval
     
+
     return eigenvalues
 
 def initialisation_parameters():
 
-    tolerance = 1e-6
+    tolerance = 1e-15
 
-    dx = 0.01
+    dx = 0.005
 
     # space dimension
-    x_max = 15
+    x_max = 10
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
+    print(f"{x =}")
     return (
         tolerance,
         dx,
@@ -124,11 +139,13 @@ if __name__ == "__main__":
     tolerance, dx, x_max, Nx, x = initialisation_parameters()
 
     # * ~ENERGY~ *
-    E_min = 1e-6
-    E_max = 6
-    dE = 0.05
+    E_min = 1
+    E_max = 3
+    dE = 0.011
 
-    E_HO = [0.5, 1.5, 2.5, 3.5, 4.5]
+    E_HO_even = [0.5, 2.5, 4.5]
+    E_HO_odd = [1.5, 3.5, 5.5]
+
 
     # HO POTENTIAL I.V.:
     y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
@@ -149,4 +166,5 @@ if __name__ == "__main__":
     print(f"\n{dE = }")
     # Printing the formatted list
     print(f"\nevals = {formatted_list}")
-    print(f"\n{E_HO = }")
+    # print(f"\n{E_HO_even = }")
+    print(f"\n{E_HO_odd = }")
