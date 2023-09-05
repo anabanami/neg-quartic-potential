@@ -48,7 +48,7 @@ def Schrödinger_RK4(x, Ψ, Φ, E, dx):
 
 
 def integrate(E, Ψ, Φ, dx):
-    """Reversed running of the RK4 Integrator through the grid one xn in x at a time:
+    """ ***Reversed*** running of the RK4 Integrator through the grid one xn in x at a time:
     For each point xn in this grid, I update the wavefunction Ψ using Schrödinger_RK4()."""
     for i, xn in reversed(list(enumerate(x))):
         Ψ, Φ = Schrödinger_RK4(xn, Ψ, Φ, E, -dx)
@@ -101,7 +101,7 @@ def find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx)
 
 def initialisation_parameters():
 
-    tolerance = 1e-3
+    tolerance = 1e-6
 
     dx = 0.01
 
@@ -124,9 +124,11 @@ if __name__ == "__main__":
     tolerance, dx, x_max, Nx, x = initialisation_parameters()
 
     # * ~ENERGY~ *
-    E_min = 0
-    E_max = 5
-    dE = 0.5
+    E_min = 1e-6
+    E_max = 6
+    dE = 0.05
+
+    E_HO = [0.5, 1.5, 2.5, 3.5, 4.5]
 
     # HO POTENTIAL I.V.:
     y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
@@ -141,6 +143,10 @@ if __name__ == "__main__":
     Ψ2, Φ2 = integrate(E_max, Ψ2, Φ2, dx)
 
     evals = find_multiple_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx)
+    sliced_list = evals[:5]
+    formatted_list = [f"{evalue:.5f}" for evalue in sliced_list]
 
-    print(f"\n{evals = }")
-    print(f"{np.shape(evals) = }")
+    print(f"\n{dE = }")
+    # Printing the formatted list
+    print(f"\nevals = {formatted_list}")
+    print(f"\n{E_HO = }")
