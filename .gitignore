@@ -27,6 +27,8 @@ comparing variance for dx/
 *.mp4
 *.npy
 *.hdf5
+*.h5
+
 
 1.py
 1.5.py

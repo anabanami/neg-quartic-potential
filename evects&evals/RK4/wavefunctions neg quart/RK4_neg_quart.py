@@ -50,21 +50,27 @@ In summary, this code serves as a tool for finding the allowed energy levels of 
 providing an essential part of understanding the behavior of quantum systems in such potentials.
 """
 
-# RK4 to solve HO Eigenvalue problem with shooting method
+# RK4 to solve neg quartic Eigenvalue problem with shooting method
 # Ana Fabela 27/08/2023
 
 import numpy as np
 import h5py
 
 
-def save_to_hdf5(filename, eigenvalues):
+def normalize_wavefunction(wavefunction, dx):
+    integral = np.sum(np.abs(wavefunction) ** 2) * dx
+    normalization_constant = np.sqrt(2 / integral)
+    return wavefunction * normalization_constant
+
+
+def save_to_hdf5(filename, eigenvalues, eigenfunctions):
     with h5py.File(filename, 'w') as hf:
-        hf.create_dataset("eigenvalues", data=eigenvalues)
+        hf.create_dataset(f"{eigenvalues}", data=eigenvalues)
+        hf.create_dataset(f"{eigenfunctions}", data=eigenfunctions)
 
 
 def V(x):
-    return -0.5 * x ** 2  # HO
-    # return 0.5 * x ** 4# negative quartic potential
+    return 0.5 * x ** 4
 
 
 # Schrödinger equation
@@ -77,7 +83,7 @@ def Schrödinger_eqn(x, Ψ, Φ, E):
 
 
 # Algorithm Runge-Kutta 4 for integrating TISE eigenvalue problem
-def Schrödinger_RK4(x, Ψ, Φ, E, dx):  # maybe an error creeping in here!!!!!
+def Schrödinger_RK4(x, Ψ, Φ, E, dx):
     k1_Ψ, k1_Φ = Schrödinger_eqn(x, Ψ, Φ, E)
     k2_Ψ, k2_Φ = Schrödinger_eqn(
         x + 0.5 * dx, Ψ + 0.5 * dx * k1_Ψ, Φ + 0.5 * dx * k1_Φ, E
@@ -107,7 +113,9 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
         wavefunction.append(Ψ)
 
     if save_wavefunction:
-        save_to_hdf5(f"wavefunction_{E}", wavefunction)
+        normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dx)
+        save_to_hdf5(f"wavefunction_{E}.h5", E, normalized_wavefunction)
+        # print(f"{np.shape(wavefunction) = }")
     return Ψ, Φ
 
 
@@ -143,7 +151,7 @@ def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init,
     i = 0
     E1 = E_min
     while E1 < E_max:
-        # print(f"{i = }")
+        print(f"{i = }")
         E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
@@ -165,7 +173,6 @@ def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init,
             E1 = E2  # no eigenvalue in this range, move to next interval
         i += 1
 
-    # print(f"\n{i = }")
     return eigenvalues
 
 
@@ -174,7 +181,7 @@ def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init
     j = 0
     E1 = E_min
     while E1 < E_max:
-        # print(f"{j = }")
+        print(f"{j = }")
         E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
@@ -196,14 +203,13 @@ def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init
             E1 = E2  # no eigenvalue in this range, move to next interval
         j += 1
 
-    # print(f"\n{j = }")
     return eigenvalues
 
 
 def initialisation_parameters():
     tolerance = 1e-15
 
-    dx = 9e-5
+    dx = 9e-4
 
     # space dimension
     x_max = 8
@@ -227,10 +233,9 @@ if __name__ == "__main__":
     E_min = 0
     E_max = 6
     dE = 9e-3
-    # dE =0.1
 
-    E_HO_even = [0.5, 2.5, 4.5]
-    E_HO_odd = [1.5, 3.5, 5.5]
+    E_even = [1.477150, 11.802434, 25.791792]
+    E_odd = [6.003386, 18.458819]
 
     # HO POTENTIAL I.V.:
     y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
@@ -245,6 +250,7 @@ if __name__ == "__main__":
 
     #################################################
 
+    print("finding odd eigenvalues")
     odd_evals = find_multiple_odd_eigenvalues(
         E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
     )
@@ -253,6 +259,7 @@ if __name__ == "__main__":
 
     #################################################
 
+    print("finding even eigenvalues")
     even_evals = find_multiple_even_eigenvalues(
         E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
     )
@@ -263,9 +270,9 @@ if __name__ == "__main__":
     print(f"{dE = }")
 
     # Printing the formatted list
-    print(f"\nfirst 3 odd eigenvalues = {formatted_even_list}")
-    print(f"expected:{E_HO_even = }")
+    print(f"\nfirst 3 even eigenvalues = {formatted_even_list}")
+    print(f"expected:{E_even = }")
 
     print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
-    print(f"expected:{E_HO_odd = }")
+    print(f"expected:{E_odd = }")
     #################################################
