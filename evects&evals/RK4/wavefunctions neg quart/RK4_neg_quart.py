@@ -63,10 +63,10 @@ def normalize_wavefunction(wavefunction, dx):
     return wavefunction * normalization_constant
 
 
-def save_to_hdf5(filename, eigenvalues, eigenfunctions):
+def save_to_hdf5(filename, eigenvalue, eigenfunction):
     with h5py.File(filename, 'w') as hf:
-        hf.create_dataset(f"{eigenvalues}", data=eigenvalues)
-        hf.create_dataset(f"{eigenfunctions}", data=eigenfunctions)
+        dataset = hf.create_dataset("eigenfunction", data=eigenfunction)
+        dataset.attrs["eigenvalue"] = eigenvalue
 
 
 def V(x):
@@ -115,7 +115,6 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
     if save_wavefunction:
         normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dx)
         save_to_hdf5(f"wavefunction_{E}.h5", E, normalized_wavefunction)
-        # print(f"{np.shape(wavefunction) = }")
     return Ψ, Φ
 
 
@@ -123,6 +122,7 @@ def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
     k = 0
     while tolerance <= abs(E1 - E2):
         # print(f"{k = }")
+        print(f"************* Entering bisection")
         E_new = (E1 + E2) / 2
         Ψ_new, Φ_new = integrate(E_new, Ψ1, Φ1, dx)
 
@@ -142,6 +142,7 @@ def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
         k += 1
 
     # Save the wavefunction corresponding to E_new
+    print(f"*** ~~saving wavefunction for eigenvalue {E_new}~~ ***")
     _, _ = integrate(E_new, Ψ1, Φ1, dx, save_wavefunction=True)
     return E_new
 
@@ -209,7 +210,7 @@ def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init
 def initialisation_parameters():
     tolerance = 1e-15
 
-    dx = 9e-4
+    dx = 2.25e-4
 
     # space dimension
     x_max = 8
@@ -230,16 +231,16 @@ if __name__ == "__main__":
     tolerance, dx, x_max, Nx, x = initialisation_parameters()
 
     # * ~ENERGY~ *
-    E_min = 0
-    E_max = 6
-    dE = 9e-3
+    E_min = 1
+    E_max = 27
+    dE = 0.04
 
     E_even = [1.477150, 11.802434, 25.791792]
     E_odd = [6.003386, 18.458819]
 
-    # HO POTENTIAL I.V.:
-    y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
-    Ψ_init, Φ_init = (np.exp(y), np.exp(y) * (np.sqrt(x_max ** 2) / np.sqrt(2)))
+    # NEG QUART POTENTIAL I.V.:
+    y = x_max ** 3 / (3 * np.sqrt(2))
+    Ψ_init, Φ_init = (2 * np.cos(y), - np.sqrt(2) * x_max ** 2 * np.sin(y))
 
     Ψ1, Φ1 = Ψ_init, Φ_init
     Ψ2, Φ2 = Ψ_init, Φ_init
@@ -254,6 +255,7 @@ if __name__ == "__main__":
     odd_evals = find_multiple_odd_eigenvalues(
         E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
     )
+
     sliced_odd_list = odd_evals[:3]
     formatted_odd_list = np.array([evalue for evalue in sliced_odd_list])
 
@@ -263,8 +265,11 @@ if __name__ == "__main__":
     even_evals = find_multiple_even_eigenvalues(
         E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
     )
+
     sliced_even_list = even_evals[:3]
     formatted_even_list = np.array([evalue for evalue in sliced_even_list])
+
+    #################################################
 
     print(f"\n{dx = }")
     print(f"{dE = }")
@@ -275,4 +280,3 @@ if __name__ == "__main__":
 
     print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
     print(f"expected:{E_odd = }")
-    #################################################

@@ -11,16 +11,15 @@ def V(x):
     return -0.5 * x ** 4
 
 def even_extension(y):
-    return np.concatenate([y, y[::-1][:-1]])
+    return np.concatenate([y[::-1][:-1], y])
 
 
 def odd_extension(y):
-    return np.concatenate([y, y[::-1][:-1]])
-    # return np.concatenate([-y, y[::-1][:-1]])
+    return np.concatenate([-y[::-1][:-1] ,y])
 
 
 def initialisation_parameters():
-    dx = 9e-4
+    dx = 2.25e-4
 
     # space dimension
     x_max = 8
@@ -43,19 +42,18 @@ if __name__ == "__main__":
     wavefunctions = []
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
 
-    for i in range(5):
+    for i in range(6):
 
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
         with h5py.File(f"wavefunction_{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
-            evalue_data = list(file.values())[0][()]
-            evalue = float(evalue_data)
+            evalue = file["eigenfunction"].attrs["eigenvalue"]
             eigenvalues.append(evalue)
 
-            numpy_array = np.array(list(file.values())[1])  # Get the wavefunction
-            wavefunctions.append(numpy_array)
+            numpy_array = file["eigenfunction"][:]  # Get the wavefunction
+            wavefunctions.append(numpy_array[::-1])
 
     # print(f"\nWe got this many wavefunctions:{np.shape(wavefunctions)}")
 
@@ -72,6 +70,19 @@ if __name__ == "__main__":
 
         plt.plot(x, np.real(wf) + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
         plt.plot(x, np.imag(wf) + evalue, "--", linewidth=1, color=color)
+
+    textstr = '\n'.join(
+        (
+            fr'$E_0 = {np.real(eigenvalues[0]):.06f}$',
+            fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
+            fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
+            fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
+            fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
+            fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
+        )
+    )
+    # place a text box in upper left in axes coords
+    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
     plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     plt.legend()
