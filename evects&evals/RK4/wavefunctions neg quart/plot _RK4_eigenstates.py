@@ -8,7 +8,7 @@ plt.rcParams['figure.dpi'] = 200
 
 
 def V(x):
-    return -0.5 * x ** 4
+    return - x ** 4
 
 def even_extension(y):
     return np.concatenate([y[::-1][:-1], y])
@@ -42,7 +42,8 @@ if __name__ == "__main__":
     wavefunctions = []
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
 
-    for i in range(6):
+
+    for i in range(5):
 
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
@@ -78,13 +79,15 @@ if __name__ == "__main__":
             fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
             fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
             fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
-            fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
+            # fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
+            # fr'$E_6 = {np.real(eigenvalues[6]):.06f}$',
+
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')

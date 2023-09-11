@@ -222,9 +222,9 @@ if __name__ == "__main__":
     print(f"\n{dx = }")
     print(f"{dE = }")
 
+    print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
+    print(f"expected:{E_HO_odd = }")
+
     # Printing the formatted list
     print(f"\nfirst 3 even eigenvalues = {formatted_even_list}")
     print(f"expected:{E_HO_even = }")
-
-    print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
-    print(f"expected:{E_HO_odd = }")

@@ -1,55 +1,3 @@
-# RK4 to solve negative quartic Eigenvalue problem with shooting method
-# Ana Fabela 15/08/2023
-
-"""
-This code provides a way to numerically solve the Time-Independent Schrödinger Equation (TISE) for a specific potential, using the shooting method and the Runge-Kutta 4 (RK4) algorithm.
- The goal is to find the energy eigenvalues of a quantum system for a given potential. Let me break down the main aspects of the code:
-
-    Imports and Settings:
-        Essential Python libraries and modules like numpy, matplotlib, scipy.fft, and scipy.signal are imported.
-        Default settings for plotting (with matplotlib) and printing (with numpy) are set.
-
-    Potential Function (V):
-        V(x)=0.5x**4: Defines the quartic potential function in terms of a position variable x.
-
-    Schrödinger's Equation:
-        This function returns the spatial derivatives of the wavefunction (Ψ) and its first spatial derivative (Φ) using the Schrödinger equation.
-         The potential V and the energy E are parameters of this equation.
-
-    Runge-Kutta 4 (RK4) Method:
-        Schrödinger_RK4 is a numerical integration method to solve ordinary differential equations (ODEs).
-         Here, it's used to solve Schrödinger's equation for the given potential.
-
-    Shooting Method:
-        The Solve function uses the shooting method. 
-        Given two initial energy guesses (E1 and E2), the function integrates Schrödinger's equation from some boundary towards another boundary 
-        and checks if the solution matches the desired boundary condition at the final point of integration.
-        The energies E1 and E2 are then updated using an interval bisection method until the solution converges or a maximum number of iterations is reached.
-
-    Finding Eigenvalues:
-        find_multiple_eigenvalues divides the energy range into intervals. For each interval, the Solve function is called to find an energy eigenvalue. 
-        Duplicate eigenvalues (from neighboring intervals) are filtered out.
-
-    Global Parameters:
-        initialisation_parameters function returns the global parameters like tolerance and space discretization parameters.
-
-    Main Execution (__main__):
-        This section initializes all parameters and declare an initial value to solve the Schrodinger equation via the integrate and the find_multiple_eigenvalues functions.
-        Various parameters and results are printed to the console for inspection.
-        The found eigenvalues are printed out and compared with a set of known values (E_bender_RK4 and E_bender_wkb).
-
-
-Key Points:
-    The code is built to solve the TISE for a negative quartic potential. This potential is non-analytic, meaning it doesn't have a known exact solution, so numerical methods
-    like the shooting method are appropriate.
-    The Runge-Kutta 4 (RK4) method is chosen as the numerical integrator because of its accuracy.
-    The shooting method, combined with the bisection method, is applied to adjust the energy guesses iteratively until a solution meeting the desired boundary condition is found.
-    The eigenvalues found represent the allowed energy levels of the quantum system under the defined negative quartic potential.
-
-In summary, this code serves as a tool for finding the allowed energy levels of a quantum system governed by a negative quartic potential, 
-providing an essential part of understanding the behavior of quantum systems in such potentials.
-"""
-
 # RK4 to solve neg quartic Eigenvalue problem with shooting method
 # Ana Fabela 27/08/2023
 
@@ -70,15 +18,14 @@ def save_to_hdf5(filename, eigenvalue, eigenfunction):
 
 
 def V(x):
-    return 0.5 * x ** 4
+    return -x ** 4
 
 
 # Schrödinger equation
 def Schrödinger_eqn(x, Ψ, Φ, E):
     """Ψ is the state, Φ is the fist spatial derivative of the state."""
-    dΨ = Φ
-    # my specific negative quartic problem. This applies 2E_A = E_B scaling to match Bender's energy
-    dΦ = -2 * (V(x) + E) * Ψ
+    dΨ = Φ 
+    dΦ = - (- V(x) + E) * Ψ
     return dΨ, dΦ
 
 
@@ -118,26 +65,36 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
     return Ψ, Φ
 
 
-def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
+def bisection(E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ1, Φ1, dx, even):
     k = 0
     while tolerance <= abs(E1 - E2):
         # print(f"{k = }")
         print(f"************* Entering bisection")
+        print(f"{E1 = }")
+        print(f"{E2 = }")
+
         E_new = (E1 + E2) / 2
         Ψ_new, Φ_new = integrate(E_new, Ψ1, Φ1, dx)
 
         A_new = np.sign(Ψ_new)
         AΦ_new = np.sign(Φ_new)
 
-        if A_new != A1:
-            E2 = E_new
-        elif AΦ_new != AΦ1:
-            E2 = E_new
+        
+        if even:
+            if AΦ_new != AΦ1:
+                E2 = E_new
+                AΦ2 = AΦ_new
+            else:
+                E1 = E_new
+                AΦ2 = A_new
         else:
-            E1 = E_new
+            if A_new != A1:
+                E2 = E_new
+                A2 = A_new
+            else:
+                E1 = E_new
+                A1 = A_new
 
-        A = A_new
-        AΦ = AΦ_new
 
         k += 1
 
@@ -147,13 +104,11 @@ def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
     return E_new
 
 
-def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
+def find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
     i = 0
-    E1 = E_min
-    while E1 < E_max:
+    for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{i = }")
-        E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
 
@@ -167,23 +122,20 @@ def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init,
             print("\nlet's-a go")
             print(f"{E1 = }")
             print(f"{E2 = }")
-            eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx)
+            eigenvalue = bisection(E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ1, Φ1, dx, even=False)
             eigenvalues.append(eigenvalue)
-            E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
-        else:
-            E1 = E2  # no eigenvalue in this range, move to next interval
+        # else:            
+
         i += 1
 
     return eigenvalues
 
 
-def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
+def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
     j = 0
-    E1 = E_min
-    while E1 < E_max:
+    for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{j = }")
-        E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
 
@@ -197,18 +149,17 @@ def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init
             print("\nMama mia!")
             print(f"{E1 = }")
             print(f"{E2 = }")
-            eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ_init, Φ_init, dx)
+            eigenvalue = bisection(E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ_init, Φ_init, dx, even=True)
             eigenvalues.append(eigenvalue)
-            E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
-        else:
-            E1 = E2  # no eigenvalue in this range, move to next interval
+        # else:
+
         j += 1
 
     return eigenvalues
 
 
 def initialisation_parameters():
-    tolerance = 1e-15
+    tolerance = 1e-8
 
     dx = 2.25e-4
 
@@ -232,8 +183,10 @@ if __name__ == "__main__":
 
     # * ~ENERGY~ *
     E_min = 1
-    E_max = 27
-    dE = 0.04
+    E_max = 26
+    dE = (E_max - E_min) / 1000
+
+    Es = np.linspace(E_min, E_max, 1000)
 
     E_even = [1.477150, 11.802434, 25.791792]
     E_odd = [6.003386, 18.458819]
@@ -253,7 +206,7 @@ if __name__ == "__main__":
 
     print("finding odd eigenvalues")
     odd_evals = find_multiple_odd_eigenvalues(
-        E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
+        Es, tolerance, Ψ_init, Φ_init, dx
     )
 
     sliced_odd_list = odd_evals[:3]
@@ -263,7 +216,7 @@ if __name__ == "__main__":
 
     print("finding even eigenvalues")
     even_evals = find_multiple_even_eigenvalues(
-        E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
+        Es, tolerance, Ψ_init, Φ_init, dx
     )
 
     sliced_even_list = even_evals[:3]
@@ -274,9 +227,10 @@ if __name__ == "__main__":
     print(f"\n{dx = }")
     print(f"{dE = }")
 
-    # Printing the formatted list
-    print(f"\nfirst 3 even eigenvalues = {formatted_even_list}")
-    print(f"expected:{E_even = }")
 
     print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
     print(f"expected:{E_odd = }")
+
+    # Printing the formatted list
+    print(f"\nfirst 3 even eigenvalues = {formatted_even_list}")
+    print(f"expected:{E_even = }")
