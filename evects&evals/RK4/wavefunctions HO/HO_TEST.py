@@ -18,7 +18,7 @@ def save_to_hdf5(filename, eigenvalue, eigenfunction):
 
 
 def V(x):
-    return -0.5 * x ** 2
+    return x ** 2
 
 
 # Schrödinger equation
@@ -26,7 +26,7 @@ def Schrödinger_eqn(x, Ψ, Φ, E):
     """Ψ is the state, Φ is the fist spatial derivative of the state."""
     dΨ = Φ
     # my specific negative quartic problem. This applies 2E_A = E_B scaling to match Bender's energy
-    dΦ = -2 * (V(x) + E) * Ψ
+    dΦ = -(E - V(x)) * Ψ
     return dΨ, dΦ
 
 
@@ -61,47 +61,53 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
         wavefunction.append(Ψ)
 
     if save_wavefunction:
+        # Save the wavefunction corresponding to E_new
+        print(f"*** ~~saving wavefunction for eigenvalue {E}~~ ***")
         normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dx)
         save_to_hdf5(f"wavefunction_{E}.h5", E, normalized_wavefunction)
     return Ψ, Φ
 
 
-def bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx):
+def bisection(E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ_init, Φ_init, dx, even):
     k = 0
     while tolerance <= abs(E1 - E2):
         # print(f"{k = }")
         print(f"************* Entering bisection")
+        print(f"{E1 = }")
+        print(f"{E2 = }")
+
         E_new = (E1 + E2) / 2
-        Ψ_new, Φ_new = integrate(E_new, Ψ1, Φ1, dx)
+        Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx)
 
         A_new = np.sign(Ψ_new)
         AΦ_new = np.sign(Φ_new)
 
-        if A_new != A1:
-            E2 = E_new
-        elif AΦ_new != AΦ1:
-            E2 = E_new
+        if even:
+            if AΦ_new != AΦ1:
+                E2 = E_new
+                AΦ2 = AΦ_new
+            else:
+                E1 = E_new
+                AΦ1 = AΦ_new
         else:
-            E1 = E_new
-
-        A = A_new
-        AΦ = AΦ_new
+            if A_new != A1:
+                E2 = E_new
+                A2 = A_new
+            else:
+                E1 = E_new
+                A1 = A_new
 
         k += 1
 
-    # Save the wavefunction corresponding to E_new
-    print(f"*** ~~saving wavefunction for eigenvalue {E_new}~~ ***")
-    _, _ = integrate(E_new, Ψ1, Φ1, dx, save_wavefunction=True)
+    _, _ = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=True)
     return E_new
 
 
-def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
+def find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
     i = 0
-    E1 = E_min
-    while E1 < E_max:
+    for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{i = }")
-        E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
 
@@ -115,23 +121,21 @@ def find_multiple_odd_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init,
             print("\nlet's-a go")
             print(f"{E1 = }")
             print(f"{E2 = }")
-            eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ1, Φ1, dx)
+            eigenvalue = bisection(
+                E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ1, Φ1, dx, even=False
+            )
             eigenvalues.append(eigenvalue)
-            E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
-        else:
-            E1 = E2  # no eigenvalue in this range, move to next interval
+
         i += 1
 
     return eigenvalues
 
 
-def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx):
+def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
     eigenvalues = []
     j = 0
-    E1 = E_min
-    while E1 < E_max:
+    for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{j = }")
-        E2 = E1 + dE
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
 
@@ -145,20 +149,20 @@ def find_multiple_even_eigenvalues(E_min, E_max, dE, tolerance, Ψ_init, Φ_init
             print("\nMama mia!")
             print(f"{E1 = }")
             print(f"{E2 = }")
-            eigenvalue = bisection(E1, E2, A1, AΦ1, tolerance, Ψ_init, Φ_init, dx)
+            eigenvalue = bisection(
+                E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ_init, Φ_init, dx, even=True
+            )
             eigenvalues.append(eigenvalue)
-            E1 = E2 + dE  # skip to next interval, avoiding the eigenvalue just found
-        else:
-            E1 = E2  # no eigenvalue in this range, move to next interval
+
         j += 1
 
     return eigenvalues
 
 
 def initialisation_parameters():
-    tolerance = 1e-15
+    tolerance = 1e-6
 
-    dx = 2.25e-4
+    dx = 5e-4
 
     # space dimension
     x_max = 8
@@ -180,11 +184,14 @@ if __name__ == "__main__":
 
     # * ~ENERGY~ *
     E_min = 0
-    E_max = 6
-    dE = 0.04
+    E_max = 5
+    nE = 512
+    dE = (E_max - E_min) / nE
 
-    E_HO_even = [0.5, 2.5, 4.5]
-    E_HO_odd = [1.5, 3.5, 5.5]
+    Es = np.linspace(E_min, E_max, nE)
+
+    E_HO_even = [1, 5]
+    E_HO_odd = [3]
 
     # HO POTENTIAL I.V.:
     y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
@@ -199,20 +206,16 @@ if __name__ == "__main__":
 
     #################################################
 
-    print("finding odd eigenvalues")
-    odd_evals = find_multiple_odd_eigenvalues(
-        E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
-    )
+    print("\nfinding odd eigenvalues")
+    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
 
     sliced_odd_list = odd_evals[:3]
     formatted_odd_list = np.array([evalue for evalue in sliced_odd_list])
 
     #################################################
 
-    print("finding even eigenvalues")
-    even_evals = find_multiple_even_eigenvalues(
-        E_min, E_max, dE, tolerance, Ψ_init, Φ_init, dx
-    )
+    print("\nfinding even eigenvalues")
+    even_evals = find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
 
     sliced_even_list = even_evals[:3]
     formatted_even_list = np.array([evalue for evalue in sliced_even_list])

@@ -8,7 +8,7 @@ plt.rcParams['figure.dpi'] = 200
 
 
 def V(x):
-    return 0.5 * x ** 2
+    return x ** 2
 
 def even_extension(y):
     return np.concatenate([y[::-1][:-1], y])
@@ -19,7 +19,7 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 2.25e-4
+    dx = 5e-4
 
     # space dimension
     x_max = 8
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     wavefunctions = []
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
 
-    for i in range(6):
+    for i in range(3):
 
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
@@ -76,9 +76,9 @@ if __name__ == "__main__":
             fr'$E_0 = {np.real(eigenvalues[0]):.06f}$',
             fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
             fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
-            fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
-            fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
-            fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
+            # fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
+            # fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
+            # fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
         )
     )
     # place a text box in upper left in axes coords
