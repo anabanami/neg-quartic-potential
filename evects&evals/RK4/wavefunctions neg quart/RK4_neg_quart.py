@@ -192,20 +192,23 @@ if __name__ == "__main__":
     E_even = [1.477150, 11.802434, 25.791792]
     E_odd = [6.003386, 18.458819]
 
-    # NEG QUART POTENTIAL I.V.:
+    #################################################
+
+    # NEG QUART POTENTIAL I.C. COSINE
     y = x_max ** 3 / (3 * np.sqrt(2))
     Ψ_init, Φ_init = (
         2 * np.cos(y),
-        -np.sqrt(2) * x_max ** 2 * np.sin(y),
+        -np.sqrt(2) * (x_max ** 2) * np.sin(y),
     )
 
     #################################################
 
-    print("\nfinding odd eigenvalues")
-    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
-
-    sliced_odd_list = odd_evals[:3]
-    formatted_odd_list = np.array([evalue for evalue in sliced_odd_list])
+    # # NEG QUART POTENTIAL I.C. SINE
+    # y = x_max ** 3 / (3 * np.sqrt(2))
+    # Ψ_init, Φ_init = (
+    #     2 * np.sin(y),
+    #     np.sqrt(2) * (x_max ** 2) * np.cos(y),
+    # )
 
     #################################################
 
@@ -217,12 +220,20 @@ if __name__ == "__main__":
 
     #################################################
 
+    print("\nfinding odd eigenvalues")
+    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
+
+    sliced_odd_list = odd_evals[:3]
+    formatted_odd_list = np.array([evalue for evalue in sliced_odd_list])
+
+    #################################################
+
     print(f"\n{dx = }")
     print(f"{dE = }")
 
-    print(f"\nfirst few odd eigenvalues = {formatted_odd_list}")
-    print(f"expected:{E_odd = }")
-
     # Printing the formatted list
     print(f"\nfirst few even eigenvalues = {formatted_even_list}")
-    print(f"expected:{E_even = }")
+    print(f"expected:{E_even[0] = }")
+
+    print(f"\nfirst few odd eigenvalues = {formatted_odd_list}")
+    print(f"expected:{E_odd[0] = }")

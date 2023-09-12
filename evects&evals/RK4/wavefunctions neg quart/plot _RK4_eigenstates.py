@@ -40,7 +40,8 @@ if __name__ == "__main__":
 
     eigenvalues = []
     wavefunctions = []
-    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
+    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd (cosine IC)
+    # extension_funcs = [odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]  # Pattern of odd and even (cosine IC)
 
 
     for i in range(2):
@@ -55,8 +56,6 @@ if __name__ == "__main__":
 
             numpy_array = file["eigenfunction"][:]  # Get the wavefunction
             wavefunctions.append(numpy_array[::-1])
-
-    # print(f"\nWe got this many wavefunctions:{np.shape(wavefunctions)}")
 
     x = np.concatenate([-x[::-1][:-1], x])  # extend domain into negative numbers
     # print(x)
