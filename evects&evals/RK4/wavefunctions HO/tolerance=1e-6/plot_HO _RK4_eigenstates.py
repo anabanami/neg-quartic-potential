@@ -44,7 +44,7 @@ if __name__ == "__main__":
     # extension_funcs = [odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]  # Pattern of even and odd
 
 
-    for i in range(3):
+    for i in range(2):
 
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
@@ -78,7 +78,7 @@ if __name__ == "__main__":
             # fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
             # fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
             # fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
-            fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
+            # fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
             fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
             fr'$E_0 = {np.real(eigenvalues[0]):.06f}$',    
         )
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
-    # plt.legend()
+    plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')
     plt.title("First few eigenstates")

@@ -1,5 +1,5 @@
 # RK4 to solve HO Eigenvalue problem with shooting method
-# Ana Fabela 27/08/2023
+# Ana Fabela 14/09/2023
 
 import numpy as np
 import h5py
@@ -25,7 +25,6 @@ def V(x):
 def Schrödinger_eqn(x, Ψ, Φ, E):
     """Ψ is the state, Φ is the fist spatial derivative of the state."""
     dΨ = Φ
-    # my specific negative quartic problem. This applies 2E_A = E_B scaling to match Bender's energy
     dΦ = -(E - V(x)) * Ψ
     return dΨ, dΦ
 
@@ -33,20 +32,12 @@ def Schrödinger_eqn(x, Ψ, Φ, E):
 # Algorithm Runge-Kutta 4 for integrating TISE eigenvalue problem
 def Schrödinger_RK4(x, Ψ, Φ, E, dx):
     k1_Ψ, k1_Φ = Schrödinger_eqn(x, Ψ, Φ, E)
-    k2_Ψ, k2_Φ = Schrödinger_eqn(
-        x + 0.5 * dx, Ψ + 0.5 * dx * k1_Ψ, Φ + 0.5 * dx * k1_Φ, E
-    )
-    k3_Ψ, k3_Φ = Schrödinger_eqn(
-        x + 0.5 * dx, Ψ + 0.5 * dx * k2_Ψ, Φ + 0.5 * dx * k2_Φ, E
-    )
+    k2_Ψ, k2_Φ = Schrödinger_eqn(x + 0.5 * dx, Ψ + 0.5 * dx * k1_Ψ, Φ + 0.5 * dx * k1_Φ, E)
+    k3_Ψ, k3_Φ = Schrödinger_eqn(x + 0.5 * dx, Ψ + 0.5 * dx * k2_Ψ, Φ + 0.5 * dx * k2_Φ, E)
     k4_Ψ, k4_Φ = Schrödinger_eqn(x + dx, Ψ + dx * k3_Ψ, Φ + dx * k3_Φ, E)
 
-    Ψ_new = Ψ + (dx / 6) * (
-        k1_Ψ + 2 * k2_Ψ + 2 * k3_Ψ + k4_Ψ
-    )  # updated solution wavefunction
-    Φ_new = Φ + (dx / 6) * (
-        k1_Φ + 2 * k2_Φ + 2 * k3_Φ + k4_Φ
-    )  # updated first derivative of solution
+    Ψ_new = Ψ + (dx / 6) * (k1_Ψ + 2 * k2_Ψ + 2 * k3_Ψ + k4_Ψ)  # updated solution wavefunction
+    Φ_new = Φ + (dx / 6) * (k1_Φ + 2 * k2_Φ + 2 * k3_Φ + k4_Φ)  # updated first derivative of solution
 
     return Ψ_new, Φ_new
 
@@ -68,36 +59,53 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
     return Ψ, Φ
 
 
-def bisection(E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ_init, Φ_init, dx, even):
-    k = 0
-    while tolerance <= abs(E1 - E2):
-        # print(f"{k = }")
-        print(f"************* Entering bisection")
-        print(f"{E1 = }")
-        print(f"{E2 = }")
+def bisection_odd(A1, A2, E1, E2, tolerance):
+    print("\n~*~*~ BISECTION ~*~*~")
+    while abs(E2 - E1) >= tolerance:
 
         E_new = (E1 + E2) / 2
-        Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx)
+        Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=False)
+        A_new, AΦ_new = (np.sign(Ψ_new), np.sign(Φ_new))
 
-        A_new = np.sign(Ψ_new)
-        AΦ_new = np.sign(Φ_new)
+        print("---Boundaries and the solution signs---")
+        print(f"{E1 = } has sign {A1 = }")
+        print(f"{E_new = } has sign A_new = {A_new}")
+        print(f"{E2 = } has sign {A2 = }")
 
-        if even:
-            if AΦ_new != AΦ1:
-                E2 = E_new
-                AΦ2 = AΦ_new
-            else:
-                E1 = E_new
-                AΦ1 = AΦ_new
-        else:
-            if A_new != A1:
-                E2 = E_new
-                A2 = A_new
-            else:
-                E1 = E_new
-                A1 = A_new
 
-        k += 1
+        if  A1 != A_new:
+            print(f"%%% Root in left interval %%% ")
+            E2 = E_new
+
+        elif A2 != A_new:
+            print(f"%%% Root in right interval %%% ")
+            E1 = E_new
+
+    _, _ = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=True)
+    return E_new
+
+
+def bisection_even(A1, A2, E1, E2, tolerance):
+    print("\n~*~*~ BISECTION ~*~*~")
+    while abs(E2 - E1) >= tolerance:
+        
+        E_new = (E1 + E2) / 2
+        Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=False)
+        A_new, AΦ_new = (np.sign(Ψ_new), np.sign(Φ_new))
+
+        print("\n---Boundaries and the derivative signs---")
+        print(f"{E1 = } has sign {A1 = }")
+        print(f"{E_new = } has sign A_new = {AΦ_new}")
+        print(f"{E2 = } has sign {A2 = }")
+
+
+        if  A1 != AΦ_new:
+            print(f"%%% Root in left interval %%% ")
+            E2 = E_new
+
+        elif A2 != AΦ_new:
+            print(f"%%% Root in right interval %%% ")
+            E1 = E_new
 
     _, _ = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=True)
     return E_new
@@ -113,17 +121,11 @@ def find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
 
         A1 = np.sign(Ψ1)
         A2 = np.sign(Ψ2)
-        AΦ1 = np.sign(Φ1)
-        AΦ2 = np.sign(Φ2)
 
         if A1 != A2:
             # testing sign of solution
             print("\nlet's-a go")
-            print(f"{E1 = }")
-            print(f"{E2 = }")
-            eigenvalue = bisection(
-                E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ1, Φ1, dx, even=False
-            )
+            eigenvalue = bisection_odd(A1, A2, E1, E2, tolerance)
             eigenvalues.append(eigenvalue)
 
         i += 1
@@ -139,19 +141,13 @@ def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
         Ψ1, Φ1 = integrate(E1, Ψ_init, Φ_init, dx)
         Ψ2, Φ2 = integrate(E2, Ψ_init, Φ_init, dx)
 
-        A1 = np.sign(Ψ1)
-        A2 = np.sign(Ψ2)
         AΦ1 = np.sign(Φ1)
         AΦ2 = np.sign(Φ2)
 
         if AΦ1 != AΦ2:
             # testing sign of first derivative of solution
             print("\nMama mia!")
-            print(f"{E1 = }")
-            print(f"{E2 = }")
-            eigenvalue = bisection(
-                E1, E2, A1, AΦ1, A2, AΦ2, tolerance, Ψ_init, Φ_init, dx, even=True
-            )
+            eigenvalue = bisection_even(AΦ1, AΦ2, E1, E2, tolerance)
             eigenvalues.append(eigenvalue)
 
         j += 1
@@ -162,10 +158,10 @@ def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
 def initialisation_parameters():
     tolerance = 1e-6
 
-    dx = 5e-4
+    dx = 5e-3
 
     # space dimension
-    x_max = 8
+    x_max = 30
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -182,52 +178,47 @@ if __name__ == "__main__":
 
     tolerance, dx, x_max, Nx, x = initialisation_parameters()
 
-    # * ~ENERGY~ *
+    # HO POTENTIAL I.V.:
+    y = -(x_max ** 2) / 2
+    Ψ_init, Φ_init = (np.exp(y), -x_max * np.exp(y))
+
+    #################################################
+
+    print("\nfinding even wavefunction")
     E_min = 0
-    E_max = 5
+    E_max = 2
     nE = 512
     dE = (E_max - E_min) / nE
-
     Es = np.linspace(E_min, E_max, nE)
 
-    E_HO_even = [1, 5]
-    E_HO_odd = [3]
-
-    # HO POTENTIAL I.V.:
-    y = x_max * np.sqrt(x_max ** 2) / (2 * np.sqrt(2))
-    Ψ_init, Φ_init = (np.exp(y), np.exp(y) * (np.sqrt(x_max ** 2) / np.sqrt(2)))
-
-    Ψ1, Φ1 = Ψ_init, Φ_init
-    Ψ2, Φ2 = Ψ_init, Φ_init
-
-    # Integrate for given E values
-    Ψ1, Φ1 = integrate(E_min, Ψ1, Φ1, dx)
-    Ψ2, Φ2 = integrate(E_max, Ψ2, Φ2, dx)
-
-    #################################################
-
-    print("\nfinding odd eigenvalues")
-    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
-
-    sliced_odd_list = odd_evals[:3]
-    formatted_odd_list = np.array([evalue for evalue in sliced_odd_list])
-
-    #################################################
-
-    print("\nfinding even eigenvalues")
     even_evals = find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
 
-    sliced_even_list = even_evals[:3]
-    formatted_even_list = np.array([evalue for evalue in sliced_even_list])
+    #################################################
+    print("\nfinding odd wavefunction")
+
+    E_min = 2
+    E_max = 4
+    nE = 512
+    dE = (E_max - E_min) / nE
+    Es = np.linspace(E_min, E_max, nE)
+
+    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
 
     #################################################
+    print("\nfinding even wavefunction")
+
+    E_min = 4
+    E_max = 6
+    nE = 512
+    dE = (E_max - E_min) / nE
+    Es = np.linspace(E_min, E_max, nE)
+
+    even_evals = find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
 
     print(f"\n{dx = }")
     print(f"{dE = }")
+    print(f"{tolerance = }")
 
-    print(f"\nfirst 3 odd eigenvalues = {formatted_odd_list}")
-    print(f"expected:{E_HO_odd = }")
+    print(f"\n{even_evals = }")
+    print(f"\n{odd_evals = }")
 
-    # Printing the formatted list
-    print(f"\nfirst 3 even eigenvalues = {formatted_even_list}")
-    print(f"expected:{E_HO_even = }")
