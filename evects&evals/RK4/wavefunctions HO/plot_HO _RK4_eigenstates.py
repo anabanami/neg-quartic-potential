@@ -19,10 +19,10 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 5e-3
+    dx = 1e-5
 
     # space dimension
-    x_max = 30
+    x_max = 5
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        with h5py.File(f"wavefunction_{i}.h5", "r") as file:
+        with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
             evalue = file["eigenfunction"].attrs["eigenvalue"]
             eigenvalues.append(evalue)
@@ -70,8 +70,21 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(x, np.real(wf) + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
-        plt.plot(x, np.imag(wf) + evalue, "--", linewidth=1, color=color)
+        plt.plot(
+            x,
+            np.real(wf) + evalue,
+            linewidth=1,
+            label=Rf"$\psi_{i}$",
+            color=color,
+        )
+        
+        # plt.plot(
+        #     x,
+        #     np.imag(wf), #+ evalue,
+        #     "--",
+        #     linewidth=1,
+        #     color=color,
+        # )
 
     textstr = '\n'.join(
         (
@@ -86,7 +99,14 @@ if __name__ == "__main__":
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+    plt.plot(
+        x,
+        V(x),
+        linewidth=2,
+        alpha=0.4,
+        color='k',
+    )
+    
     # plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')

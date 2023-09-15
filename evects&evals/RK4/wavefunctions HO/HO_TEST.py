@@ -49,7 +49,8 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
     for i, xn in reversed(list(enumerate(x))):
         # Reduction of order of ODE
         Ψ, Φ = Schrödinger_RK4(xn, Ψ, Φ, E, -dx)
-        wavefunction.append(Ψ)
+        if save_wavefunction:
+            wavefunction.append(Ψ)
 
     if save_wavefunction:
         # Save the wavefunction corresponding to E_new
@@ -111,8 +112,7 @@ def bisection_even(A1, A2, E1, E2, tolerance):
     return E_new
 
 
-def find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
-    eigenvalues = []
+def find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
     i = 0
     for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{i = }")
@@ -126,15 +126,13 @@ def find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
             # testing sign of solution
             print("\nlet's-a go")
             eigenvalue = bisection_odd(A1, A2, E1, E2, tolerance)
-            eigenvalues.append(eigenvalue)
 
         i += 1
 
-    return eigenvalues
+    return eigenvalue
 
 
-def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
-    eigenvalues = []
+def find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
     j = 0
     for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{j = }")
@@ -148,20 +146,19 @@ def find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx):
             # testing sign of first derivative of solution
             print("\nMama mia!")
             eigenvalue = bisection_even(AΦ1, AΦ2, E1, E2, tolerance)
-            eigenvalues.append(eigenvalue)
 
         j += 1
 
-    return eigenvalues
+    return eigenvalue
 
 
 def initialisation_parameters():
     tolerance = 1e-6
 
-    dx = 5e-3
+    dx = 1e-5
 
     # space dimension
-    x_max = 30
+    x_max = 5
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -182,43 +179,55 @@ if __name__ == "__main__":
     y = -(x_max ** 2) / 2
     Ψ_init, Φ_init = (np.exp(y), -x_max * np.exp(y))
 
+
+    nE = 50
     #################################################
 
     print("\nfinding even wavefunction")
     E_min = 0
     E_max = 2
-    nE = 512
+    
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
-    even_evals = find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
+    eval_0 = find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
 
     #################################################
     print("\nfinding odd wavefunction")
 
     E_min = 2
     E_max = 4
-    nE = 512
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
-    odd_evals = find_multiple_odd_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
+    eval_1 = find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
 
     #################################################
     print("\nfinding even wavefunction")
 
     E_min = 4
     E_max = 6
-    nE = 512
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
-    even_evals = find_multiple_even_eigenvalues(Es, tolerance, Ψ_init, Φ_init, dx)
+    eval_2 = find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
 
+    print(f"{tolerance = }")
     print(f"\n{dx = }")
     print(f"{dE = }")
-    print(f"{tolerance = }")
 
-    print(f"\n{even_evals = }")
-    print(f"\n{odd_evals = }")
+    print(f"\n{eval_0 = }")
+    print(f"{eval_1 = }")
+    print(f"{eval_2 = }")
+
+    print("\nERROR:")
+    print(f"{1 - eval_0 = }")
+    print(f"{3 - eval_1 = }")
+    print(f"{5 - eval_2 = }")
+
+
+
+
+
+
 
