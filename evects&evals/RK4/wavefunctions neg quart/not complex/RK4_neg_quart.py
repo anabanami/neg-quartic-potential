@@ -49,7 +49,8 @@ def integrate(E, Ψ, Φ, dx, save_wavefunction=False):
     for i, xn in reversed(list(enumerate(x))):
         # Reduction of order of ODE
         Ψ, Φ = Schrödinger_RK4(xn, Ψ, Φ, E, -dx)
-        wavefunction.append(Ψ)
+        if save_wavefunction:
+            wavefunction.append(Ψ)
 
     if save_wavefunction:
         # Save the wavefunction corresponding to E_new
@@ -67,7 +68,7 @@ def bisection_odd(A1, A2, E1, E2, tolerance):
         Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=False)
         A_new, AΦ_new = (np.sign(Ψ_new), np.sign(Φ_new))
 
-        print("---Boundaries and the solution signs---")
+        print("\n---Boundaries and the solution signs---")
         print(f"{E1 = } has sign {A1 = }")
         print(f"{E_new = } has sign A_new = {A_new}")
         print(f"{E2 = } has sign {A2 = }")
@@ -111,8 +112,8 @@ def bisection_even(A1, A2, E1, E2, tolerance):
     return E_new
 
 
+
 def find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
-    """find the first eigenvalue in the range"""
     i = 0
     for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{i = }")
@@ -125,14 +126,14 @@ def find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
         if A1 != A2:
             # testing sign of solution
             print("\nlet's-a go")
-            return bisection_odd(A1, A2, E1, E2, tolerance)
+            eigenvalue = bisection_odd(A1, A2, E1, E2, tolerance)
 
         i += 1
 
+    return eigenvalue
 
 
 def find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
-    """find the first eigenvalue in the range"""
     j = 0
     for E1, E2 in zip(Es[:-1], Es[1:]):
         print(f"{j = }")
@@ -145,16 +146,17 @@ def find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
         if AΦ1 != AΦ2:
             # testing sign of first derivative of solution
             print("\nMama mia!")
-            return bisection_even(AΦ1, AΦ2, E1, E2, tolerance)
+            eigenvalue = bisection_even(AΦ1, AΦ2, E1, E2, tolerance)
 
         j += 1
 
+    return eigenvalue
 
 
 def initialisation_parameters():
     tolerance = 1e-6
 
-    dx = 1e-4
+    dx = 1e-3
 
     # space dimension
     x_max = 35
@@ -182,74 +184,54 @@ if __name__ == "__main__":
         #25.791792,
     ]
 
+    #
+    Ψ_init = np.exp((x_max / 3) * np.sqrt(-x_max ^ 4))
+    Φ_init = np.exp((x_max / 3) * np.sqrt(-x_max ^ 4)) * (
+        (np.sqrt(-(x_max ** 4) / 3) - (2 * x_max ** 4) / (3 * np.sqrt(-(x_max ** 4))))
+    )
     #################################################
-
-    # # NEG QUART POTENTIAL I.C. COSINE
-    # y = x_max ** 3 / (3 * np.sqrt(2))
-    # Ψ_init, Φ_init = (
-    #     2 * np.cos(y),
-    #     -np.sqrt(2) * (x_max ** 2) * np.sin(y),
-    # )
-
-    #################################################
-
-    # # NEG QUART POTENTIAL I.C. SINE
-    # y = x_max ** 3 / (3 * np.sqrt(2))
-    # Ψ_init, Φ_init = (
-    #     2 * np.sin(y),
-    #     np.sqrt(2) * (x_max ** 2) * np.cos(y),
-    # )
-
-    #################################################
-
 
     nE = 50
 
-    print("\nfinding even wavefunction")
     E_min = 0
     E_max = 5
     
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
-    eval_0 = find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
+    print(f"\nfinding even wavefunction in range E = [{E_min}, {E_max}] ")
 
-    # #################################################
-    # print("\nfinding odd wavefunction")
 
-    # E_min = 5
-    # E_max = 7
-    # dE = (E_max - E_min) / nE
-    # Es = np.linspace(E_min, E_max, nE)
+    eval_even = find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
 
-    # eval_1 = find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
+    #################################################
+    print(f"\nfinding odd wavefunction in range E = [{E_min}, {E_max}] ")
 
-    # #################################################
-    # print("\nfinding even wavefunction")
+    E_min = 0
+    E_max = 5
+    dE = (E_max - E_min) / nE
+    Es = np.linspace(E_min, E_max, nE)
 
-    # E_min = 10
-    # E_max = 12
-    # dE = (E_max - E_min) / nE
-    # Es = np.linspace(E_min, E_max, nE)
+    eval_odd = find_odd_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
 
-    # eval_2 = find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx)
+    #################################################
 
-    print(f"{tolerance = }")
+    print(f"\n{tolerance = }")
     print(f"\n{dx = }")
     print(f"{dE = }")
 
-    print(f"\n{eval_0 = }")
+    print(f"\nO={eval_even}")
+    print(f"E={eval_odd}")
+
+    print(f"{E_Bender[0] - eval_even = }")
+    print(f"{E_Bender[1] - eval_odd = }")
+    
+    # print(f"\n{eval_0 = }")
     # print(f"{eval_1 = }")
     # print(f"{eval_2 = }")
 
-    print("\nERROR:")
-    print(f"{E_Bender[0] - eval_0 = }")
+    # print("\nERROR:")
+    # print(f"{E_Bender[0] - eval_0 = }")
     # print(f"{E_Bender[1] - eval_1 = }")
     # print(f"{E_Bender[2] - eval_2 = }")
-
-
-
-
-
-
 

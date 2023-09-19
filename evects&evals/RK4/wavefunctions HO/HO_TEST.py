@@ -29,8 +29,8 @@ def Schrödinger_eqn(x, Ψ, Φ, E):
     return dΨ, dΦ
 
 
-# Algorithm Runge-Kutta 4 for integrating TISE eigenvalue problem
 def Schrödinger_RK4(x, Ψ, Φ, E, dx):
+    # Algorithm Runge-Kutta 4 for integrating TISE eigenvalue problem
     k1_Ψ, k1_Φ = Schrödinger_eqn(x, Ψ, Φ, E)
     k2_Ψ, k2_Φ = Schrödinger_eqn(x + 0.5 * dx, Ψ + 0.5 * dx * k1_Ψ, Φ + 0.5 * dx * k1_Φ, E)
     k3_Ψ, k3_Φ = Schrödinger_eqn(x + 0.5 * dx, Ψ + 0.5 * dx * k2_Ψ, Φ + 0.5 * dx * k2_Φ, E)
@@ -68,7 +68,7 @@ def bisection_odd(A1, A2, E1, E2, tolerance):
         Ψ_new, Φ_new = integrate(E_new, Ψ_init, Φ_init, dx, save_wavefunction=False)
         A_new, AΦ_new = (np.sign(Ψ_new), np.sign(Φ_new))
 
-        print("---Boundaries and the solution signs---")
+        print("\n---Boundaries and the solution signs---")
         print(f"{E1 = } has sign {A1 = }")
         print(f"{E_new = } has sign A_new = {A_new}")
         print(f"{E2 = } has sign {A2 = }")
@@ -153,9 +153,9 @@ def find_even_eigenvalue(Es, tolerance, Ψ_init, Φ_init, dx):
 
 
 def initialisation_parameters():
-    tolerance = 1e-6
+    tolerance = 1e-9
 
-    dx = 1e-5
+    dx = 1e-7
 
     # space dimension
     x_max = 5
@@ -179,9 +179,10 @@ if __name__ == "__main__":
     y = -(x_max ** 2) / 2
     Ψ_init, Φ_init = (np.exp(y), -x_max * np.exp(y))
 
-
-    nE = 50
     #################################################
+
+
+    nE = 6
 
     print("\nfinding even wavefunction")
     E_min = 0

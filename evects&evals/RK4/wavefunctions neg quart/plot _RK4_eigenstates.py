@@ -8,7 +8,7 @@ plt.rcParams['figure.dpi'] = 200
 
 
 def V(x):
-    return - x ** 4
+    return - (x ** 4)
 
 def even_extension(y):
     return np.concatenate([y[::-1][:-1], y])
@@ -19,7 +19,7 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 5e-4
+    dx = 1e-1
 
     # space dimension
     x_max = 30
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     eigenvalues = []
     wavefunctions = []
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd (cosine IC)
-    # extension_funcs = [odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]  # Pattern of odd and even (cosine IC)
+    # extension_funcs = [odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]  # Pattern of odd and even (sin IC)
 
 
     for i in range(2):
