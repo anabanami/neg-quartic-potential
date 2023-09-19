@@ -19,10 +19,10 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 1e-5
+    dx = 1e-3
 
     # space dimension
-    x_max = 5
+    x_max = 10
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -40,11 +40,10 @@ if __name__ == "__main__":
 
     eigenvalues = []
     wavefunctions = []
-    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
-    # extension_funcs = [odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]  # Pattern of even and odd
+    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]
 
 
-    for i in range(3):
+    for i in range(2):
 
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
@@ -70,42 +69,22 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(
-            x,
-            np.real(wf) + evalue,
-            linewidth=1,
-            label=Rf"$\psi_{i}$",
-            color=color,
-        )
-        
-        # plt.plot(
-        #     x,
-        #     np.imag(wf), #+ evalue,
-        #     "--",
-        #     linewidth=1,
-        #     color=color,
-        # )
+        plt.plot(x, np.real(wf) + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
+        plt.plot(x, np.imag(wf) + evalue, "--", linewidth=1, color=color)
+
+        # plt.plot(x, abs(wf)**2 + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
 
     textstr = '\n'.join(
         (
-            # fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
-            # fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
-            # fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
-            fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
-            fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
-            fr'$E_0 = {np.real(eigenvalues[0]):.06f}$',    
+            # fr'$E_2 = {eigenvalues[2]:.06f}$',
+            fr'$E_1 = {eigenvalues[1]:.06f}$',
+            fr'$E_0 = {eigenvalues[0]:.06f}$',    
         )
     )
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.plot(
-        x,
-        V(x),
-        linewidth=2,
-        alpha=0.4,
-        color='k',
-    )
+    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     
     # plt.legend()
     plt.xlabel(R'$x$')

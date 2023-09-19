@@ -9,17 +9,16 @@ def normalize_wavefunction(wavefunction, dr):
     return wavefunction * normalization_constant
 
 
-# def save_to_hdf5(filename, eigenvalue, eigenfunction):
-#     """ Save """
-#     with h5py.File(filename, 'w') as hf:
-#         dataset = hf.create_dataset("eigenfunction", data=eigenfunction)
-#         dataset.attrs["eigenvalue"] = eigenvalue
+def save_to_hdf5(filename, eigenvalue, eigenfunction):
+    """ Save """
+    with h5py.File(filename, 'w') as hf:
+        dataset = hf.create_dataset("eigenfunction", data=eigenfunction)
+        dataset.attrs["eigenvalue"] = eigenvalue
 
 
 def Schrödinger_eqn(r, Ψ, Φ, E):
-    """ TISE for negative quartic potential Hamiltonian """
     dΨ = Φ
-    dΦ = - phase ** 2 * ((r * phase) ** 4 + E) * Ψ # V(x = r * phase) = - (r * phase) ** 4
+    dΦ = - phase ** 2 * (-((r * phase) ** 2) + E) * Ψ # V(x = r * phase) = (r * phase) ** 2
     return dΨ, dΦ
 
 
@@ -48,18 +47,22 @@ def integrate(E, Ψ, Φ, dr, save_wavefunction=False):
         if save_wavefunction:
             wavefunction.append(Ψ)
 
-    # if save_wavefunction:
-    #     # Save the wavefunction corresponding to E_new
-    #     print(f"*** ~~saving wavefunction for eigenvalue {E}~~ ***")
-    #     normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dr)
-    #     save_to_hdf5(f"wavefunction_{E}.h5", E, normalized_wavefunction)
+    if save_wavefunction:
+        # Save the wavefunction corresponding to E_new
+        print(f"*** ~~saving wavefunction for eigenvalue {E}~~ ***")
+        normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dr)
+        save_to_hdf5(f"{E}.h5", E, normalized_wavefunction)
     return Ψ, Φ
 
 
 def ICS():
-    y = 1j * (r_max**3) * phase / 3
+    # y = 1j * (r_max**3) / 3
+    # Ψ_init = np.exp(y)
+    # Φ_init = 1j * (r_max ** 3) * Ψ_init
+    # return Ψ_init, Φ_init
+    y = - (r_max * phase)**2 / 2
     Ψ_init = np.exp(y)
-    Φ_init = 1j * (r_max ** 3) * Ψ_init
+    Φ_init = -(r_max * phase) *  Ψ_init
     return Ψ_init, Φ_init
 
 
@@ -99,11 +102,10 @@ def find_even_eigenvalue(Es, Ψ_init, Φ_init, dr):
         # FIND MINIMUM BETWEEN: Φ1 and Φ3
         if Φ_values[0] > Φ_values[1] < Φ_values[2]:
             print("#### Mama mia!")
-            # search for minimum
+            # iteratively search for minimum
             minimum = minimize(objective_even, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
             eigenvalue = minimum.x[0]
-            print(f"found the approximate eigenvalue: {eigenvalue}")
-            return eigenvalue
+            _ = integrate(eigenvalue, Ψ_init, Φ_init, dr, save_wavefunction=True)
 
         Φ_values.pop(0)
 
@@ -134,11 +136,10 @@ def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
         # FIND MINIMUM BETWEEN: Ψ1 and Ψ3
         if Ψ_values[0] > Ψ_values[1] < Ψ_values[2]:
             print("#### Let's-a-go!")
-            # search for minimum
+            # iteratively search for minimum
             minimum = minimize(objective_odd, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
             eigenvalue = minimum.x[0]
-            print(f"found the approximate eigenvalue: {eigenvalue}")
-            return eigenvalue
+            _ = integrate(eigenvalue, Ψ_init, Φ_init, dr, save_wavefunction=True)
 
         Ψ_values.pop(0)
 
@@ -147,17 +148,18 @@ def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
     return eigenvalue
 
 
+
 ##################################################################################################
 
 def initialisation_parameters():
     # (centre) opening angle for Stokes wedges corresponding to the negative quartic potential
-    theta_right = - np.pi / 6
+    theta_right = 0 #- np.pi / 6
 
     phase = np.exp(1j * theta_right)
 
     # radial dimension
-    r_max = 6
-    dr = 1e-5
+    r_max = 10
+    dr = 1e-3
     Nr = int(r_max / dr)
     r = np.linspace(0, r_max, Nr, endpoint=False)
 
@@ -179,7 +181,7 @@ if __name__ == "__main__":
 
     #################################################
 
-    nE = 10
+    nE = 15
 
     E_min = 0
     E_max = 4
@@ -195,10 +197,8 @@ if __name__ == "__main__":
 
     #################################################
 
-
-    E_min = 4
-    E_max = 8
-
+    E_min = 0
+    E_max = 4
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
@@ -208,22 +208,19 @@ if __name__ == "__main__":
 
     print(f"<><<><<><")
     
-
     print(f"\n{dr = }")
     print(f"{dE = }")
 
     print(f"\nEven eigenvalue = {eval_even}")
     print(f" Odd eigenvalue = {eval_odd}")
 
-
-    E_Bender = [
-        1.477150,
-        6.003386,
-        11.802434,
-        18.458819,
-        25.791792,
+    E_HO = [
+    1,
+    3,
+    5,
+    7,
     ]
 
     print(f"\nError")
-    print(f"{E_Bender[0] - eval_even = }")
-    print(f"{E_Bender[1] - eval_odd = }")
+    print(f"{E_HO[0] - eval_even = }")
+    print(f"{E_HO[1] - eval_odd = }")

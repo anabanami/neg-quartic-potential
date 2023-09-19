@@ -9,17 +9,17 @@ def normalize_wavefunction(wavefunction, dr):
     return wavefunction * normalization_constant
 
 
-# def save_to_hdf5(filename, eigenvalue, eigenfunction):
-#     """ Save """
-#     with h5py.File(filename, 'w') as hf:
-#         dataset = hf.create_dataset("eigenfunction", data=eigenfunction)
-#         dataset.attrs["eigenvalue"] = eigenvalue
+def save_to_hdf5(filename, eigenvalue, eigenfunction):
+    """ Save """
+    with h5py.File(filename, 'w') as hf:
+        dataset = hf.create_dataset("eigenfunction", data=eigenfunction)
+        dataset.attrs["eigenvalue"] = eigenvalue
 
 
 def Schrödinger_eqn(r, Ψ, Φ, E):
     """ TISE for negative quartic potential Hamiltonian """
     dΨ = Φ
-    dΦ = - phase ** 2 * (-((r * phase) ** 2) + E) * Ψ # V(x = r * phase) = (r * phase) ** 2
+    dΦ = - phase_left ** 2 * (-(-(r * phase_left) ** 4) + E) * Ψ # V(x = r * phase_left) = - (r * phase_left) ** 4
     return dΨ, dΦ
 
 
@@ -37,73 +37,71 @@ def Schrödinger_RK4(r, Ψ, Φ, E, dr):
     return Ψ_new, Φ_new
 
 
-def integrate(E, Ψ, Φ, dr, save_wavefunction=False):
+def integrate_LHS(E, Ψ, Φ, dr, save_wavefunction=False):
     """***Reversed*** running of the RK4 Integrator through the grid one rn in r at a time:
     For each point rn in this grid, I update the wavefunction Ψ using Schrödinger_RK4()."""
     wavefunction = []
 
-    for i, rn in reversed(list(enumerate(r))):
+    for i, rn in list(enumerate(r_left)):
         # Reduction of order of ODE
-        Ψ, Φ = Schrödinger_RK4(rn, Ψ, Φ, E, -dr)
+        Ψ, Φ = Schrödinger_RK4(rn, Ψ, Φ, E, dr)
         if save_wavefunction:
             wavefunction.append(Ψ)
 
-    # if save_wavefunction:
-    #     # Save the wavefunction corresponding to E_new
-    #     print(f"*** ~~saving wavefunction for eigenvalue {E}~~ ***")
-    #     normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dr)
-    #     save_to_hdf5(f"wavefunction_{E}.h5", E, normalized_wavefunction)
+    if save_wavefunction:
+        # Save the wavefunction corresponding to E_new
+        print(f"*** ~~saving wavefunction for eigenvalue {E}~~ ***")
+        normalized_wavefunction = normalize_wavefunction(np.array(wavefunction), dr)
+        save_to_hdf5(f"LHS{E}.h5", E, normalized_wavefunction)
     return Ψ, Φ
 
 
-def ICS():
-    y = 1j * (r_max**3) * phase / 3
+def ICS_LHS():
+    y = - (r_max * phase_left)**2 / 2
     Ψ_init = np.exp(y)
-    Φ_init = 1j * (r_max ** 3) * Ψ_init
+    Φ_init = -(r_max * phase_left) *  Ψ_init
     return Ψ_init, Φ_init
 
 
 
-def objective_even(E, Ψ_init, Φ_init, dr):
+def objective_even_LHS(E, Ψ_init, Φ_init, dr):
     """Objective function for even states"""
-    _, Φ = integrate(E, Ψ_init, Φ_init, dr)
+    _, Φ = integrate_LHS(E, Ψ_init, Φ_init, dr)
     return np.abs(Φ ** 2)
 
 
-def objective_odd(E, Ψ_init, Φ_init, dr):
+def objective_odd_LHS(E, Ψ_init, Φ_init, dr):
     """Objective function for odd states"""
-    Ψ, _ = integrate(E, Ψ_init, Φ_init, dr)
+    Ψ, _ = integrate_LHS(E, Ψ_init, Φ_init, dr)
     return np.abs(Ψ ** 2)
 
 
-def find_even_eigenvalue(Es, Ψ_init, Φ_init, dr):
+def find_even_eigenvalue_LHS(Es, Ψ_init, Φ_init, dr):
     j = 0
     # Initialise eigenvalue
     eigenvalue = None
     
     # Initialise list with first two Ψ values
-    _, Φ1 = integrate(Es[0], Ψ_init, Φ_init, dr)
-    _, Φ2 = integrate(Es[1], Ψ_init, Φ_init, dr)
+    _, Φ1 = integrate_LHS(Es[0], Ψ_init, Φ_init, dr)
+    _, Φ2 = integrate_LHS(Es[1], Ψ_init, Φ_init, dr)
 
     # append abs(Φn ** 2) to Φ_values (n = 1, 2)
     Φ_values = [abs(Φ1 ** 2), abs(Φ2 ** 2)]
 
     for E1, E2, E3 in zip(Es[:-2], Es[1:-1], Es[2:]):
         # Compute the integral for E3 (Ψ3)
-        _, Φ3 = integrate(E3, Ψ_init, Φ_init, dr)
+        _, Φ3 = integrate_LHS(E3, Ψ_init, Φ_init, dr)
         # append abs(Φ3 ** 2) to Φ_values
         Φ_values.append(abs(Φ3 ** 2))
         print(f"{j = }")
-
 
         # FIND MINIMUM BETWEEN: Φ1 and Φ3
         if Φ_values[0] > Φ_values[1] < Φ_values[2]:
             print("#### Mama mia!")
             # iteratively search for minimum
-            minimum = minimize(objective_even, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
+            minimum = minimize(objective_even_LHS, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
             eigenvalue = minimum.x[0]
-            print(f"found the approximate eigenvalue: {eigenvalue}")
-
+            _ = integrate_LHS(eigenvalue, Ψ_init, Φ_init, dr, save_wavefunction=True)
 
         Φ_values.pop(0)
 
@@ -112,21 +110,21 @@ def find_even_eigenvalue(Es, Ψ_init, Φ_init, dr):
     return eigenvalue
 
 
-def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
+def find_odd_eigenvalue_LHS(Es, Ψ_init, Φ_init, dr):
     i = 0
     # Initialise eigenvalue
     eigenvalue = None
     
     # Initialise list with first two Ψ values
-    Ψ1, _ = integrate(Es[0], Ψ_init, Φ_init, dr)
-    Ψ2, _ = integrate(Es[1], Ψ_init, Φ_init, dr)
+    Ψ1, _ = integrate_LHS(Es[0], Ψ_init, Φ_init, dr)
+    Ψ2, _ = integrate_LHS(Es[1], Ψ_init, Φ_init, dr)
 
     # append abs(Ψn ** 2) to Ψ_values (n = 1, 2)
     Ψ_values = [abs(Ψ1 ** 2), abs(Ψ2 ** 2)]
 
     for E1, E2, E3 in zip(Es[:-2], Es[1:-1], Es[2:]):
         # Compute the integral for E3 (Ψ3)
-        Ψ3, _ = integrate(E3, Ψ_init, Φ_init, dr)
+        Ψ3, _ = integrate_LHS(E3, Ψ_init, Φ_init, dr)
         # append abs(Ψ3 ** 2) to Ψ_values
         Ψ_values.append(abs(Ψ3 ** 2))
         print(f"{i = }")
@@ -135,10 +133,9 @@ def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
         if Ψ_values[0] > Ψ_values[1] < Ψ_values[2]:
             print("#### Let's-a-go!")
             # iteratively search for minimum
-            minimum = minimize(objective_odd, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
+            minimum = minimize(objective_odd_LHS, (E1 + E3) / 2, args=(Ψ_init, Φ_init, dr), bounds=[(E1, E3)])
             eigenvalue = minimum.x[0]
-            print(f"found the approximate eigenvalue: {eigenvalue}")
-
+            _ = integrate_LHS(eigenvalue, Ψ_init, Φ_init, dr, save_wavefunction=True)
 
         Ψ_values.pop(0)
 
@@ -146,40 +143,36 @@ def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
 
     return eigenvalue
 
-
-
-
 ##################################################################################################
 
 def initialisation_parameters():
     # (centre) opening angle for Stokes wedges corresponding to the negative quartic potential
-    theta_right = - np.pi / 6
+    theta_left = 0
 
-    phase = np.exp(1j * theta_right)
+    phase_left = np.exp(1j * theta_left)
 
     # radial dimension
     r_max = 10
     dr = 1e-3
     Nr = int(r_max / dr)
-    r = np.linspace(0, r_max, Nr, endpoint=False)
+    r_left = np.linspace(-r_max, 0, Nr, endpoint=False)
 
     return (
-        theta_right,
-        phase,
+        theta_left,
+        phase_left,
         r_max,
         dr,
-        r_max,
         Nr,
-        r,
+        r_left,
     )
 
 if __name__ == "__main__":
 
-    theta_right, phase, r_max, dr, r_max, Nr, r = initialisation_parameters()
+    theta_left, phase_left, r_max, dr, Nr, r_left = initialisation_parameters()
 
-    Ψ_init, Φ_init = ICS()
+    Ψ_init, Φ_init = ICS_LHS()
 
-    #################################################
+  #################################################
 
     nE = 15
 
@@ -191,35 +184,35 @@ if __name__ == "__main__":
 
     print(f"\n<><<><<>< finding even wave function in range E = [{E_min}, {E_max}] ")
 
-    eval_even = find_even_eigenvalue(Es, Ψ_init, Φ_init, dr)
+    eval_even = find_even_eigenvalue_LHS(Es, Ψ_init, Φ_init, dr)
 
     print(f"<><<><<><")
 
     #################################################
-
-    print(f"\n<><<><<>< finding odd wave function in range E = [{E_min}, {E_max}] ")
 
     E_min = 0
     E_max = 4
     dE = (E_max - E_min) / nE
     Es = np.linspace(E_min, E_max, nE)
 
-    eval_odd = find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr)
+    print(f"\n<><<><<>< finding odd wave function in range E = [{E_min}, {E_max}] ")
+
+    eval_odd = find_odd_eigenvalue_LHS(Es, Ψ_init, Φ_init, dr)
 
     print(f"<><<><<><")
     
-
     print(f"\n{dr = }")
     print(f"{dE = }")
 
     print(f"\nEven eigenvalue = {eval_even}")
     print(f" Odd eigenvalue = {eval_odd}")
 
+
     E_HO = [
-    1,
-    3,
-    5,
-    7,
+        1,
+        3,
+        5,
+        7,
     ]
 
     print(f"\nError")

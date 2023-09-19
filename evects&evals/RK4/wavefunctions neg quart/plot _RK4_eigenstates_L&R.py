@@ -10,12 +10,12 @@ plt.rcParams['figure.dpi'] = 200
 def V(x):
     return - (x ** 4)
 
-def even_extension(y):
-    return np.concatenate([y[::-1][:-1], y])
+# def even_extension(y):
+#     return np.concatenate([y[::-1][:-1], y])
 
 
-def odd_extension(y):
-    return np.concatenate([-y[::-1][:-1] ,y])
+# def odd_extension(y):
+#     return np.concatenate([-y[::-1][:-1] ,y])
 
 
 def initialisation_parameters():
@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     eigenvalues = []
     wavefunctions = []
-    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
+    # extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
 
 
     for i in range(2):
@@ -57,13 +57,13 @@ if __name__ == "__main__":
             wavefunctions.append(numpy_array[::-1])
 
     x = np.concatenate([-x[::-1][:-1], x])  # extend domain into negative numbers
-    # print(x)
+    print(x)
 
     # Using list comprehension to get extended wavefunctions
-    extended_wavefunctions = [func(wf) for func, wf in zip(extension_funcs, wavefunctions)]
+    # extended_wavefunctions = [func(wf) for func, wf in zip(extension_funcs, wavefunctions)]
 
     # Plotting
-    for i, (wf, evalue) in enumerate(zip(extended_wavefunctions, eigenvalues)):
+    for i, (wf, evalue) in enumerate(zip(wavefunctions, eigenvalues)):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 

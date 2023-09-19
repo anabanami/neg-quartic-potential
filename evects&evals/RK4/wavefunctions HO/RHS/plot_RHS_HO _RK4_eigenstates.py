@@ -8,21 +8,14 @@ plt.rcParams['figure.dpi'] = 200
 
 
 def V(x):
-    return - (x ** 4)
-
-def even_extension(y):
-    return np.concatenate([y[::-1][:-1], y])
-
-
-def odd_extension(y):
-    return np.concatenate([-y[::-1][:-1] ,y])
+    return x ** 2
 
 
 def initialisation_parameters():
     dx = 1e-3
 
     # space dimension
-    x_max = 6
+    x_max = 10
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -40,7 +33,6 @@ if __name__ == "__main__":
 
     eigenvalues = []
     wavefunctions = []
-    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]  # Pattern of even and odd
 
 
     for i in range(2):
@@ -56,14 +48,10 @@ if __name__ == "__main__":
             numpy_array = file["eigenfunction"][:]  # Get the wavefunction
             wavefunctions.append(numpy_array[::-1])
 
-    x = np.concatenate([-x[::-1][:-1], x])  # extend domain into negative numbers
-    # print(x)
-
-    # Using list comprehension to get extended wavefunctions
-    extended_wavefunctions = [func(wf) for func, wf in zip(extension_funcs, wavefunctions)]
+    # print(f"\nWe got this many wavefunctions:{np.shape(wavefunctions)}")
 
     # Plotting
-    for i, (wf, evalue) in enumerate(zip(extended_wavefunctions, eigenvalues)):
+    for i, (wf, evalue) in enumerate(zip(wavefunctions, eigenvalues)):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
@@ -79,12 +67,12 @@ if __name__ == "__main__":
             fr'$E_0 = {eigenvalues[0]:.06f}$',    
         )
     )
-    
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
-    plt.legend()
+    
+    # plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')
     plt.title("First few eigenstates")
