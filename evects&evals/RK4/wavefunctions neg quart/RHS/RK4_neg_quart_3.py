@@ -149,7 +149,7 @@ def find_odd_eigenvalue(Es, Ψ_init, Φ_init, dr):
 
 def initialisation_parameters():
     # (centre) opening angle for Stokes wedges corresponding to the negative quartic potential
-    theta_right = - np.pi / 6
+    theta_right = - np.pi / 3
 
     phase = np.exp(1j * theta_right)
 

@@ -36,7 +36,11 @@ long double shoot(long double E1, long double E2, long double A1, long double A2
 // solutions from two starting energies (E1 and E2).
 int main(void) 
 {
-    long double E1 = 1, E2 = 1.5, tempE;
+    // long double E1 = 1, E2 = 1.5, tempE;
+    // long double E1 = 5.9, E2 = 6.2, tempE;
+    // long double E1 = 11.5, E2 = 11.9, tempE;
+    // long double E1 = 18, E2 = 18.5, tempE;
+    long double E1 = 25, E2 = 26, tempE;
     long double three = 3.0;
     long double stepsize = 0.0005;
     long double theta_left, theta_right;
@@ -187,6 +191,11 @@ void rkintegrate(ldc x0, ldc *y, ldc *z, long double h,
         //     }
         // }
 
+    }
+
+    if (output_filename != NULL)
+    {
+        fclose(output);
     }
 
     *y = psi ;
