@@ -18,7 +18,7 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 1e-3
+    dx = 1e-5
 
     # space dimension
     x_max = 30
@@ -106,10 +106,10 @@ if __name__ == "__main__":
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
 
-    # # INVESTIGATING THE DECAY
-    # # PLLOTTING AN ENVELOPE
-    envelope = 1 / x**2
-    plt.plot(x, envelope, alpha=0.4, color='blue', linestyle='--', label=R'$\frac{1}{x^2}$')
+    # # # INVESTIGATING THE DECAY
+    # # # PLLOTTING AN ENVELOPE
+    # envelope = 1 / x**2
+    # plt.plot(x, envelope, alpha=0.4, color='blue', linestyle='--', label=R'$\frac{1}{x^2}$')
     
     plt.legend()
     plt.xlabel(R'$x$')

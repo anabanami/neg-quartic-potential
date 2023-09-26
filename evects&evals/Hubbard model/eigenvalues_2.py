@@ -154,7 +154,7 @@ def plot_wavefunctions(N, x, evals, evects):
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     plt.axvline(0, linestyle=":", alpha=0.4, color="black")
 
     # plt.ylim()
@@ -258,27 +258,27 @@ if __name__ == "__main__":
     # Close the hdf5 file
     file.close()
 
-    print("\nComparing with Bender's spectrum")
-    _2evals = 2 * evals
+    # print("\nComparing with Bender's spectrum")
+    # _2evals = 2 * evals
 
-    # Bender energies to compare
-    E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
+    # # Bender energies to compare
+    # E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
 
-    ax = plt.gca()
-    color = next(ax._get_lines.prop_cycler)['color']
-    textstr = '\n'.join(
-        (
-            fr'$E_0 = {np.real(evals[6]):.06f}~\rightarrow~2E_0 = {np.real(_2evals[6]):.06f}~~\mathrm{{vs.}}~~E_{{B, 0}}= {np.real(E_bender[0]):.06f}$',
-            fr'$E_1 = {np.real(evals[7]):.06f}~\rightarrow~2E_1 = {np.real(_2evals[7]):.06f}~~\mathrm{{vs.}}~~E_{{B, 1}} = {np.real(E_bender[1]):.06f}$',
-            fr'$E_2 = {np.real(evals[8]):.06f}~\rightarrow~2E_2 = {np.real(_2evals[8]):.06f}~~\mathrm{{vs.}}~~E_{{B, 2}} = {np.real(E_bender[2]):.06f}$',
-            fr'$E_3 = {np.real(evals[9]):.06f}~\rightarrow~2E_3 = {np.real(_2evals[9]):.06f}~~\mathrm{{vs.}}~~E_{{B, 3}} = {np.real(E_bender[3]):.06f}$',
-            fr'$E_4 = {np.real(evals[10]):.06f}~\rightarrow~2E_4 = {np.real(_2evals[10]):.06f}~~\mathrm{{vs.}}~~E_{{B, 4}} = {np.real(E_bender[4]):.06f}$',
-        )
-    )
-    # place a text box in upper left in axes coords
-    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+    # ax = plt.gca()
+    # color = next(ax._get_lines.prop_cycler)['color']
+    # textstr = '\n'.join(
+    #     (
+    #         fr'$E_0 = {np.real(evals[6]):.06f}~\rightarrow~2E_0 = {np.real(_2evals[6]):.06f}~~\mathrm{{vs.}}~~E_{{B, 0}}= {np.real(E_bender[0]):.06f}$',
+    #         fr'$E_1 = {np.real(evals[7]):.06f}~\rightarrow~2E_1 = {np.real(_2evals[7]):.06f}~~\mathrm{{vs.}}~~E_{{B, 1}} = {np.real(E_bender[1]):.06f}$',
+    #         fr'$E_2 = {np.real(evals[8]):.06f}~\rightarrow~2E_2 = {np.real(_2evals[8]):.06f}~~\mathrm{{vs.}}~~E_{{B, 2}} = {np.real(E_bender[2]):.06f}$',
+    #         fr'$E_3 = {np.real(evals[9]):.06f}~\rightarrow~2E_3 = {np.real(_2evals[9]):.06f}~~\mathrm{{vs.}}~~E_{{B, 3}} = {np.real(E_bender[3]):.06f}$',
+    #         fr'$E_4 = {np.real(evals[10]):.06f}~\rightarrow~2E_4 = {np.real(_2evals[10]):.06f}~~\mathrm{{vs.}}~~E_{{B, 4}} = {np.real(E_bender[4]):.06f}$',
+    #     )
+    # )
+    # # place a text box in upper left in axes coords
+    # ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.title("Comparing eigenvalues with Bender's")
-    plt.show()
+    # plt.title("Comparing eigenvalues with Bender's")
+    # plt.show()
 
 

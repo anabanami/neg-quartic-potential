@@ -69,14 +69,15 @@ for i, (name, data) in enumerate(file_data.items()):
     # plt.plot(r, [np.real(val) + E_Bender[i] for val in wf], linewidth=1, label=Rf"$\psi_{i}$", color=color)
     # plt.plot(r, [np.imag(val) + E_Bender[i] for val in wf], "--", linewidth=1, color=color)
 
-    # # probability density
     plt.plot(
         r,
-        [abs(val ** 2) + E_Bender[i] for val in wf],
+        np.log(abs(wf ** 2)),
         linewidth=1,
         label=Rf"$\psi_{i}$",
         color=color,
     )
+
+    # plt.plot(r, 500 - 10 * r**4) # what does the origin look like???
 
 textstr = '\n'.join(
     (
@@ -92,6 +93,7 @@ ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 plt.legend()
 plt.xlabel(R'$r$')
 # plt.ylabel('Amplitude')
-plt.ylabel('Absolute squared amplitude')
+# plt.ylabel('Absolute squared amplitude')
+plt.ylabel('LOG Absolute squared amplitude')
 plt.title("First few eigenstates")
 plt.show()

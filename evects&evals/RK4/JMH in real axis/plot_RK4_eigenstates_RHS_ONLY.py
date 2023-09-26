@@ -13,9 +13,9 @@ def V(x):
 
 def initialisation_parameters():
     x_max = 30
-    dx = 1e-3
+    dx = 1e-5
     Nx = int(x_max / dx)
-    x = np.linspace(0.1, x_max, Nx, endpoint=False)
+    x = np.linspace(0, x_max, Nx, endpoint=False)
 
     return (
         dx,

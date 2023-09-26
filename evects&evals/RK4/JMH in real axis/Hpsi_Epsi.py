@@ -11,7 +11,7 @@ m = 1/2
 
 # spatial dimension
 x_max = 30
-dx = 1e-3
+dx = 1e-5
 Nx = int(x_max / dx)
 x = np.linspace(0, x_max, Nx, endpoint=False)
 
@@ -36,18 +36,28 @@ H_psi = K + potential_energy
 
 E0 = 1.47714975357798685525
 
-plt.plot(
-    x,
-    H_psi,
-    label=R"$ H \psi_{0}$",
-)
+# plt.plot(
+#     x,
+#     H_psi,
+#     label=R"$ H \psi_{0}$",
+# )
+
+# plt.plot(
+#     x,
+#     E0 * psi,
+#     label=R"$E_{0} \psi_{0}$",
+# )
 
 plt.plot(
     x,
-    E0 * psi,
-    label=R"$E_{0} \psi_{0}$",
+    E0 * psi - H_psi,
+    label=R"$E_{0} \psi_{0} - H \psi$",
 )
+
 plt.legend()
+plt.xlim(0.17, 25)
+plt.ylim(-40, 40)
+
 plt.xlabel(R'$x$')
 plt.ylabel('Amplitude')    
 plt.title(R"$H \psi = E \psi$??")

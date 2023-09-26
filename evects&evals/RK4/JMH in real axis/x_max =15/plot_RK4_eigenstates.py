@@ -69,20 +69,8 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(
-            x,
-            np.real(wf) + evalue,
-            linewidth=1,
-            label=Rf"$\psi_{i}$",
-            color=color,
-        )
-        plt.plot(
-            x,
-            np.imag(wf) + evalue,
-            "--",
-            linewidth=1,
-            color=color,
-        )
+        plt.plot(x, np.real(wf) + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
+        plt.plot(x, np.imag(wf) + evalue, "--", linewidth=1, color=color)
 
     textstr = '\n'.join(
         (
@@ -98,9 +86,8 @@ if __name__ == "__main__":
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     
-    plt.legend()
+    # plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')
-    # plt.title("Ground state of negative quartic Hamiltonian")
     plt.title("First few eigenstates")
     plt.show()
