@@ -72,8 +72,6 @@ if __name__ == "__main__":
         plt.plot(x, np.real(wf) + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
         plt.plot(x, np.imag(wf) + evalue, "--", linewidth=1, color=color)
 
-        # plt.plot(x, abs(wf)**2 + evalue, linewidth=1, label=Rf"$\psi_{i}$", color=color)
-
     textstr = '\n'.join(
         (
             fr'$E_4 = {eigenvalues[4]:.06f}$',
@@ -88,7 +86,7 @@ if __name__ == "__main__":
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     
-    plt.legend()
+    # plt.legend()
     plt.xlabel(R'$x$')
     plt.ylabel('Amplitude')
     plt.title("First few eigenstates")
