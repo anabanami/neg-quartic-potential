@@ -77,8 +77,8 @@ if __name__ == "__main__":
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
 
     plt.grid(color='gray', linestyle=':', linewidth=0.5)
-    # points
 
+    # # INVESTIGATING THE DECAY
     # Define the specific x values.
     logx1 = 1.0675  # First x value
     logx2 = 2.0048  # Second x value

@@ -1,4 +1,3 @@
-import os
 import numpy as np
 import h5py
 import matplotlib
@@ -69,18 +68,27 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
+        # plt.plot(
+        #     x,
+        #     np.real(wf),# + evalue,
+        #     linewidth=1,
+        #     label=Rf"$\psi_{i}$",
+        #     color=color,
+        # )
+        # plt.plot(
+        #     x,
+        #     np.imag(wf),# + evalue,
+        #     "--",
+        #     linewidth=1,
+        #     color=color,
+        # )
+
         plt.plot(
             x,
-            np.real(wf),# + evalue,
+            abs(wf **2),# + evalue,
+            "-",
             linewidth=1,
-            label=Rf"$\psi_{i}$",
-            color=color,
-        )
-        plt.plot(
-            x,
-            np.imag(wf),# + evalue,
-            "--",
-            linewidth=1,
+            label=Rf"$|\psi_{i}|^2$",
             color=color,
         )
 
@@ -97,9 +105,16 @@ if __name__ == "__main__":
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+
+    # # INVESTIGATING THE DECAY
+    # # PLLOTTING AN ENVELOPE
+    envelope = 1 / x**2
+    plt.plot(x, envelope, alpha=0.4, color='blue', linestyle='--', label=R'$\frac{1}{x^2}$')
     
     plt.legend()
     plt.xlabel(R'$x$')
-    plt.ylabel('Amplitude')
-    plt.title("First few eigenstates")
+    # plt.ylabel('Amplitude')    
+    # plt.title("First few eigenstates")
+    plt.ylabel('Probability density')
+    plt.title("Ground state of negative quartic Hamiltonian")
     plt.show()

@@ -96,7 +96,7 @@ if __name__ == "__main__":
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
+    plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
     
     plt.legend()
     plt.xlabel(R'$x$')
