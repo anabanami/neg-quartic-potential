@@ -8,17 +8,17 @@ plt.rcParams['figure.dpi'] = 200
 
 # These are the (first 5) eigenvalues we found for epsilon = 2
 E_Bender = [
-    1.47714975357798685340,
-    6.00338608330813549739,
-    11.80243359513381656671,
-    18.45881870407351963044,
-    25.79179237850876206181,
+    1.47714975357798685590,
+    6.00338608330813595709,
+    11.80243359513385765711,
+    18.45881870407381107266,
+    25.79179237850849242854,
 ]
 
 # Dictionary to hold the file data
 file_data = {}
 
-for i in range(4):
+for i in range(5):
     left_file = f"psi_left_{i}.csv"
     right_file = f"psi_right_{i}.csv"
 
@@ -66,13 +66,13 @@ for i, (name, data) in enumerate(file_data.items()):
     ax = plt.gca()
     color = next(ax._get_lines.prop_cycler)['color']
 
-    # plt.plot(
-    #     r,
-    #     abs(wf ** 2),
-    #     linewidth=1,
-    #     label=Rf"$\psi_{i}$",
-    #     color=color,
-    # )
+    plt.plot(
+        r,
+        abs(wf ** 2),
+        linewidth=1,
+        label=Rf"$\psi_{i}$",
+        color=color,
+    )
 
 
     plt.plot(
@@ -87,7 +87,7 @@ for i, (name, data) in enumerate(file_data.items()):
 
 textstr = '\n'.join(
     (
-        # fr'$E_4 = {E_Bender[4]:.06f}$',
+        fr'$E_4 = {E_Bender[4]:.06f}$',
         fr'$E_3 = {E_Bender[3]:.06f}$',
         fr'$E_2 = {E_Bender[2]:.06f}$',
         fr'$E_1 = {E_Bender[1]:.06f}$',

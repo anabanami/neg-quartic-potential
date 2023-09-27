@@ -103,14 +103,14 @@ int main(void)
             return 0;
         }
 
-        psi1_right = 1.0;
+        psi1_right = 1e-100;
         psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
-        psi2_right = 1.0;
+        psi2_right = 1e-100;
         psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
         
-        psi1_left = 1.0;
+        psi1_left = 1e-100;
         psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
-        psi2_left = 1.0;
+        psi2_left = 1e-100;
         psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
     }
 
