@@ -1,12 +1,3 @@
-// These are the (first 5) eigenvalues for epsilon = 2
-// E_Bender = [
-//         1.477150,
-//         6.003386,
-//         11.802434,
-//         18.458819,
-//         25.791792,
-//     ]
-
 // This code includes standard libraries. stdio.h is for input/output functions like printf.
  // math.h provides mathematical functions. complex.h provides support for complex numbers.
 #include <stdio.h>
@@ -27,6 +18,9 @@ void rkintegrate(ldc x0, ldc *y, ldc *z, long double h,
 ldc F(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 ldc G(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 long double shoot(long double E1, long double E2, long double A1, long double A2);
+void performEnergySearch(long double E_start, long double E_end);
+
+
 
 
 // The main function initializes a series of variables and complex values and runs a loop 
@@ -41,93 +35,15 @@ int main(void)
     // long double E1 = 11.5, E2 = 11.9, tempE;
     // long double E1 = 18, E2 = 18.5, tempE;
     // long double E1 = 25, E2 = 26, tempE;
+    long double step = 1.0; // This is your coarse grid interval.
+    long double E_max = 100; // This is the maximum energy value up to which you want to perform the search.
 
-    long double three = 3.0;
-    long double stepsize = 0.0005;
-    long double theta_left, theta_right;
-
-    ldc psi1_left, psiprime1_left;
-    ldc psi1_right, psiprime1_right;
-    ldc psi2_left, psiprime2_left;
-    ldc psi2_right, psiprime2_right;
-    ldc psi1_diff, psi2_diff;
-    ldc x_left, x_right;
-    
-    int i, loop;
-
-    // Save the initial energy bounds for use in output filenames
-    long double E1_init = E1, E2_init = E2;
-
-    x_right = 10.0 * cexpl(I * pi * ((4.0 * 1.0 - epsilon) / (4.0 + 2.0 * epsilon)));
-    x_left = 10.0 * cexpl(I * pi * ((4.0 * -2.0 - epsilon) / (4.0 + 2.0 * epsilon)));
-
-    theta_right = cargl(x_right);
-    theta_left = cargl(x_left);
-
-    loop = (int) (x_right / stepsize);
-    loop++;
-
-    psi1_right = 1.0;
-    psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
-    psi2_right = 1.0;
-    psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
-    
-    psi1_left = 1.0;
-    psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
-    psi2_left = 1.0;
-    psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
-
-    for (i = 0; i < 40; i++)
+    for(long double E_start = 0; E_start < E_max; E_start += step) 
     {
-        rkintegrate(x_right, &psi1_right, &psiprime1_right, -stepsize, E1, theta_right, NULL);
-        rkintegrate(x_right, &psi2_right, &psiprime2_right, -stepsize, E2, theta_right, NULL);
-        rkintegrate(x_left, &psi1_left, &psiprime1_left, -stepsize, E1, theta_left, NULL);
-        rkintegrate(x_left, &psi2_left, &psiprime2_left, -stepsize, E2, theta_left, NULL);
-
-        psi1_diff = cexpl(-I * theta_left) * (psiprime1_left / psi1_left);
-        psi1_diff -= cexpl(-I * theta_right) * (psiprime1_right / psi1_right);
-        psi2_diff = cexpl(-I * theta_left) * (psiprime2_left / psi2_left);
-        psi2_diff -= cexpl(-I * theta_right) * (psiprime2_right / psi2_right);
-
-        printf("%d\t\t%.10Lf\t\t%.10Lf\n", i + 1, E1, E2);
-
-        if (!isnan(E1))
-        {
-            tempE = E1;
-            E1 = shoot(E1, E2, cabsl(psi1_diff), cabsl(psi2_diff));
-            E2 = tempE;
-        } 
-
-        else 
-        {
-            printf("%.20Lf\n", E2);
-            return 0;
-        }
-
-        psi1_right = 1e-100;
-        psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
-        psi2_right = 1e-100;
-        psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
-        
-        psi1_left = 1e-100;
-        psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
-        psi2_left = 1e-100;
-        psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
+        performEnergySearch(E_start, E_start + step);
     }
 
-    // Integrate once more, to save the results to output csv files
-    char output_filename[256];
-
-    sprintf(output_filename, "psi_left_%.1Lf-%.1Lf.csv", E1_init, E2_init);
-    rkintegrate(x_left, &psi1_left, &psiprime1_left, -stepsize, E1, theta_left, output_filename);
-
-    sprintf(output_filename, "psi_right_%.1Lf-%.1Lf.csv", E1_init, E2_init);
-    rkintegrate(x_right, &psi1_right, &psiprime1_right, -stepsize, E1, theta_right, output_filename);
-
-    printf("%.20Lf\n", E1);
-
     return 0;
-
 }
 
 // This function appears to be an implementation of the Runge-Kutta 4th order method (RK4)
@@ -218,3 +134,93 @@ long double shoot(long double E1, long double E2, long double A1, long double A2
 
     return E3;
 }
+
+// New function that wraps the core logic
+void performEnergySearch(long double E_start, long double E_end) 
+{
+    long double E1 = E_start, E2 = E_end, tempE;
+    long double three = 3.0;
+    long double stepsize = 0.0005;
+    long double theta_left, theta_right;
+
+    ldc psi1_left, psiprime1_left;
+    ldc psi1_right, psiprime1_right;
+    ldc psi2_left, psiprime2_left;
+    ldc psi2_right, psiprime2_right;
+    ldc psi1_diff, psi2_diff;
+    ldc x_left, x_right;
+    
+    int i, loop;
+
+    // Save the initial energy bounds for use in output filenames
+    long double E1_init = E1, E2_init = E2;
+
+    x_right = 10.0 * cexpl(I * pi * ((4.0 * 1.0 - epsilon) / (4.0 + 2.0 * epsilon)));
+    x_left = 10.0 * cexpl(I * pi * ((4.0 * -2.0 - epsilon) / (4.0 + 2.0 * epsilon)));
+
+    theta_right = cargl(x_right);
+    theta_left = cargl(x_left);
+
+    loop = (int) (x_right / stepsize);
+    loop++;
+
+    psi1_right = 5e-100;
+    psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
+    psi2_right = 5e-100;
+    psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
+    
+    psi1_left = 5e-100;
+    psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
+    psi2_left = 5e-100;
+    psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
+
+    for (i = 0; i < 40; i++)
+    {
+        rkintegrate(x_right, &psi1_right, &psiprime1_right, -stepsize, E1, theta_right, NULL);
+        rkintegrate(x_right, &psi2_right, &psiprime2_right, -stepsize, E2, theta_right, NULL);
+        rkintegrate(x_left, &psi1_left, &psiprime1_left, -stepsize, E1, theta_left, NULL);
+        rkintegrate(x_left, &psi2_left, &psiprime2_left, -stepsize, E2, theta_left, NULL);
+
+        psi1_diff = cexpl(-I * theta_left) * (psiprime1_left / psi1_left);
+        psi1_diff -= cexpl(-I * theta_right) * (psiprime1_right / psi1_right);
+        psi2_diff = cexpl(-I * theta_left) * (psiprime2_left / psi2_left);
+        psi2_diff -= cexpl(-I * theta_right) * (psiprime2_right / psi2_right);
+
+        printf("%d\t\t%.10Lf\t\t%.10Lf\n", i + 1, E1, E2);
+
+        if (!isnan(E1))
+        {
+            tempE = E1;
+            E1 = shoot(E1, E2, cabsl(psi1_diff), cabsl(psi2_diff));
+            E2 = tempE;
+        } 
+
+        else 
+        {
+            printf("%.20Lf\n", E2);
+            return;
+        }
+
+        psi1_right = 5e-100;
+        psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
+        psi2_right = 5e-100;
+        psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
+        
+        psi1_left = 5e-100;
+        psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
+        psi2_left = 5e-100;
+        psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
+    }
+
+    // Integrate once more, to save the results to output csv files
+    char output_filename[256];
+
+    sprintf(output_filename, "psi_left%.1Lf-%.1Lf.csv", E1_init, E2_init);
+    rkintegrate(x_left, &psi1_left, &psiprime1_left, -stepsize, E1, theta_left, output_filename);
+
+    sprintf(output_filename, "psi_right_%.1Lf-%.1Lf.csv", E1_init, E2_init);
+    rkintegrate(x_right, &psi1_right, &psiprime1_right, -stepsize, E1, theta_right, output_filename);
+
+    printf("%.20Lf\n", E1);
+}
+_
