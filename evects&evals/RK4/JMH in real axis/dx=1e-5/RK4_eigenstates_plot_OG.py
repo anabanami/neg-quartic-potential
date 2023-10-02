@@ -39,13 +39,10 @@ if __name__ == "__main__":
 
     eigenvalues = []
     wavefunctions = []
-    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension]
+    extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]
 
 
-    for i in range(5):
-
-        ax = plt.gca()
-        color = next(ax._get_lines.prop_cycler)['color']
+    for i in range(11):
 
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
@@ -88,21 +85,9 @@ if __name__ == "__main__":
             abs(wf **2) + evalue,
             "-",
             linewidth=1,
-            label=Rf"$|\psi_{i}|^2$",
             color=color,
         )
 
-    textstr = '\n'.join(
-        (
-            fr'$E_4 = {eigenvalues[4]:.06f}$',
-            fr'$E_3 = {eigenvalues[3]:.06f}$',
-            fr'$E_2 = {eigenvalues[2]:.06f}$',
-            fr'$E_1 = {eigenvalues[1]:.06f}$',
-            fr'$E_0 = {eigenvalues[0]:.06f}$',    
-        )
-    )
-    # place a text box in upper left in axes coords
-    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
 
@@ -114,7 +99,7 @@ if __name__ == "__main__":
     # plt.legend()
     plt.xlabel(R'$x$')
     # plt.ylabel('Amplitude')    
-    # plt.title("First few eigenstates")
+    # plt.title("Ground state of negative quartic Hamiltonian")
     plt.ylabel('Probability density')
-    plt.title("Ground state of negative quartic Hamiltonian")
+    plt.title("First few eigenstates")
     plt.show()

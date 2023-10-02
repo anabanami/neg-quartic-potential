@@ -78,7 +78,7 @@ if __name__ == "__main__":
     plt.grid(color='gray', linestyle=':', linewidth=0.5)
 
     # # INVESTIGATING THE DECAY
-    # Select the specific points for gradient sampling for each state
+    # Select the specific points for gradient sampling for each of the first 5 states
 
     logx1 = 0.9535  # First x value
     logx2 = 2.0067  # Second x value

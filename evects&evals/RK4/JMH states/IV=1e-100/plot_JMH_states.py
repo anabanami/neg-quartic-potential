@@ -6,19 +6,25 @@ import matplotlib.pyplot as plt
 plt.rcParams['figure.dpi'] = 200
 
 
-# These are the (first 5) eigenvalues we found for epsilon = 2
+# These are the (first 11) eigenvalues we found for epsilon = 2
 E_Bender = [
-    1.47714975357798685340,
-    6.00338608330813549739,
-    11.80243359513381656671,
-    18.45881870407351963044,
-    25.79179237850876206181,
+    1.47714975357798686273,
+    6.00338608330813547180,
+    11.80243359513386549372,
+    18.45881870407350603368,
+    25.79179237850933880880,
+    33.69427987657709945568,
+    42.09380771103636153727,
+    50.93740433237080572626,
+    60.18436924385155633796,
+    69.80209265698014350909,
+    79.76551330248462000350
 ]
 
 # Dictionary to hold the file data
 file_data = {}
 
-for i in range(4):
+for i in range(11):
     left_file = f"psi_left_{i}.csv"
     right_file = f"psi_right_{i}.csv"
 
@@ -66,35 +72,22 @@ for i, (name, data) in enumerate(file_data.items()):
     ax = plt.gca()
     color = next(ax._get_lines.prop_cycler)['color']
 
-    # plt.plot(
-    #     r,
-    #     abs(wf ** 2),
-    #     linewidth=1,
-    #     label=Rf"$\psi_{i}$",
-    #     color=color,
-    # )
-
-
     plt.plot(
         r,
-        np.log(abs(wf ** 2)),
+        abs(wf ** 2),
         linewidth=1,
         label=Rf"$\psi_{i}$",
         color=color,
     )
 
-    # plt.plot(r, 500 - 10 * r**4) # what does the origin look like???
 
-textstr = '\n'.join(
-    (
-        # fr'$E_4 = {E_Bender[4]:.06f}$',
-        fr'$E_3 = {E_Bender[3]:.06f}$',
-        fr'$E_2 = {E_Bender[2]:.06f}$',
-        fr'$E_1 = {E_Bender[1]:.06f}$',
-        fr'$E_0 = {E_Bender[0]:.06f}$',
-    )
-)
-ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+    # plt.semilogy(
+    #     r,
+    #     abs(wf) ** 2,
+    #     linewidth=1,
+    #     label=Rf"$\psi_{i}$",
+    #     color=color,
+    # )
 
 plt.legend()
 plt.xlabel(R'$r$')

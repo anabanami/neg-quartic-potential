@@ -28,7 +28,6 @@ ldc F(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 ldc G(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 long double shoot(long double E1, long double E2, long double A1, long double A2);
 
-
 // The main function initializes a series of variables and complex values and runs a loop 
 // to integrate certain differential equations using the rkintegrate function. 
 // The results and energies are printed out. There's an energy adjustment mechanism 
@@ -36,11 +35,19 @@ long double shoot(long double E1, long double E2, long double A1, long double A2
 // solutions from two starting energies (E1 and E2).
 int main(void) 
 {
-    // long double E1 = 1, E2 = 1.5, tempE;
-    // long double E1 = 5.9, E2 = 6.2, tempE;
-    // long double E1 = 11.5, E2 = 11.9, tempE;
-    // long double E1 = 18, E2 = 18.5, tempE;
-    // long double E1 = 25, E2 = 26, tempE;
+    // long double E1 = 1, E2 = 1.5, tempE; // THIS ONE RETURNS: 1.47714975357798686273
+    // long double E1 = 5.9, E2 = 6.2, tempE; // THIS ONE RETURNS: 6.00338608330813547180
+    // long double E1 = 11.5, E2 = 11.9, tempE; // THIS ONE RETURNS: 11.80243359513386549372
+    // long double E1 = 18, E2 = 18.5, tempE; // THIS ONE RETURNS: 18.45881870407350603368
+    // long double E1 = 25, E2 = 26, tempE; // THIS ONE RETURNS: 25.79179237850933880880
+    // long double E1 = 33.5, E2 = 34, tempE; // THIS ONE RETURNS: 33.69427987657709945568
+    // long double E1 = 41, E2 = 42, tempE; // THIS ONE RETURNS: 42.09380771103636153727
+    // long double E1 = 50, E2 = 51, tempE; // THIS ONE RETURNS: 50.93740433237080572626
+    // long double E1 = 60, E2 = 61, tempE; // THIS ONE RETURNS: 60.18436924385155633796
+    // long double E1 = 69, E2 = 70, tempE; // THIS ONE RETURNS: 69.80209265698014350909
+    // long double E1 = 79, E2 = 80, tempE; // THIS ONE RETURNS: 79.76551330248462000350
+    // long double E1 = 90, E2 = 91, tempE; // THIS ONE RETURNS: inf
+    // long double E1 = 100.1, E2 = 100.9, tempE; // THIS ONE RETURNS: -inf
 
     long double three = 3.0;
     long double stepsize = 0.0005;
@@ -67,14 +74,14 @@ int main(void)
     loop = (int) (x_right / stepsize);
     loop++;
 
-    psi1_right = 1.0;
+    psi1_right = 1e-100;
     psiprime1_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi1_right;
-    psi2_right = 1.0;
+    psi2_right = 1e-100;
     psiprime2_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi2_right;
     
-    psi1_left = 1.0;
+    psi1_left = 1e-100;
     psiprime1_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi1_left;
-    psi2_left = 1.0;
+    psi2_left = 1e-100;
     psiprime2_left = -cpowl(I, epsilon) * cpowl(x_left, (2.0 + epsilon)) * psi2_left;
 
     for (i = 0; i < 40; i++)

@@ -45,9 +45,6 @@ if __name__ == "__main__":
 
     for i in range(2):
 
-        ax = plt.gca()
-        color = next(ax._get_lines.prop_cycler)['color']
-
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
             evalue = file["eigenfunction"].attrs["eigenvalue"]
