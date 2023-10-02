@@ -1,12 +1,3 @@
-// These are the (first 5) eigenvalues for epsilon = 2
-// E_Bender = [
-//         1.477150,
-//         6.003386,
-//         11.802434,
-//         18.458819,
-//         25.791792,
-//     ]
-
 // This code includes standard libraries. stdio.h is for input/output functions like printf.
  // math.h provides mathematical functions. complex.h provides support for complex numbers.
 #include <stdio.h>

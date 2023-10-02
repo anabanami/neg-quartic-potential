@@ -1,5 +1,11 @@
+// This code is simulating a quantum-mechanical scenario involving the Schrödinger equation.
+// It iterates over different energy levels E and integrates the system of first-order ordinary differential equations described by F and G functions with Runge-Kutta 4,
+// to find the corresponding psi and psiprime values for each energy E. The code then calculates the value of psi_diff to a file. 
+// psi_diff is the a boundary condition(will be used as shooting condition) encapsuling the continuity of the logaritmic derivative at the origin.
+// The final values of psi_diff for various energy levels are written to psi_diffs.csv file in the main function.
+
 // This code includes standard libraries. stdio.h is for input/output functions like printf.
- // math.h provides mathematical functions. complex.h provides support for complex numbers.
+// math.h provides mathematical functions. complex.h provides support for complex numbers.
 #include <stdio.h>
 #include <math.h>
 #include <complex.h>
@@ -19,6 +25,9 @@ ldc F(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 ldc G(long double r, long double theta, ldc psi, ldc psiprime, long double E);
 
 
+// Here’s the main function where the program execution starts. 
+// The main function initializes several variables and pointers for computation 
+// and file writing.
 int main(void) 
 {
     // COARSE -- SEARCH parameters
@@ -71,6 +80,11 @@ int main(void)
     
 }
 
+// This function performs the Runge-Kutta integration method.
+// It has a loop that calculates psi and psiprime for each step h 
+// using the differential equations defined by the F and G functions. 
+// If output_filename is not NULL, the function writes to the file and closes it 
+// before exiting. The updated psi and psiprime are returned via pointers.
 void rkintegrate(ldc x0, ldc *y, ldc *z, long double h,
                  long double E, long double theta, char *output_filename)
 {
@@ -127,12 +141,15 @@ void rkintegrate(ldc x0, ldc *y, ldc *z, long double h,
     *z = psiprime;
 }
 
-
+// The function F returns the derivative psiprime. 
+// It’s used in rkintegrate as part of the differential equation to calculate the next psi.
 ldc F(long double r, long double theta, ldc psi, ldc psiprime, long double E)
 {
     return psiprime;
 }
-
+// The function G returns a complex value calculated using r, theta, psi, psiprime, and E.
+// It’s used in rkintegrate as part of the differential equation to calculate
+// the next psiprime.
 ldc G(long double r, long double theta, ldc psi, ldc psiprime, long double E)
 {
     ldc retval;
