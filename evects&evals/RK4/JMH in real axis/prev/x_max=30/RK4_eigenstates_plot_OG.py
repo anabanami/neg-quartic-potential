@@ -18,7 +18,7 @@ def odd_extension(y):
 
 
 def initialisation_parameters():
-    dx = 1e-5
+    dx = 1e-3
 
     # space dimension
     x_max = 30
@@ -91,10 +91,10 @@ if __name__ == "__main__":
 
     textstr = '\n'.join((
         fR'$E_{0} = {eigenvalues[0]:.06f}$',
-        fR'$E_{1} = {eigenvalues[1]:.06f}$',
-        fR'$E_{2} = {eigenvalues[2]:.06f}$',
-        fR'$E_{3} = {eigenvalues[3]:.06f}$',
-        fR'$E_{4} = {eigenvalues[4]:.06f}$',
+        # fR'$E_{1} = {eigenvalues[1]:.06f}$',
+        # fR'$E_{2} = {eigenvalues[2]:.06f}$',
+        # fR'$E_{3} = {eigenvalues[3]:.06f}$',
+        # fR'$E_{4} = {eigenvalues[4]:.06f}$',
         )
     )
     

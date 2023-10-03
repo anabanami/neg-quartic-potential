@@ -29,7 +29,7 @@ def get_files():
     eigenvalues = []
     wavefunctions = []
 
-    for i in range(5):
+    for i in range(11):
 
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
@@ -56,7 +56,13 @@ if __name__ == "__main__":
     # wf, evalue = wavefunctions[2], eigenvalues[2]
     # wf, evalue = wavefunctions[3], eigenvalues[3]
     # wf, evalue = wavefunctions[4], eigenvalues[4]
-
+    # wf, evalue = wavefunctions[2], eigenvalues[5]
+    # wf, evalue = wavefunctions[3], eigenvalues[6]
+    # wf, evalue = wavefunctions[4], eigenvalues[7]
+    # wf, evalue = wavefunctions[2], eigenvalues[8]
+    # wf, evalue = wavefunctions[3], eigenvalues[9]
+    # wf, evalue = wavefunctions[4], eigenvalues[10]
+    
     # Logarithmic Plots:
     # Plot the logarithm of the absolute value of the wavefunction against x
     # to infer exponential, power law, or other decays

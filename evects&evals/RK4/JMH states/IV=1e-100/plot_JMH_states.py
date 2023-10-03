@@ -24,7 +24,7 @@ E_Bender = [
 # Dictionary to hold the file data
 file_data = {}
 
-for i in range(11):
+for i in range(5):
     left_file = f"psi_left_{i}.csv"
     right_file = f"psi_right_{i}.csv"
 
@@ -77,7 +77,7 @@ for i, (name, data) in enumerate(file_data.items()):
         abs(wf ** 2),
         linewidth=1,
         label=Rf"$\psi_{i}$",
-        color=color,
+        # color=color,
     )
 
 
@@ -89,9 +89,21 @@ for i, (name, data) in enumerate(file_data.items()):
     #     color=color,
     # )
 
+textstr = '\n'.join(
+    (
+        fr'$E_0 = {E_Bender[0]:.06f}$',
+        fr'$E_1 = {E_Bender[1]:.06f}$',
+        fr'$E_2 = {E_Bender[2]:.06f}$',
+        fr'$E_3 = {E_Bender[3]:.06f}$',
+        fr'$E_4 = {E_Bender[4]:.06f}$',
+    )
+)
+ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
+
+
 plt.legend()
 plt.xlabel(R'$r$')
 # plt.ylabel('Absolute squared amplitude')
-plt.ylabel('LOG Absolute squared amplitude')
-plt.title("First few eigenstates")
+# plt.ylabel('LOG Absolute squared amplitude')
+plt.title("First 5 eigenstates")
 plt.show()
