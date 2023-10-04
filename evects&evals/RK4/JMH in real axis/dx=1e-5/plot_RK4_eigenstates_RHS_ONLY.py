@@ -86,8 +86,8 @@ if __name__ == "__main__":
     # # INVESTIGATING THE DECAY
     # Select the specific points for gradient sampling for each of the first 5 states
 
-    logx1 = 0.9535  # First x value
-    logx2 = 2.0067  # Second x value
+    logx1 = 3.39764545  # First x value
+    logx2 = 3.005203223  # Second x value
 
     # logx1 = 0.9535  # First x value
     # logx2 = 2.00335  # Second x value

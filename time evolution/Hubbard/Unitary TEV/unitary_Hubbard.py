@@ -1,7 +1,7 @@
 # Time evolution using Hubbard Hamiltonian with unitary operator
-# HDF5 protocol
 # Ana Fabela 22/06/2023
 
+# Import necessary libraries and modules
 import os
 from pathlib import Path
 import numpy as np
@@ -10,14 +10,18 @@ from scipy import linalg
 from scipy.signal import convolve
 import h5py
 
-
+# Configure matplotlib to display high DPI figures
 plt.rcParams['figure.dpi'] = 200
 
 #######################################################################################################
 
 
 def plot_matrices():
-    # Generate the Hamiltonian
+    """
+    Function to visualize the Hubbard Hamiltonian and its absolute value (on a log scale) as heat maps.
+    The Hamiltonian is generated via the Bose_Hubbard_Hamiltonian function.
+    """
+    # Generate the Hamiltonian matrix
     H = Bose_Hubbard_Hamiltonian()
 
     # Plot the Hamiltonian as a heat map
@@ -41,7 +45,15 @@ def plot_matrices():
 
 
 def gaussian_smoothing(data, pts):
-    """gaussian smooth an array by given number of points"""
+    """
+    Function to smooth input data with a Gaussian kernel.
+    The data is convolved with a Gaussian kernel to achieve smoothing.
+    Parameters:
+    - data: The array to be smoothed.
+    - pts: Number of points to be considered in the Gaussian kernel.
+    Returns:
+    - The smoothed array.
+    """
     x = np.arange(-4 * pts, 4 * pts + 1, 1)
     kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
     smoothed = convolve(data, kernel, mode='same')
@@ -50,6 +62,13 @@ def gaussian_smoothing(data, pts):
 
 
 def smooth_restricted_V(x):
+    """
+    Function to generate a potential V(x) based on input x, with smoothing applied in a restricted domain.
+    Parameters:
+    - x: Array defining the spatial coordinates.
+    Returns:
+    - The smoothed potential V.
+    """
     V = np.ones_like(x) * x[cut] ** 4
     V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
     ## smoooth by pts=3
@@ -58,15 +77,35 @@ def smooth_restricted_V(x):
 
 
 def V(x):
-    # return -α * smooth_restricted_V(x)
-    return np.zeros_like(x)
-    # return - 0.5 * (x ** 2)
+    """
+    Function defining a potential V as a function of position x.
+    Parameters:
+    - x: Position.
+    Returns:
+    - Potential V at position x.
+    """
+    # # unmodified negative quartic potential
+    # return -alpha * x**4
+    # # restricted and smoothed negative quartic potential
+    # return -alpha * smooth_restricted_V(x)
+    # # Free space (no potential)
+    # return np.zeros_like(x)
+    # # upside-down harmonic oscillator
+    return - (x ** 2)
 
 
 def plot_evolution_frame(y, state, time, i):
-    # potential
+    """
+    Function to plot and save the evolution of the wave function in position space at a specific time.
+    Parameters:
+    - y: Position coordinates.
+    - state: Wave function at time `time`.
+    - time: The particular instant of time.
+    - i: Index used for saving the plot.
+    """
+    # potential plot
     plt.plot(y, V(y), color="black", linewidth=2, label="V(x)")
-    # prob. density plot
+    # prob. density of states plot
     plt.plot(y, abs(state) ** 2, label=R"$|\psi(x, t)|^2$")
     plt.ylabel(R"$|\psi(x, t)|^2$")
     plt.xlabel(R"$x$")
@@ -97,7 +136,6 @@ def plot_vs_k(state, time, i):
     plt.clf()
 
 
-###############################################################################
 def x_variance(x, dx, Ψ):
     # Calculate Spatial variance of wavefunction (Ψ) per unit time
     f = x * abs(Ψ ** 2)
@@ -111,12 +149,12 @@ def x_variance(x, dx, Ψ):
     return dx / 2 * np.sum(g_right + g_left)
 
 
-###############################################################################
-
-#######################################################################################################
-
-
 def Bose_Hubbard_Hamiltonian():
+    """
+    Function to generate the Hubbard Hamiltonian for a Bose system.
+    Returns:
+    - The Hubbard Hamiltonian matrix H.
+    """
     # Initialize the Hamiltonian as a zero matrix
     H = np.zeros((N_sites, N_sites))
     # On-site interaction potential
@@ -136,18 +174,29 @@ def Bose_Hubbard_Hamiltonian():
 
 
 def Unitary(M):
+    """
+    Function to generate the unitary matrix for time evolution.
+    Returns:
+    - The unitary time evolution operator U
+    """
     A = -1j * M * dt / hbar
     return linalg.expm(A)
 
 
 def TEV(x, wave):
+    """
+    Function to perform Time Evolution via the Hubbard Hamiltonian and store the results in an HDF5 file.
+    Parameters:
+    - x: Spatial coordinates array.
+    - wave: Initial wave function.
+    """
     # spatial variance
     SIGMAS_x_SQUARED = []
 
     states = []
 
     # Create a new HDF5 file
-    file = h5py.File('9.5.hdf5', 'w')
+    file = h5py.File('Unitary_hubbard.hdf5', 'w')
 
     # time evolution
     H = Bose_Hubbard_Hamiltonian()
@@ -176,7 +225,7 @@ def TEV(x, wave):
     # Close the hdf5 file
     file.close()
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
-    np.save(f"9.5_variance.npy", SIGMAS_x_SQUARED)
+    np.save(f"Unitary_hubbard_variance.npy", SIGMAS_x_SQUARED)
 
     PLOT_INTERVAL = 20
     for j, state in enumerate(states):
@@ -187,27 +236,32 @@ def TEV(x, wave):
 
 
 def globals():
+    """
+    Function to define and return global variables used throughout the script.
+    Includes physical constants, potential coefficients, spatial and temporal discretization, initial wave function, etc.
+    Returns:
+    - A tuple containing all global parameters.
+    """
     # makes folder for simulation frames
-    folder = Path(f'9.5')
+    folder = Path(f'Unitary_hubbard')
 
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
-
-    # # Bender units
-    # m = 1/2
-    # ω = 2
-
-    # natural units
-    m = 1
-    ω = 1
     hbar = 1
 
+    # Bender units
+    m = 1 / 2
+    omega = 2
+    # # natural units
+    # m = 1
+    # omega = 1
+
     # lengths for HO quench
-    l1 = np.sqrt(hbar / (m * ω))
+    l1 = np.sqrt(hbar / (m * omega))
 
     # coefficient for quartic potential
-    α = 4
+    alpha = 1
 
     N_sites = 900
     cut = 5
@@ -230,15 +284,14 @@ def globals():
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
     ## initial conditions: shifted HO ground state
     # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
-    
 
     return (
         folder,
         hbar,
         m,
-        ω,
+        omega,
         l1,
-        α,
+        alpha,
         N_sites,
         cut,
         t,
@@ -254,15 +307,16 @@ def globals():
 
 
 if __name__ == "__main__":
-    """FUNCTION CALLS"""
+
+    # Retrieve global parameters
 
     (
         folder,
         hbar,
         m,
-        ω,
+        omega,
         l1,
-        α,
+        alpha,
         N_sites,
         cut,
         t,
@@ -276,11 +330,15 @@ if __name__ == "__main__":
         wave,
     ) = globals()
 
+    # Generate and plot the Hamiltonian matrices
     plot_matrices()
 
+    # Perform time evolution and visualize
     TEV(x, wave)
 
-    print(f"\n{np.sum(abs(wave)**2)*dx = }")  # is IC normalised???
+    # [Print or log statements that help understanding the flow and outcomes...]
+    # CHECK that IC is normalised
+    print(f"\n{np.sum(abs(wave)**2)*dx = }")
 
     print(f"\n{x_max = }")
     print(f"{Nx = }")

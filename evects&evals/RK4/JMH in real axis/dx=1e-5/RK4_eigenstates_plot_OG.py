@@ -42,7 +42,7 @@ if __name__ == "__main__":
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]
 
 
-    for i in range(5):
+    for i in range(10):
 
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
@@ -63,31 +63,31 @@ if __name__ == "__main__":
     # Plotting
     for i, (wf, evalue) in enumerate(zip(extended_wavefunctions, eigenvalues)):
         ax = plt.gca()
-        # color = next(ax._get_lines.prop_cycler)['color']
-
-        # plt.plot(
-        #     x,
-        #     np.real(wf),# + evalue,
-        #     linewidth=1,
-        #     label=Rf"$\psi_{i}$",
-        #     color=color,
-        # )
-        # plt.plot(
-        #     x,
-        #     np.imag(wf),# + evalue,
-        #     "--",
-        #     linewidth=1,
-        #     color=color,
-        # )
+        color = next(ax._get_lines.prop_cycler)['color']
 
         plt.plot(
             x,
-            abs(wf **2) + evalue,
-            "-",
+            np.real(wf) + evalue,
             linewidth=1,
-            label=fR'$E_{{{i}}}$',
-            # color=color,
+            label=Rf"$\psi_{i}$",
+            color=color,
         )
+        plt.plot(
+            x,
+            np.imag(wf) + evalue,
+            "--",
+            linewidth=1,
+            color=color,
+        )
+
+        # plt.plot(
+        #     x,
+        #     abs(wf **2) + evalue,
+        #     "-",
+        #     linewidth=1,
+        #     label=fR'$E_{{{i}}}$',
+        #     color=color,
+        # )
 
     textstr = '\n'.join((
         fR'$E_{0} = {eigenvalues[0]:.06f}$',
@@ -111,9 +111,9 @@ if __name__ == "__main__":
     
     # plt.legend()
     plt.xlabel(R'$x$')
-    # plt.ylabel('Amplitude')    
+    plt.ylabel('Amplitude')    
     # plt.title("Ground state of negative quartic Hamiltonian")
-    plt.ylabel('Probability density')
+    # plt.ylabel('Probability density')
     plt.title("First 5 eigenstates")
     # plt.title("First 11 eigenstates")
 
