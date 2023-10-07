@@ -84,14 +84,22 @@ def V(x):
     Returns:
     - Potential V at position x.
     """
-    # # unmodified negative quartic potential
-    # return -alpha * x**4
-    # # restricted and smoothed negative quartic potential
-    # return -alpha * smooth_restricted_V(x)
+    # Select test potential by uncommenting
+
     # # Free space (no potential)
     # return np.zeros_like(x)
+
     # # upside-down harmonic oscillator
-    return - (x ** 2)
+    # return - (x ** 2)
+
+    # # # unmodified negative quartic potential
+    # return -alpha * x ** 4
+
+    # restricted and smoothed negative quartic potential
+    return -alpha * smooth_restricted_V(x)
+
+    # # Higher order perturbation
+    # return - (x ** 8)
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -263,27 +271,28 @@ def globals():
     # coefficient for quartic potential
     alpha = 1
 
-    N_sites = 900
-    cut = 5
-
-    dx = 0.1
-    # Hopping strength
-    t = 1 / (2 * dx ** 2)
-
     # space dimension
     x_max = 45
+    dx = 0.08
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
+
+    # Lattice parameters
+    N_sites = Nx
+    cut = 5
+    # Hopping strength
+    t = 1 / (2 * dx ** 2)
 
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 2
+    t_final = 5.7
 
-    # initial conditions: HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
-    ## initial conditions: shifted HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    # # initial conditions: HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+
+    # initial conditions: shifted HO ground state
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,
