@@ -42,7 +42,7 @@ if __name__ == "__main__":
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]
 
 
-    for i in range(10):
+    for i in range(1):
 
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
@@ -65,42 +65,41 @@ if __name__ == "__main__":
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        plt.plot(
-            x,
-            np.real(wf) + evalue,
-            linewidth=1,
-            label=Rf"$\psi_{i}$",
-            color=color,
-        )
-        plt.plot(
-            x,
-            np.imag(wf) + evalue,
-            "--",
-            linewidth=1,
-            color=color,
-        )
-
         # plt.plot(
         #     x,
-        #     abs(wf **2) + evalue,
-        #     "-",
+        #     np.real(wf) + evalue,
         #     linewidth=1,
-        #     label=fR'$E_{{{i}}}$',
+        #     label=Rf"$\psi_{i}$",
+        #     color=color,
+        # )
+        # plt.plot(
+        #     x,
+        #     np.imag(wf) + evalue,
+        #     "--",
+        #     linewidth=1,
         #     color=color,
         # )
 
+        plt.plot(
+            x,
+            abs(wf **2),# + evalue,
+            "-",
+            linewidth=1,
+            label=fR'$E_{{{i}}}$',
+            color=color,
+        )
+
     textstr = '\n'.join((
         fR'$E_{0} = {eigenvalues[0]:.06f}$',
-        fR'$E_{1} = {eigenvalues[1]:.06f}$',
-        fR'$E_{2} = {eigenvalues[2]:.06f}$',
-        fR'$E_{3} = {eigenvalues[3]:.06f}$',
-        fR'$E_{4} = {eigenvalues[4]:.06f}$',
+    #     fR'$E_{1} = {eigenvalues[1]:.06f}$',
+    #     fR'$E_{2} = {eigenvalues[2]:.06f}$',
+    #     fR'$E_{3} = {eigenvalues[3]:.06f}$',
+    #     fR'$E_{4} = {eigenvalues[4]:.06f}$',
         )
     )
     
     # place a text box in upper left in axes coords
     ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
-
 
     # plt.plot(x, V(x), linewidth=2, alpha=0.4, color='k')
 
@@ -111,13 +110,11 @@ if __name__ == "__main__":
     
     # plt.legend()
     plt.xlabel(R'$x$')
-    plt.ylabel('Amplitude')    
-    # plt.title("Ground state of negative quartic Hamiltonian")
-    # plt.ylabel('Probability density')
-    plt.title("First 5 eigenstates")
-    # plt.title("First 11 eigenstates")
-
-
+    # plt.ylabel('Amplitude')    
+    plt.ylabel('Probability density')
+    plt.title("Ground state of negative quartic Hamiltonian")
+    # plt.title("First 10 eigenstates in the real line")
+    plt.grid(color="gray", linestyle=":")
     plt.show()
 
-    # JMH_STATES_real_line_ZOOM_left_2.pdf
+    # JMH_STATES_real_line_zoom.pdf

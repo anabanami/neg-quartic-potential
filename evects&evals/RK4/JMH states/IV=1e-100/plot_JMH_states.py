@@ -91,15 +91,15 @@ for i, (name, data) in enumerate(file_data.items()):
 textstr = '\n'.join(
     (
         fr'$E_0 = {E_Bender[0]:.06f}$',
-        # fr'$E_1 = {E_Bender[1]:.06f}$',
-        # fr'$E_2 = {E_Bender[2]:.06f}$',
-        # fr'$E_3 = {E_Bender[3]:.06f}$',
-        # fr'$E_4 = {E_Bender[4]:.06f}$',
-        # fr'$E_5 = {E_Bender[5]:.06f}$',
-        # fr'$E_6 = {E_Bender[6]:.06f}$',
-        # fr'$E_7 = {E_Bender[7]:.06f}$',
-        # fr'$E_8 = {E_Bender[8]:.06f}$',
-        # fr'$E_9 = {E_Bender[9]:.06f}$',        
+        fr'$E_1 = {E_Bender[1]:.06f}$',
+        fr'$E_2 = {E_Bender[2]:.06f}$',
+        fr'$E_3 = {E_Bender[3]:.06f}$',
+        fr'$E_4 = {E_Bender[4]:.06f}$',
+        fr'$E_5 = {E_Bender[5]:.06f}$',
+        fr'$E_6 = {E_Bender[6]:.06f}$',
+        fr'$E_7 = {E_Bender[7]:.06f}$',
+        fr'$E_8 = {E_Bender[8]:.06f}$',
+        fr'$E_9 = {E_Bender[9]:.06f}$',        
     )
 )
 ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
@@ -115,7 +115,7 @@ plt.xlabel(R'$r$')
 # plt.ylabel('Absolute squared amplitude')
 plt.ylabel('LOG Absolute squared amplitude')
 # plt.title("First 5 eigenstates")
-# plt.title("First 10 eigenstates")
-plt.title("Ground state")
-
+plt.title("First 10 eigenstates")
+# plt.title("Ground state")
+plt.grid(color="gray", linestyle=":")
 plt.show()

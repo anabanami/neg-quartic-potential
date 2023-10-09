@@ -146,6 +146,7 @@ def plot_vs_k(state, time, i):
 
 def x_variance(x, dx, Ψ):
     # Calculate Spatial variance of wavefunction (Ψ) per unit time
+    # means squared distance from the mean
     f = x * abs(Ψ ** 2)
     f_right = f[1:]  # right endpoints
     f_left = f[:-1]  # left endpoints
@@ -193,7 +194,8 @@ def Unitary(M):
 
 def TEV(x, wave):
     """
-    Function to perform Time Evolution via the Hubbard Hamiltonian and store the results in an HDF5 file.
+    Function to perform Time Evolution via the Hubbard Hamiltonian 
+    and store the results in an HDF5 file.
     Parameters:
     - x: Spatial coordinates array.
     - wave: Initial wave function.
@@ -213,6 +215,10 @@ def TEV(x, wave):
     state = wave
     states.append(state)
     sigma_x_squared = x_variance(x, dx, state)
+    # # IF USING a shifted IC
+    # sigma_x_squared = x_variance(x-1, dx, state)
+    # sigma_x_squared = x_variance(x-2, dx, state)
+
     SIGMAS_x_SQUARED.append(sigma_x_squared)
     dset = file.create_dataset("0.0", data=state)
 
@@ -246,7 +252,8 @@ def TEV(x, wave):
 def globals():
     """
     Function to define and return global variables used throughout the script.
-    Includes physical constants, potential coefficients, spatial and temporal discretization, initial wave function, etc.
+    Includes physical constants, potential coefficients, spatial and temporal
+    discretization, initial wave function, etc.
     Returns:
     - A tuple containing all global parameters.
     """
