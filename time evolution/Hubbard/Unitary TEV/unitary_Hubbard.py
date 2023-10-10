@@ -95,8 +95,11 @@ def V(x):
     # # # unmodified negative quartic potential
     # return -alpha * x ** 4
 
-    # restricted and smoothed negative quartic potential
-    return -alpha * smooth_restricted_V(x)
+    # # restricted and smoothed negative quartic potential
+    # return -alpha * smooth_restricted_V(x)
+
+    # Higher order perturbation
+    return - (x ** 6)
 
     # # Higher order perturbation
     # return - (x ** 8)

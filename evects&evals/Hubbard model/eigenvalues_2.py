@@ -1,8 +1,9 @@
 # Diagonalising Hubbard matrices
-# HDF5 protocol
 # Ana Fabela 17/07/2023
 
+# Import necessary libraries and modules
 import os
+from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import linalg
@@ -12,11 +13,16 @@ import h5py
 plt.rcParams['figure.dpi'] = 200
 
 
-#######################################################################################################
-
-
 def gaussian_smoothing(data, pts):
-    """gaussian smooth an array by given number of points"""
+    """
+    Function to smooth input data with a Gaussian kernel.
+    The data is convolved with a Gaussian kernel to achieve smoothing.
+    Parameters:
+    - data: The array to be smoothed.
+    - pts: Number of points to be considered in the Gaussian kernel.
+    Returns:
+    - The smoothed array.
+    """
     x = np.arange(-4 * pts, 4 * pts + 1, 1)
     kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
     smoothed = convolve(data, kernel, mode='same')
@@ -25,21 +31,47 @@ def gaussian_smoothing(data, pts):
 
 
 def smooth_restricted_V(x):
+    """
+    Function to generate a potential V(x) based on input x, with smoothing applied in a restricted domain.
+    Parameters:
+    - x: Array defining the spatial coordinates.
+    Returns:
+    - The smoothed potential V.
+    """
     V = np.ones_like(x) * x[cut] ** 4
     V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
-    ## smoooth by pts=2
-    V = gaussian_smoothing(V, 2)
+    ## smoooth by pts=3
+    V = gaussian_smoothing(V, 3)
     return V
 
 
 def V(x):
-    # return 0.5 * m * (ω * x) ** 2
-    # return - 0.5 * (ω * x) ** 2 # TEST: continuum states
-    return -0.5 * x ** 4
-    # return - 0.5 * smooth_restricted_V(x)
+    """
+    Function defining a potential V as a function of position x.
+    Parameters:
+    - x: Position.
+    Returns:
+    - Potential V at position x.
+    """
+    # Select test potential by uncommenting
 
+    # # Free space
+    # return np.zeros_like(x)
 
-#######################################################################################################
+    # #Harmonic oscillator
+    # return x ** 2
+
+    # # # unmodified negative quartic potential
+    # return -alpha * x ** 4
+
+    # # restricted and smoothed negative quartic potential
+    # return -alpha * smooth_restricted_V(x)
+
+    # # Higher order perturbation
+    # return - (x ** 6)
+
+    # Higher order perturbation
+    return -(x ** 8)
 
 
 def Bose_Hubbard_Hamiltonian():
@@ -50,6 +82,7 @@ def Bose_Hubbard_Hamiltonian():
 
     # Define the hopping and interaction terms
     # PERIODIC BCS
+    print(">>>> Generating Hubbard matrix")
     for i in range(Nx):
         # Hopping terms
         H[i, (i + 1) % Nx] = -t
@@ -83,6 +116,7 @@ def plot_matrix(H):
 
 
 def filter_sorting(evals, evects):
+    print(">>>> Filter and sort eigenvalues")
     # filtering
     mask = (-10 < evals.real) & (evals.real < 50)
     evals = evals[mask]
@@ -108,11 +142,12 @@ def plot_wavefunctions(N, x, evals, evects):
     grid (x) by treating the index of the eigenvector's
     components as corresponding to the index in the x array."""
 
-    for i in range(10):
+    print(">>>> Plotting wavefunctions")
+    for i in range(11):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        if i < 6:
+        if i < 7:
             plt.plot(
                 x,
                 np.real(evects[:, i] + evals[i]),
@@ -121,7 +156,11 @@ def plot_wavefunctions(N, x, evals, evects):
                 color=color,
             )
             plt.plot(
-                x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color
+                x,
+                np.imag(evects[:, i]) + np.real(evals[i]),
+                "--",
+                linewidth=1,
+                color=color,
             )
 
         else:
@@ -130,11 +169,15 @@ def plot_wavefunctions(N, x, evals, evects):
                 np.real(evects[:, i] + evals[i]),
                 "-",
                 linewidth=1,
-            label=fR"$\psi_{i}(x)$",
-            color=color,
+                label=fR"$\psi_{{{i}}}(x)$",
+                color=color,
             )
             plt.plot(
-            x, np.imag(evects[:, i]) + np.real(evals[i]), "--", linewidth=1, color=color
+                x,
+                np.imag(evects[:, i]) + np.real(evals[i]),
+                "--",
+                linewidth=1,
+                color=color,
             )
 
     textstr = '\n'.join(
@@ -149,6 +192,7 @@ def plot_wavefunctions(N, x, evals, evects):
             fr'$E_7 = {np.real(evals[7]):.06f}$',
             fr'$E_8 = {np.real(evals[8]):.06f}$',
             fr'$E_9 = {np.real(evals[9]):.06f}$',
+            fr'$E_{{10}} = {np.real(evals[10]):.06f}$',
         )
     )
     # place a text box in upper left in axes coords
@@ -169,36 +213,47 @@ def plot_wavefunctions(N, x, evals, evects):
 
 
 def globals():
-
-    os.system(f'rm *.hdf5')
-
-    # # natural units
-    m = 1
-    ω = 1
+    """
+    Function to define and return global variables used throughout the script.
+    Includes physical constants, potential coefficients, spatial and temporal
+    discretization, initial wave function, etc.
+    Returns:
+    - A tuple containing all global parameters.
+    """
+    os.system(f'rm *.h5')
 
     hbar = 1
 
-    dx = 0.01
+    # Bender units
+    m = 1 / 2
+    omega = 2
+
+    # coefficient for quartic potential
+    alpha = 1
+
+    # space dimension
+    dx = 0.006
+
+    x_max = 20
+    Nx = int(2 * x_max / dx)
+    x = np.linspace(-x_max, x_max, Nx, endpoint=False)
+
     # Hopping strength
     t = 1 / (2 * dx ** 2)
 
-    # space dimension
-    x_max = 15
-    Nx = int(2 * x_max / dx)
     cut = 5
-    x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
     return (
         hbar,
         m,
-        ω,
-        Nx,
-        cut,
-        t,
-        x_max,
+        omega,
+        alpha,
         dx,
+        x_max,
         Nx,
         x,
+        t,
+        cut,
     )
 
 
@@ -207,27 +262,25 @@ if __name__ == "__main__":
     (
         hbar,
         m,
-        ω,
-        Nx,
-        cut,
-        t,
-        x_max,
+        omega,
+        alpha,
         dx,
+        x_max,
         Nx,
         x,
+        t,
+        cut,
     ) = globals()
 
     print("TESTING PARAMETERS:")
+    print(f"\n{x_max = }")
+    print(f"{Nx = }")
+    print(f"{x.shape = }")
+    print(f"\n{dx = }")
 
-    print("\n")
-    print(f"{dx = }")
-    print(f"{t = }")
-    print(f"\nEigenvalues = {Nx = }")
-    print(f"{x_max = }")
-
-    print("\nONLY for restricted V(x):")
-    print(f"{x[cut] = }")
-    print(f"index {cut = }")
+    print("only relevant to smooth restricted potential:")
+    print(f"x_cut_left = {x[cut]= }")
+    print(f"x_cut_right = {x[Nx-cut]= }")
 
     # generate Hubbard matrix
     M = Bose_Hubbard_Hamiltonian()
@@ -236,6 +289,7 @@ if __name__ == "__main__":
     evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
 
     # fix Energy shift of - 2t
+    print("\n>>>> correcting energy shift due to hopping term approx")
     for i, value in enumerate(evals):
         evals[i] = np.real(value) + 2 * t
 
@@ -246,39 +300,19 @@ if __name__ == "__main__":
     plot_wavefunctions(Nx, x, evals, evects)
 
     # Create a new HDF5 file
-    # file = h5py.File(f'evals_V(x)=0.5m(ωx)**2', 'w')
-    # file = h5py.File(f'evals_V(x)=-0.5m(ωx)**2', 'w')
-    file = h5py.File(f'evals_V(x)=-0.5x**4.hdf5', 'w')
-    # file = h5py.File(f'evals_V(x)=-0.5smooth_restricted_V(x).hdf5', 'w')
-
-    # Create datasets for eigenvalues and eigenvectors in hdf5 file
-    evals_dset = file.create_dataset('eigenvalues', data=evals)
-    evects_dset = file.create_dataset('eigenvectors', data=evects)
+    print("\n>>>> saving Evals_hubbard.h5")
+    with h5py.File(f'Evals_hubbard.h5', 'w') as file:
+        # Create datasets for eigenvalues and eigenvectors in hdf5 file
+        evals_dset = file.create_dataset('eigenvalues', data=evals)
+        evects_dset = file.create_dataset('eigenvectors', data=evects)
 
     # Close the hdf5 file
     file.close()
 
-    # print("\nComparing with Bender's spectrum")
-    # _2evals = 2 * evals
-
-    # # Bender energies to compare
-    # E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
-
-    # ax = plt.gca()
-    # color = next(ax._get_lines.prop_cycler)['color']
-    # textstr = '\n'.join(
-    #     (
-    #         fr'$E_0 = {np.real(evals[6]):.06f}~\rightarrow~2E_0 = {np.real(_2evals[6]):.06f}~~\mathrm{{vs.}}~~E_{{B, 0}}= {np.real(E_bender[0]):.06f}$',
-    #         fr'$E_1 = {np.real(evals[7]):.06f}~\rightarrow~2E_1 = {np.real(_2evals[7]):.06f}~~\mathrm{{vs.}}~~E_{{B, 1}} = {np.real(E_bender[1]):.06f}$',
-    #         fr'$E_2 = {np.real(evals[8]):.06f}~\rightarrow~2E_2 = {np.real(_2evals[8]):.06f}~~\mathrm{{vs.}}~~E_{{B, 2}} = {np.real(E_bender[2]):.06f}$',
-    #         fr'$E_3 = {np.real(evals[9]):.06f}~\rightarrow~2E_3 = {np.real(_2evals[9]):.06f}~~\mathrm{{vs.}}~~E_{{B, 3}} = {np.real(E_bender[3]):.06f}$',
-    #         fr'$E_4 = {np.real(evals[10]):.06f}~\rightarrow~2E_4 = {np.real(_2evals[10]):.06f}~~\mathrm{{vs.}}~~E_{{B, 4}} = {np.real(E_bender[4]):.06f}$',
-    #     )
-    # )
-    # # place a text box in upper left in axes coords
-    # ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
-
-    # plt.title("Comparing eigenvalues with Bender's")
-    # plt.show()
-
-
+    print("\n>>>> Comparing with Bender's spectrum")
+    _2evals = 2 * evals
+    # Bender energies to compare
+    E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
+    print(
+        f"E0 = {np.real(evals[6]):.06f} vs {E_bender[0]}\n, E1 = {np.real(evals[7]):.06f} vs {E_bender[1]}\n, E2 = {np.real(evals[8]):.06f} vs {E_bender[2]}\n, E3 = {np.real(evals[9]):.06f} vs {E_bender[3]}\n, E4 = {np.real(evals[10]):.06f} vs {E_bender[4]}"
+    )
