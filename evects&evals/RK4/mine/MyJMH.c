@@ -15,7 +15,7 @@
 // for the negative quartic Hamiltonian.
 #define ldc long double complex
 #define pi 3.14159265358979323846
-#define epsilon 2.0
+#define epsilon 6.0
 
 
 // Function prototypes are declared so that they can be used before their definitions.
@@ -59,7 +59,7 @@ int main(void)
     for(int i = 0; i < N; i++)
     {
         E = E_min + i * step;
-        sprintf("%.20Lf",E,"\n");
+        printf("%.20Lf\n", E);
 
         psi_right = 1.0;
         psiprime_right = -cpowl(I, epsilon) * cpowl(x_right, (2.0 + epsilon)) * psi_right;

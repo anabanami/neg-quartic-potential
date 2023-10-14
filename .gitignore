@@ -1,47 +1,12 @@
-states/
-betas/
-alphas/
-neg_x4_potential.nb
-variance/
-
-OG RK4/
-no potential/
-HO-HO-quench/
-RESTRICT V/
-RK4_quench_HO-neg-quartic/
-
-imagggg/
-old/
-tests_robustness/
-complex_integration.py
-
-x=35/
-x=45/
-x=65/
-restricted_V_α=4/
-test/
-test2/
-comparing variance for dx/
+NOPE/
+prev/
 
 *.png
+*.jpeg
+*.pdf
 *.mp4
 *.npy
 *.hdf5
 *.h5
 *.csv
 
-1.py
-1.5.py
-2.py
-3.py
-4.py
-5.py
-6.py
-7.py
-8.py
-9/
-10/
-
-# reformulate this later
-GPE/
-evects&evals/RK4/JMH

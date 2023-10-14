@@ -42,7 +42,7 @@ if __name__ == "__main__":
     extension_funcs = [even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension, odd_extension, even_extension]
 
 
-    for i in range(1):
+    for i in range(10):
 
         with h5py.File(f"{i}.h5", "r") as file:
             # Get the eigenvalue data and convert it to a float
@@ -82,26 +82,25 @@ if __name__ == "__main__":
 
         plt.plot(
             x,
-            (2 * abs(wf **2)),# + evalue,
+            (2.5 * abs(wf **2)) + evalue,
             "-",
             linewidth=1,
-            label=fR'$E_{{{i}}}$',
+            label=fR'$\psi_{{{i}}}$',
             color=color,
         )
 
     textstr = '\n'.join(
         (
             fr'$E_0 = {np.real(eigenvalues[0]):.06f}$',
-            # fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
-            # fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
-            # fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
-            # fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
-            # fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
-            # fr'$E_6 = {np.real(eigenvalues[6]):.06f}$',
-            # fr'$E_7 = {np.real(eigenvalues[7]):.06f}$',
-            # fr'$E_8 = {np.real(eigenvalues[8]):.06f}$',
-            # fr'$E_9 = {np.real(eigenvalues[9]):.06f}$',
-            # fr'$E_{{10}} = {np.real(eigenvalues[10]):.06f}$',
+            fr'$E_1 = {np.real(eigenvalues[1]):.06f}$',
+            fr'$E_2 = {np.real(eigenvalues[2]):.06f}$',
+            fr'$E_3 = {np.real(eigenvalues[3]):.06f}$',
+            fr'$E_4 = {np.real(eigenvalues[4]):.06f}$',
+            fr'$E_5 = {np.real(eigenvalues[5]):.06f}$',
+            fr'$E_6 = {np.real(eigenvalues[6]):.06f}$',
+            fr'$E_7 = {np.real(eigenvalues[7]):.06f}$',
+            fr'$E_8 = {np.real(eigenvalues[8]):.06f}$',
+            fr'$E_9 = {np.real(eigenvalues[9]):.06f}$',
         )
     )
     # place a text box in upper left in axes coords
@@ -114,13 +113,14 @@ if __name__ == "__main__":
     # envelope = 1 / x**2
     # plt.plot(x, envelope, alpha=0.4, color='blue', linestyle='--', label=R'$\frac{1}{x^2}$')
     
-    # plt.legend()
+    plt.xlim(-16.5, 16.5)
+    plt.legend()
     plt.xlabel(R'$x$')
-    # plt.ylabel('Amplitude')    
-    plt.ylabel('Probability density')
-    plt.title("Ground state of negative quartic Hamiltonian")
-    # plt.title("First 10 eigenstates in the real line")
+    plt.ylabel('Probability density with vertical energy shift')
+    # plt.title("Ground state of negative quartic Hamiltonian")
+    plt.title("First 10 eigenstates in the real line")
     plt.grid(color="gray", linestyle=":")
     plt.show()
 
+    # JMH_STATES_real_line.pdf
     # JMH_STATES_real_line_zoom.pdf

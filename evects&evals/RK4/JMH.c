@@ -26,7 +26,7 @@ long double shoot(long double E1, long double E2, long double A1, long double A2
 // solutions from two starting energies (E1 and E2).
 int main(void) 
 {
-    // long double E1 = 1, E2 = 1.5, tempE; // THIS ONE RETURNS: 1.47714975357798686273
+    long double E1 = 1, E2 = 1.5, tempE; // THIS ONE RETURNS: 1.47714975357798686273
     // long double E1 = 5.9, E2 = 6.2, tempE; // THIS ONE RETURNS: 6.00338608330813547180
     // long double E1 = 11.5, E2 = 11.9, tempE; // THIS ONE RETURNS: 11.80243359513386549372
     // long double E1 = 18, E2 = 18.5, tempE; // THIS ONE RETURNS: 18.45881870407350603368

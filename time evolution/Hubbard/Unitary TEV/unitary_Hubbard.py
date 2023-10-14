@@ -11,7 +11,7 @@ from scipy.signal import convolve
 import h5py
 
 # Configure matplotlib to display high DPI figures
-plt.rcParams['figure.dpi'] = 200
+plt.rcParams['figure.dpi'] = 400
 
 #######################################################################################################
 
@@ -92,17 +92,14 @@ def V(x):
     # # upside-down harmonic oscillator
     # return - (x ** 2)
 
-    # # # unmodified negative quartic potential
+    # # # # unmodified negative quartic potential
     # return -alpha * x ** 4
 
     # # restricted and smoothed negative quartic potential
     # return -alpha * smooth_restricted_V(x)
 
-    # Higher order perturbation
-    return - (x ** 6)
-
-    # # Higher order perturbation
-    # return - (x ** 8)
+    # a similar higher order deformation of HO
+    return -(x ** 8)
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -114,37 +111,77 @@ def plot_evolution_frame(y, state, time, i):
     - time: The particular instant of time.
     - i: Index used for saving the plot.
     """
+    ax = plt.gca()
     # potential plot
-    plt.plot(y, V(y), color="black", linewidth=2, label="V(x)")
-    # prob. density of states plot
-    plt.plot(y, abs(state) ** 2, label=R"$|\psi(x, t)|^2$")
-    plt.ylabel(R"$|\psi(x, t)|^2$")
-    plt.xlabel(R"$x$")
+    plt.plot(
+        y,
+        V(y),
+        # label=R"$V(x) = -x^2$",
+        # label=R"$V(x) = -x^4$",
+        label=R"$V(x) = -x^8$",
+        color="gray",
+        alpha=0.4,
+    )
+    # plot of prob. density of state
+    plt.plot(
+        y,
+        3 * abs(state) ** 2,
+        label=R"$|\psi(x, t)|^2$",
+    )
+
     plt.legend()
-    plt.ylim(-1.5, 3)
-    plt.xlim(-5, 5)
-    plt.title(f"t = {time:05f}")
-    plt.savefig(f"{folder}/{i}.png")
+    plt.ylim(-0.2, 2.5)
+    # plt.xlim(-5, 5)
+    # plt.ylabel(R"$|\psi(x, t)|^2$")
+    # plt.xlabel(R"$x$")
+
+    textstr = f"t = {time:05f}"
+    # place a text box in upper left in axes coords
+    ax.text(
+        0.02,
+        0.98,
+        textstr,
+        transform=ax.transAxes,
+        verticalalignment='top',
+    )
+    plt.tight_layout()
+    plt.savefig(f"{folder}/{i}.pdf")
     # plt.show()
     plt.clf()
 
 
 def plot_vs_k(state, time, i):
+    ax = plt.gca()
     # for Fourier space
     kx = np.fft.fftshift(2 * np.pi * np.fft.fftfreq(Nx, dx))
     state = np.fft.fftshift(np.fft.fft(state))
 
     # prob. density plot
-    plt.plot(kx, abs(state) ** 2, label=R"$|\psi(k_x, t)|^2$")
-    plt.ylabel(R"$|\psi(k_x, t)|^2$")
-    plt.xlabel(R"$k_x$")
+    plt.plot(
+        kx,
+        abs(state) ** 2,
+        label=R"$|\psi(k_x, t)|^2$",
+    )
+
     plt.legend()
+    # plt.ylabel(R"$|\psi(k_x, t)|^2$")
+    # plt.xlabel(R"$k_x$")
     # plt.ylim(-1.5, 3)
     # plt.xlim(-5, 5)
-    plt.title(f"t = {time:05f}")
-    plt.savefig(f"{folder}/{i}.png")
+    textstr = f"t = {time:05f}"
+    # place a text box in upper left in axes coords
+    ax.text(
+        0.02,
+        0.98,
+        textstr,
+        transform=ax.transAxes,
+        verticalalignment='top',
+    )
+    plt.tight_layout()
+    plt.savefig(f"{folder2}/{i}.pdf")
     # plt.show()
     plt.clf()
+
 
 
 def x_variance(x, dx, Ψ):
@@ -197,7 +234,7 @@ def Unitary(M):
 
 def TEV(x, wave):
     """
-    Function to perform Time Evolution via the Hubbard Hamiltonian 
+    Function to perform Time Evolution via the Hubbard Hamiltonian
     and store the results in an HDF5 file.
     Parameters:
     - x: Spatial coordinates array.
@@ -249,7 +286,7 @@ def TEV(x, wave):
         if j % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
             plot_evolution_frame(x, state, times[j], j)
-            # plot_vs_k(state, times[j], j)
+            plot_vs_k(state, times[j], j)
 
 
 def globals():
@@ -260,11 +297,14 @@ def globals():
     Returns:
     - A tuple containing all global parameters.
     """
-    # makes folder for simulation frames
+    # makes folders for simulation frames
     folder = Path(f'Unitary_hubbard')
-
     os.makedirs(folder, exist_ok=True)
-    os.system(f'rm {folder}/*.png')
+    os.system(f'rm {folder}/*.pdf')
+
+    folder2 = Path(f'Unitary_hubbard-momentum')
+    os.makedirs(folder2, exist_ok=True)
+    os.system(f'rm {folder2}/*.pdf')
 
     hbar = 1
 
@@ -282,7 +322,7 @@ def globals():
     alpha = 1
 
     # space dimension
-    x_max = 45
+    x_max = 25
     dx = 0.08
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
@@ -296,16 +336,17 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 5.7
+    t_final = 6
 
-    # # initial conditions: HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
+    # initial conditions: HO ground state
+    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
 
-    # initial conditions: shifted HO ground state
-    wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    # # initial conditions: shifted HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,
+        folder2,
         hbar,
         m,
         omega,
@@ -331,6 +372,7 @@ if __name__ == "__main__":
 
     (
         folder,
+        folder2,
         hbar,
         m,
         omega,
@@ -349,8 +391,8 @@ if __name__ == "__main__":
         wave,
     ) = globals()
 
-    # Generate and plot the Hamiltonian matrices
-    plot_matrices()
+    # # Generate and plot the Hamiltonian matrices
+    # plot_matrices()
 
     # Perform time evolution and visualize
     TEV(x, wave)
@@ -362,8 +404,5 @@ if __name__ == "__main__":
     print(f"\n{x_max = }")
     print(f"{Nx = }")
     print(f"{x.shape = }")
-    print(f"x_cut_left = {x[cut]= }")
-    print(f"x_cut_right = {x[Nx-cut]= }")
-
     print(f"\n{dx = }")
     print(f"{dt = }")

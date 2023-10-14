@@ -16,12 +16,12 @@ def globals():
     omega = 2
 
     # space dimension
-    dx = 0.08
+    dx = 20/1024
 
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 5.7
+    t_final = 6
 
     return (
         dt,
@@ -39,7 +39,7 @@ if __name__ == "__main__":
         t_final,
     ) = globals()
 
-    with open('Unitary_hubbard_variance.npy', 'rb') as f:
+    with open('SIGMAS_SQUARED.npy', 'rb') as f:
         data = np.load(f)
 
     time = np.linspace(t_initial, t_final, len(data))
@@ -47,9 +47,9 @@ if __name__ == "__main__":
     ### TITLES
     # plt.title(f"Spatial dispersion for wavepacket in free space")
     # plt.title(f"Spatial dispersion for wavepacket in an upside down HO")
-    # plt.title(f"Spatial dispersion for wavepacket in the negative quartic potential")
+    plt.title(f"Spatial dispersion for wavepacket in the negative quartic potential (RK4)")
     # plt.title(f"Spatial dispersion for a shifted gaussian in a negative quartic potential")
-    plt.title(f"Spatial dispersion for wavepacket in a negative octic potential")
+    # plt.title(f"Spatial dispersion for wavepacket in a negative octic potential")
 
     plt.plot(time, data, label=R"$\left< x^2 \right> - \left< x \right>^2$")
     plt.ylabel(R"$\sigma_{(x)}^2$")

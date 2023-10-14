@@ -67,9 +67,6 @@ def V(x):
     # # restricted and smoothed negative quartic potential
     # return -alpha * smooth_restricted_V(x)
 
-    # # Higher order perturbation
-    # return - (x ** 6)
-
     # Higher order perturbation
     return -(x ** 8)
 
@@ -147,7 +144,7 @@ def plot_wavefunctions(N, x, evals, evects):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        if i < 7:
+        if i < 1:
             plt.plot(
                 x,
                 np.real(evects[:, i] + evals[i]),
@@ -182,12 +179,12 @@ def plot_wavefunctions(N, x, evals, evects):
 
     textstr = '\n'.join(
         (
-            # fr'$E_0 = {np.real(evals[0]):.06f}$',
-            # fr'$E_1 = {np.real(evals[1]):.06f}$',
-            # fr'$E_2 = {np.real(evals[2]):.06f}$',
-            # fr'$E_3 = {np.real(evals[3]):.06f}$',
-            # fr'$E_4 = {np.real(evals[4]):.06f}$',
-            # fr'$E_5 = {np.real(evals[5]):.06f}$',
+            fr'$E_0 = {np.real(evals[0]):.06f}$',
+            fr'$E_1 = {np.real(evals[1]):.06f}$',
+            fr'$E_2 = {np.real(evals[2]):.06f}$',
+            fr'$E_3 = {np.real(evals[3]):.06f}$',
+            fr'$E_4 = {np.real(evals[4]):.06f}$',
+            fr'$E_5 = {np.real(evals[5]):.06f}$',
             fr'$E_6 = {np.real(evals[6]):.06f}$',
             fr'$E_7 = {np.real(evals[7]):.06f}$',
             fr'$E_8 = {np.real(evals[8]):.06f}$',
@@ -284,7 +281,7 @@ if __name__ == "__main__":
 
     # generate Hubbard matrix
     M = Bose_Hubbard_Hamiltonian()
-    # plot_matrix(M)
+    plot_matrix(M)
 
     evals, evects = linalg.eig(M)  # remember that evects are columns! v[:, j]
 

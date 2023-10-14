@@ -18,7 +18,7 @@
 // (though this might change if needed).
 #define ldc long double complex
 #define pi 3.14159265358979323846
-#define epsilon 2.0
+#define epsilon 6.0
 
 
 // Function prototypes are declared so that they can be used before their definitions.
@@ -35,7 +35,7 @@ long double shoot(long double E1, long double E2, long double A1, long double A2
 // solutions from two starting energies (E1 and E2).
 int main(void) 
 {
-    // long double E1 = 1, E2 = 1.5, tempE;
+    long double E1 = 2.8, E2 = 2.9, tempE;
     // long double E1 = 5.9, E2 = 6.2, tempE;
     // long double E1 = 11.5, E2 = 11.9, tempE;
     // long double E1 = 18, E2 = 18.5, tempE;
