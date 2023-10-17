@@ -21,7 +21,7 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 5.7
+    t_final = 6
 
     return (
         dt,
@@ -46,10 +46,10 @@ if __name__ == "__main__":
     
     ### TITLES
     # plt.title(f"Spatial dispersion for wavepacket in free space")
-    # plt.title(f"Spatial dispersion for wavepacket in an upside down HO")
+    plt.title(f"Spatial dispersion for wavepacket in an upside down HO")
     # plt.title(f"Spatial dispersion for wavepacket in the negative quartic potential")
     # plt.title(f"Spatial dispersion for a shifted gaussian in a negative quartic potential")
-    plt.title(f"Spatial dispersion for wavepacket in a negative octic potential")
+    # plt.title(f"Spatial dispersion for wavepacket in a negative octic potential")
 
     plt.plot(time, data, label=R"$\left< x^2 \right> - \left< x \right>^2$")
     plt.ylabel(R"$\sigma_{(x)}^2$")

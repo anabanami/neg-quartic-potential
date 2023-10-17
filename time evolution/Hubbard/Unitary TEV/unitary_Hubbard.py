@@ -11,7 +11,7 @@ from scipy.signal import convolve
 import h5py
 
 # Configure matplotlib to display high DPI figures
-plt.rcParams['figure.dpi'] = 400
+plt.rcParams['figure.dpi'] = 500
 
 #######################################################################################################
 
@@ -89,17 +89,17 @@ def V(x):
     # # Free space (no potential)
     # return np.zeros_like(x)
 
-    # # upside-down harmonic oscillator
-    # return - (x ** 2)
+    # # harmonic oscillator
+    # return (x ** 2)
 
-    # # # # unmodified negative quartic potential
+    # upside-down harmonic oscillator
+    return - (x ** 2)
+
+    # # unmodified negative quartic potential
     # return -alpha * x ** 4
 
-    # # restricted and smoothed negative quartic potential
-    # return -alpha * smooth_restricted_V(x)
-
-    # a similar higher order deformation of HO
-    return -(x ** 8)
+    # # a similar higher order deformation of HO
+    # return -(x ** 8)
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -116,9 +116,11 @@ def plot_evolution_frame(y, state, time, i):
     plt.plot(
         y,
         V(y),
-        # label=R"$V(x) = -x^2$",
+        # label=R"$V(x) = 0$",
+        # label=R"$V(x) = x^2$",
+        label=R"$V(x) = -x^2$",
         # label=R"$V(x) = -x^4$",
-        label=R"$V(x) = -x^8$",
+        # label=R"$V(x) = -x^8$",
         color="gray",
         alpha=0.4,
     )
@@ -254,10 +256,11 @@ def TEV(x, wave):
 
     state = wave
     states.append(state)
+
+    # VARIANCE
     sigma_x_squared = x_variance(x, dx, state)
-    # # IF USING a shifted IC
+    # ONLY IF USING a shifted IC
     # sigma_x_squared = x_variance(x-1, dx, state)
-    # sigma_x_squared = x_variance(x-2, dx, state)
 
     SIGMAS_x_SQUARED.append(sigma_x_squared)
     dset = file.create_dataset("0.0", data=state)
@@ -281,7 +284,7 @@ def TEV(x, wave):
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
     np.save(f"Unitary_hubbard_variance.npy", SIGMAS_x_SQUARED)
 
-    PLOT_INTERVAL = 20
+    PLOT_INTERVAL = 100
     for j, state in enumerate(states):
         if j % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
@@ -311,9 +314,6 @@ def globals():
     # Bender units
     m = 1 / 2
     omega = 2
-    # # natural units
-    # m = 1
-    # omega = 1
 
     # lengths for HO quench
     l1 = np.sqrt(hbar / (m * omega))
@@ -322,7 +322,7 @@ def globals():
     alpha = 1
 
     # space dimension
-    x_max = 25
+    x_max = 45
     dx = 0.08
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)

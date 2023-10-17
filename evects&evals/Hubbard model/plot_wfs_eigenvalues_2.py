@@ -59,8 +59,8 @@ def V(x):
     # # Free space
     # return np.zeros_like(x)
 
-    # #Harmonic oscillator
-    # return x ** 2
+    #Harmonic oscillator
+    return x ** 2
 
     # # # unmodified negative quartic potential
     # return -alpha * x ** 4
@@ -68,8 +68,8 @@ def V(x):
     # # restricted and smoothed negative quartic potential
     # return -alpha * smooth_restricted_V(x)
 
-    # Higher order perturbation
-    return -(x ** 8)
+    # # Higher order perturbation
+    # return -(x ** 8)
 
 
 def explore_hdf5_group(group, indent=0):
@@ -100,13 +100,14 @@ def plot_wavefunctions(N, x, evals, evects):
         ax = plt.gca()
         color = next(ax._get_lines.prop_cycler)['color']
 
-        if 3 < i < 9:
+        # if 3 < i < 9:
+        if i < 5:
             plt.plot(
                 x,
                 (150 * (abs(evects[:, i])**2) + evals[i]),
                 "-",
                 linewidth=1,
-                label=fR"$\psi_{{{i-4}}}(x)$",
+                label=fR"$\psi_{{{i}}}(x)$",
                 color=color,
             )
 
@@ -152,13 +153,13 @@ def plot_wavefunctions(N, x, evals, evects):
 
     textstr = '\n'.join(
         (
-           fr'$E_0 = {np.real(evals[4]):.06f}$',
-            fr'$E_1 = {np.real(evals[5]):.06f}$',
-            fr'$E_2 = {np.real(evals[6]):.06f}$',
-            fr'$E_3 = {np.real(evals[7]):.06f}$',
-            fr'$E_4 = {np.real(evals[8]):.06f}$',
-            # fr'$E_5 = {np.real(evals[9]):.06f}$',
-            # fr'$E_6 = {np.real(evals[10]):.06f}$',
+           fr'$E_0 = {np.real(evals[0]):.06f}$',
+            fr'$E_1 = {np.real(evals[1]):.06f}$',
+            fr'$E_2 = {np.real(evals[2]):.06f}$',
+            fr'$E_3 = {np.real(evals[3]):.06f}$',
+            fr'$E_4 = {np.real(evals[4]):.06f}$',
+            # fr'$E_5 = {np.real(evals[5]):.06f}$',
+            # fr'$E_6 = {np.real(evals[6]):.06f}$',
             # fr'$E_7 = {np.real(evals[7]):.06f}$',
             # fr'$E_8 = {np.real(evals[8]):.06f}$',
             # fr'$E_9 = {np.real(evals[9]):.06f}$',
@@ -172,7 +173,7 @@ def plot_wavefunctions(N, x, evals, evects):
         x,
         V(x),
         linewidth=3,
-        label=R"$V(x) = -x^4$",
+        label=R"$V(x) = x^2$",
         color="gray",
         alpha=0.3,
     )

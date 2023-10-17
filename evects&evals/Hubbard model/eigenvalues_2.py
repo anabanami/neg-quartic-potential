@@ -58,8 +58,8 @@ def V(x):
     # # Free space
     # return np.zeros_like(x)
 
-    # #Harmonic oscillator
-    # return x ** 2
+    #Harmonic oscillator
+    return x ** 2
 
     # # # unmodified negative quartic potential
     # return -alpha * x ** 4
@@ -67,8 +67,8 @@ def V(x):
     # # restricted and smoothed negative quartic potential
     # return -alpha * smooth_restricted_V(x)
 
-    # Higher order perturbation
-    return -(x ** 8)
+    # # Higher order perturbation
+    # return -(x ** 8)
 
 
 def Bose_Hubbard_Hamiltonian():
@@ -306,10 +306,10 @@ if __name__ == "__main__":
     # Close the hdf5 file
     file.close()
 
-    print("\n>>>> Comparing with Bender's spectrum")
-    _2evals = 2 * evals
-    # Bender energies to compare
-    E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
-    print(
-        f"E0 = {np.real(evals[6]):.06f} vs {E_bender[0]}\n, E1 = {np.real(evals[7]):.06f} vs {E_bender[1]}\n, E2 = {np.real(evals[8]):.06f} vs {E_bender[2]}\n, E3 = {np.real(evals[9]):.06f} vs {E_bender[3]}\n, E4 = {np.real(evals[10]):.06f} vs {E_bender[4]}"
-    )
+    # print("\n>>>> Comparing with Bender's spectrum")
+    # _2evals = 2 * evals
+    # # Bender energies to compare
+    # E_bender = np.array([1.477150, 6.003386, 11.802434, 18.458819, 25.791792])
+    # print(
+    #     f"E0 = {np.real(evals[6]):.06f} vs {E_bender[0]}\n, E1 = {np.real(evals[7]):.06f} vs {E_bender[1]}\n, E2 = {np.real(evals[8]):.06f} vs {E_bender[2]}\n, E3 = {np.real(evals[9]):.06f} vs {E_bender[3]}\n, E4 = {np.real(evals[10]):.06f} vs {E_bender[4]}"
+    # )
