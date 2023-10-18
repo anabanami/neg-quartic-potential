@@ -17,7 +17,8 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 6
+    # t_final = 6
+    t_final = 15
 
     return (
         dt,
@@ -54,10 +55,18 @@ if __name__ == "__main__":
         # ("neg_HO_45.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
         # ("neg_HO_65.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 65$"),
         # ("neg_HO_45_shiftedIC.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_HO_45_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_HO_65_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 65$"),
+        # ("neg_HO_45_shiftedIC_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
+
 
         # ("neg_quart_45.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
         # ("neg_quart_65.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 65$"),
         # ("neg_quart_45_shiftedIC.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+        ("neg_quart_45_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+        ("neg_quart_65_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 65$"),
+        # ("neg_quart_45_shiftedIC_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+
 
         # ("neg_oct_45.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 45$"),
         # ("neg_oct_65.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 65$"),
@@ -68,7 +77,7 @@ if __name__ == "__main__":
         linestyle = "--" if index % 2 != 0 else "-"  # Dashed for every second file, starting from the second file (1-indexed)
         plot_data(file_name, label, linestyle)
 
-    plt.title("Spatial dispersion for various potentials")
+    plt.title("Spatial dispersion in a negative HO potential (different box sizes)")
     plt.ylabel(R"$\sigma_{(x)}^2$")
     plt.xlabel("t")
     plt.grid()

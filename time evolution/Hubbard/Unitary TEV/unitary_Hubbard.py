@@ -92,14 +92,14 @@ def V(x):
     # # harmonic oscillator
     # return (x ** 2)
 
-    # upside-down harmonic oscillator
-    return - (x ** 2)
+    # # upside-down harmonic oscillator
+    # return - (x ** 2)
 
     # # unmodified negative quartic potential
     # return -alpha * x ** 4
 
-    # # a similar higher order deformation of HO
-    # return -(x ** 8)
+    # a similar higher order deformation of HO
+    return -(x ** 8)
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -118,9 +118,9 @@ def plot_evolution_frame(y, state, time, i):
         V(y),
         # label=R"$V(x) = 0$",
         # label=R"$V(x) = x^2$",
-        label=R"$V(x) = -x^2$",
+        # label=R"$V(x) = -x^2$",
         # label=R"$V(x) = -x^4$",
-        # label=R"$V(x) = -x^8$",
+        label=R"$V(x) = -x^8$",
         color="gray",
         alpha=0.4,
     )
@@ -259,8 +259,9 @@ def TEV(x, wave):
 
     # VARIANCE
     sigma_x_squared = x_variance(x, dx, state)
-    # ONLY IF USING a shifted IC
-    # sigma_x_squared = x_variance(x-1, dx, state)
+    # VARIANCE
+    # # ONLY IF USING a shifted IC
+    # sigma_x_squared = x_variance(x-10, dx, state)
 
     SIGMAS_x_SQUARED.append(sigma_x_squared)
     dset = file.create_dataset("0.0", data=state)
@@ -336,13 +337,13 @@ def globals():
     # time dimension
     dt = m * dx ** 2 / (np.pi * hbar) * (1 / 8)
     t_initial = 0
-    t_final = 6
+    t_final = 15
 
-    # initial conditions: HO ground state
+    # # initial conditions: HO ground state
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
 
-    # # initial conditions: shifted HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
+    # initial conditions: shifted HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 10) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,

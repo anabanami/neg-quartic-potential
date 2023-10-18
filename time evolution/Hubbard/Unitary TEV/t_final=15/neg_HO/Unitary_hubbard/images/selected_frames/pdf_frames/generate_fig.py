@@ -55,7 +55,8 @@ for i in range(rows):
 plt.tight_layout()
 
 # Save the figure as a PDF
-plt.savefig("probability_density_in__25.pdf", dpi=300)
+plt.savefig("probability_density_in_negoctic_25.pdf", dpi=300)
+# plt.savefig("probability_density_in_negoctic-MOMENTUM_25.pdf", dpi=300)
 
 # Show the figure
 plt.show()
