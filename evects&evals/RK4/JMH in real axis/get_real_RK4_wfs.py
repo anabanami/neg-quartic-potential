@@ -143,9 +143,12 @@ def initialisation_parameters():
         ]
     )
 
-    # spatial dimension
-    x_max = 30
-    dx = 1e-5
+    # # spatial dimension
+    # x_max = 30
+    # dx = 1e-5
+    # space dimension
+    dx = 0.08
+    x_max = 45
     Nx = int(x_max / dx)
     x = np.linspace(0, x_max, Nx, endpoint=False)
 

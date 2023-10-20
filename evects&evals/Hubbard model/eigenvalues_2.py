@@ -58,11 +58,11 @@ def V(x):
     # # Free space
     # return np.zeros_like(x)
 
-    #Harmonic oscillator
-    return x ** 2
+    # #Harmonic oscillator
+    # return x ** 2
 
-    # # # unmodified negative quartic potential
-    # return -alpha * x ** 4
+    # # unmodified negative quartic potential
+    return -alpha * x ** 4
 
     # # restricted and smoothed negative quartic potential
     # return -alpha * smooth_restricted_V(x)
@@ -229,9 +229,8 @@ def globals():
     alpha = 1
 
     # space dimension
-    dx = 0.006
-
-    x_max = 20
+    dx = 0.08
+    x_max = 45
     Nx = int(2 * x_max / dx)
     x = np.linspace(-x_max, x_max, Nx, endpoint=False)
 
@@ -294,7 +293,7 @@ if __name__ == "__main__":
     evals, evects = filter_sorting(evals, evects)
 
     # plot eigenfunctions
-    plot_wavefunctions(Nx, x, evals, evects)
+    # plot_wavefunctions(Nx, x, evals, evects)
 
     # Create a new HDF5 file
     print("\n>>>> saving Evals_hubbard.h5")

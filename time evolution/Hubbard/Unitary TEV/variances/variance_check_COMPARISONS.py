@@ -47,6 +47,7 @@ if __name__ == "__main__":
         # ("free_45.npy", R"$V(x) = 0$, $x_{\mathrm{max}} = 45$"),
         # ("free_65.npy", R"$V(x) = 0$, $x_{\mathrm{max}} = 65$"),
         # ("free_45_shiftedIC.npy", R"$V(x) = 0$, $x_{\mathrm{max}} = 45$"),
+        # ("free_t_final=15.npy", R"$V(x) = 0$, $x_{\mathrm{max}} = 45$"),
 
         # ("HO_45.npy", R"$V(x) = x^2$, $x_{\mathrm{max}} = 45$"),
         # ("HO_65.npy", R"$V(x) = x^2$, $x_{\mathrm{max}} = 65$"),
@@ -55,21 +56,25 @@ if __name__ == "__main__":
         # ("neg_HO_45.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
         # ("neg_HO_65.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 65$"),
         # ("neg_HO_45_shiftedIC.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
-        # ("neg_HO_45_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
-        # ("neg_HO_65_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 65$"),
+        ("neg_HO_45_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
+        ("neg_HO_65_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 65$"),
         # ("neg_HO_45_shiftedIC_t_final=15.npy", R"$V(x) = -x^2$, $x_{\mathrm{max}} = 45$"),
 
 
         # ("neg_quart_45.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
         # ("neg_quart_65.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 65$"),
         # ("neg_quart_45_shiftedIC.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
-        ("neg_quart_45_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
-        ("neg_quart_65_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 65$"),
+        # ("neg_quart_45_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_quart_65_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 65$"),
         # ("neg_quart_45_shiftedIC_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_quart_45_shiftedIC_x-1_t_final=15.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_quart_with_HubbardIC.npy", R"$V(x) = -x^4$, $x_{\mathrm{max}} = 45$"),
 
 
         # ("neg_oct_45.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 45$"),
         # ("neg_oct_65.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 65$"),
+        # ("neg_oct_45_t_final=15.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 45$"),
+        # ("neg_oct_65_t_final=15.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 65$"),
         # ("neg_oct_45_shiftedIC.npy", R"$V(x) = -x^8$, $x_{\mathrm{max}} = 45$"),
     ]
 
@@ -77,7 +82,7 @@ if __name__ == "__main__":
         linestyle = "--" if index % 2 != 0 else "-"  # Dashed for every second file, starting from the second file (1-indexed)
         plot_data(file_name, label, linestyle)
 
-    plt.title("Spatial dispersion in a negative HO potential (different box sizes)")
+    plt.title("Spatial dispersion in negative quartic potential Hamiltonian\n(IC centered at"R"$x=1$)")
     plt.ylabel(R"$\sigma_{(x)}^2$")
     plt.xlabel("t")
     plt.grid()

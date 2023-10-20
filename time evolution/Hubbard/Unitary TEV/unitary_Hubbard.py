@@ -95,11 +95,11 @@ def V(x):
     # # upside-down harmonic oscillator
     # return - (x ** 2)
 
-    # # unmodified negative quartic potential
-    # return -alpha * x ** 4
+    # unmodified negative quartic potential
+    return -alpha * x ** 4
 
-    # a similar higher order deformation of HO
-    return -(x ** 8)
+    # # a similar higher order deformation of HO
+    # return -(x ** 8)
 
 
 def plot_evolution_frame(y, state, time, i):
@@ -119,8 +119,8 @@ def plot_evolution_frame(y, state, time, i):
         # label=R"$V(x) = 0$",
         # label=R"$V(x) = x^2$",
         # label=R"$V(x) = -x^2$",
-        # label=R"$V(x) = -x^4$",
-        label=R"$V(x) = -x^8$",
+        label=R"$V(x) = -x^4$",
+        # label=R"$V(x) = -x^8$",
         color="gray",
         alpha=0.4,
     )
@@ -261,7 +261,7 @@ def TEV(x, wave):
     sigma_x_squared = x_variance(x, dx, state)
     # VARIANCE
     # # ONLY IF USING a shifted IC
-    # sigma_x_squared = x_variance(x-10, dx, state)
+    # sigma_x_squared = x_variance(x-1, dx, state)
 
     SIGMAS_x_SQUARED.append(sigma_x_squared)
     dset = file.create_dataset("0.0", data=state)
@@ -339,11 +339,24 @@ def globals():
     t_initial = 0
     t_final = 15
 
+    # # # initial conditions: neg_quartic GS
+    # # Open the HDF5 file for reading
+    # with h5py.File('neg_quart_eigenvectors.h5', 'r') as file:
+    #     # Access the 'eigenvectors' dataset
+    #     eigenvectors = file['eigenvectors']
+        
+    #     # Get the Hubbard negative quartic GS
+    #     first_set_of_eigenvectors = eigenvectors[:, 4]
+        
+    #     # Convert it to a numpy array
+    #     wave = np.array(first_set_of_eigenvectors)
+
+
     # # initial conditions: HO ground state
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
 
-    # initial conditions: shifted HO ground state
-    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 10) ** 2) / (2 * l1 ** 2))
+    # # # initial conditions: shifted HO ground state
+    # wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-((x - 1) ** 2) / (2 * l1 ** 2))
 
     return (
         folder,
@@ -394,6 +407,7 @@ if __name__ == "__main__":
 
     # # Generate and plot the Hamiltonian matrices
     # plot_matrices()
+
 
     # Perform time evolution and visualize
     TEV(x, wave)
