@@ -7,16 +7,18 @@ from scipy.fft import fft, ifft
 from matplotlib.ticker import FormatStrFormatter
 
 # Setting the resolution of the figures
-plt.rcParams['figure.dpi'] = 200
+plt.rcParams['figure.dpi'] = 300
 
 
 def V(x, t):
     """Define the piece-wise potential function"""
     T = 0
     if t < T:
-        return (1 / 2) * m * ω ** 2 * x ** 2
+        return (1 / 2) * m * omega ** 2 * x ** 2
     else:
-        return -(x ** 4)
+        # return -(x ** 4)
+        return -(x ** 2)
+
 
 
 def Schrodinger_eqn(t, Ψ):
@@ -27,13 +29,13 @@ def Schrodinger_eqn(t, Ψ):
     return (-1j / hbar) * (KΨ + VΨ)
 
 
-def Schrodinger_RK4(t, delta_t, Ψ):
+def Schrodinger_RK4(t, dt, Ψ):
     """Implement the 4th order Runge-Kutta method on TDSE"""
     k1 = Schrodinger_eqn(t, Ψ)
-    k2 = Schrodinger_eqn(t + delta_t / 2, Ψ + k1 * delta_t / 2)
-    k3 = Schrodinger_eqn(t + delta_t / 2, Ψ + k2 * delta_t / 2)
-    k4 = Schrodinger_eqn(t + delta_t, Ψ + k3 * delta_t)
-    return Ψ + (delta_t / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
+    k2 = Schrodinger_eqn(t + dt / 2, Ψ + k1 * dt / 2)
+    k3 = Schrodinger_eqn(t + dt / 2, Ψ + k2 * dt / 2)
+    k4 = Schrodinger_eqn(t + dt, Ψ + k3 * dt)
+    return Ψ + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4)
 
 
 def variance(x, dx, Ψ):
@@ -60,6 +62,7 @@ def plot_evolution_frame(y, state, time, i):
     - time: The particular instant of time.
     - i: Index used for saving the plot.
     """
+    i = i/2000
     ax = plt.gca()
     # plot of prob. density of state
     plt.plot(
@@ -69,10 +72,7 @@ def plot_evolution_frame(y, state, time, i):
     )
 
     plt.legend()
-    plt.ylim(-0.2, 2.5)
-    # plt.xlim(-5, 5)
-    # plt.ylabel(R"$|\psi(x, t)|^2$")
-    # plt.xlabel(R"$x$")
+    plt.ylim(-0.2, 2)
 
     textstr = f"t = {time:05f}"
     # place a text box in upper left in axes coords
@@ -89,64 +89,75 @@ def plot_evolution_frame(y, state, time, i):
     plt.clf()
 
 
-def simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder):
+def simulate_quench(t, t_final, i, x, wave, x_max, dx, folder):
     """Simulate the quantum quench from HO to negative quartic potential.
     Only plot every 50th frame of the simulation and save those files as pdfs in a folder.
     Calculate the variance and normalisation for each wave function"""
-    PLOT_INTERVAL = 50
+    PLOT_INTERVAL = 2000
     waves = []
     SIGMAS_SQUARED = []
     while t < t_final:
         if not i % PLOT_INTERVAL:
-            print(f"time = {t}\n")
+            print(f"time = {t}")
 
             waves.append(wave)
             plot_evolution_frame(x, wave, t, i)
 
-            sigma_x_squared = variance(x, delta_x, wave)
+            sigma_x_squared = variance(x, dx, wave)
             SIGMAS_SQUARED.append(sigma_x_squared)
-            print(f"variance = {sigma_x_squared}\n")
+            print(f"variance = {sigma_x_squared}")
 
             h = abs(wave ** 2)
             h_right = h[1:]
             h_left = h[:-1]
-            print(f"wave normalisation: {delta_x / 2 * np.sum(h_right + h_left)}")
+            print(f"wave normalisation: {dx / 2 * np.sum(h_right + h_left)}\n")
 
-        wave = Schrodinger_RK4(t, delta_t, wave)
+        wave = Schrodinger_RK4(t, dt, wave)
         i += 1
-        t += delta_t
+        t += dt
 
-    np.save("SIGMAS_SQUARED.npy", SIGMAS_SQUARED)
+    np.save("variance_OG_RK4.npy", SIGMAS_SQUARED)
 
 
 def globals():
     """Define global variables and initial conditions"""
-    folder = Path('OG RK4_bleh')
+    folder = Path('OG_RK4_negHO')
+    # folder = Path('OG_RK4_negquart')
+
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.png')
 
     hbar = 1
+
     # Bender units
     m = 1 / 2
-    ω = 2
+    omega = 2
 
-    x_max = 10
-    x = np.linspace(-x_max, x_max, 1024, endpoint=False)
+    # space dimension
+    x_max = 30
+    dx = 3e-3
+    Nx = int(2 * x_max / dx)
+    x = np.linspace(-x_max, x_max, Nx, endpoint=False)
     n = x.size
-    delta_x = x[1] - x[0]
 
-    k = 2 * np.pi * np.fft.fftfreq(n, delta_x)
+    # wave number
+    k = 2 * np.pi * np.fft.fftfreq(n, dx)
 
-    wave = (m * ω / (np.pi * hbar)) ** (1 / 4) * np.exp(-m * ω * x ** 2 / (2 * hbar))
+    # Initial condition
+    wave = (m * omega / (np.pi * hbar)) ** (1 / 4) * np.exp(
+        -m * omega * x ** 2 / (2 * hbar)
+    )
     wave = np.array(wave, dtype=complex)
 
+    # time dimension
+    dt = m * dx ** 2 / (np.pi * hbar)
     t = 0
-    t_final = 6
-    delta_t = m * delta_x ** 2 / (np.pi * hbar)
+    t_final = 15
 
+    # counter
     i = 0
 
-    return folder, hbar, m, ω, x_max, x, delta_x, n, k, wave, t, t_final, delta_t, i
+    return folder, hbar, m, omega, x_max, x, dx, n, k, wave, t, t_final, dt, i
 
 
 if __name__ == "__main__":
@@ -156,31 +167,17 @@ if __name__ == "__main__":
         folder,
         hbar,
         m,
-        ω,
+        omega,
         x_max,
         x,
-        delta_x,
+        dx,
         n,
         k,
         wave,
         t,
         t_final,
-        delta_t,
+        dt,
         i,
     ) = globals()
 
-    simulate_quench(t, t_final, i, x, wave, x_max, delta_x, folder)
-
-    sigmas_list = np.load("SIGMAS_SQUARED.npy")
-    time = np.linspace(t, t_final, len(sigmas_list))
-
-    plt.plot(time, sigmas_list, label=R"$\left< x^2 \right> - \left< x \right>^2$")
-    plt.ylabel(R"$\sigma_{x}^2$")
-    plt.title(f"Spatial variance")
-    plt.xlabel("t")
-    plt.legend()
-    plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%g'))
-    plt.savefig("OG_RK4_Variance_Quench.pdf")
-    plt.grid(color='gray', linestyle=':')
-    plt.show()
-    plt.clf()
+    simulate_quench(t, t_final, i, x, wave, x_max, dx, folder)

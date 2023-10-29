@@ -1,26 +1,22 @@
 import matplotlib.pyplot as plt
 from pdf2image import convert_from_path
 
-
 # Manually specify the PDF filenames
 pdf_files = [
-    '0.pdf',
-    '3450.pdf',
-    '5850.pdf',
-    '7900.pdf',
-    '10350.pdf',
-    '13750.pdf',
-    '17350.pdf',
-    '26050.pdf',
-    '31500.pdf',
+    'frame001.pdf',
+    'frame020.pdf',
+    'frame040.pdf',
+    'frame060.pdf',
+    'frame080.pdf',
+    'frame100.pdf',
 ]
 
 # Number of rows and columns in the grid
 rows = 3
-cols = 3
+cols = 2
 
 # Create a new figure
-fig, axs = plt.subplots(rows, cols, figsize=(15, 11))
+fig, axs = plt.subplots(rows, cols, figsize=(10, 9))
 
 for i in range(rows):
     for j in range(cols):
@@ -59,7 +55,7 @@ for i in range(rows):
 plt.tight_layout()
 
 # Save the figure as a PDF
-plt.savefig("probability_density_in_negquartic_RK4.pdf", dpi=300)
+plt.savefig("probability_density_in_neg_quartic_shiftedIC_x-1.pdf", dpi=300)
 
 # Show the figure
 plt.show()

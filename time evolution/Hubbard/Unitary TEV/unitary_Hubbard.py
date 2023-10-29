@@ -13,8 +13,6 @@ import h5py
 # Configure matplotlib to display high DPI figures
 plt.rcParams['figure.dpi'] = 500
 
-#######################################################################################################
-
 
 def plot_matrices():
     """
@@ -42,38 +40,6 @@ def plot_matrices():
     plt.xlabel('Site index')
     plt.ylabel('Site index')
     plt.show()
-
-
-def gaussian_smoothing(data, pts):
-    """
-    Function to smooth input data with a Gaussian kernel.
-    The data is convolved with a Gaussian kernel to achieve smoothing.
-    Parameters:
-    - data: The array to be smoothed.
-    - pts: Number of points to be considered in the Gaussian kernel.
-    Returns:
-    - The smoothed array.
-    """
-    x = np.arange(-4 * pts, 4 * pts + 1, 1)
-    kernel = np.exp(-(x ** 2) / (2 * pts ** 2))
-    smoothed = convolve(data, kernel, mode='same')
-    normalisation = convolve(np.ones_like(data), kernel, mode='same')
-    return smoothed / normalisation
-
-
-def smooth_restricted_V(x):
-    """
-    Function to generate a potential V(x) based on input x, with smoothing applied in a restricted domain.
-    Parameters:
-    - x: Array defining the spatial coordinates.
-    Returns:
-    - The smoothed potential V.
-    """
-    V = np.ones_like(x) * x[cut] ** 4
-    V[cut : Nx - cut] = x[cut : Nx - cut] ** 4
-    ## smoooth by pts=3
-    V = gaussian_smoothing(V, 3)
-    return V
 
 
 def V(x):
@@ -151,43 +117,10 @@ def plot_evolution_frame(y, state, time, i):
     # plt.show()
     plt.clf()
 
-
-def plot_vs_k(state, time, i):
-    ax = plt.gca()
-    # for Fourier space
-    kx = np.fft.fftshift(2 * np.pi * np.fft.fftfreq(Nx, dx))
-    state = np.fft.fftshift(np.fft.fft(state))
-
-    # prob. density plot
-    plt.plot(
-        kx,
-        abs(state) ** 2,
-        label=R"$|\psi(k_x, t)|^2$",
-    )
-
-    plt.legend()
-    # plt.ylabel(R"$|\psi(k_x, t)|^2$")
-    # plt.xlabel(R"$k_x$")
-    # plt.ylim(-1.5, 3)
-    # plt.xlim(-5, 5)
-    textstr = f"t = {time:05f}"
-    # place a text box in upper left in axes coords
-    ax.text(
-        0.02,
-        0.98,
-        textstr,
-        transform=ax.transAxes,
-        verticalalignment='top',
-    )
-    plt.tight_layout()
-    plt.savefig(f"{folder2}/{i}.pdf")
-    # plt.show()
-    plt.clf()
-
-
-
 def x_variance(x, dx, Ψ):
-    # Calculate Spatial variance of wavefunction (Ψ) per unit time
+    """
+    Calculate Spatial variance of wave function (Ψ) per unit time
+    """
     # means squared distance from the mean
     f = x * abs(Ψ ** 2)
     f_right = f[1:]  # right endpoints
@@ -198,6 +131,41 @@ def x_variance(x, dx, Ψ):
     g_right = g[1:]
     g_left = g[:-1]
     return dx / 2 * np.sum(g_right + g_left)
+
+
+def average_position(x, dx, Ψ):
+    """
+    Calculate the average position, <x>, of wave function (Ψ) per unit time
+    """
+    integrand = np.conj(Ψ) * x * Ψ
+    integrand_right = integrand[1:]
+    integrand_left = integrand[:-1]
+    return dx / 2 * np.sum(integrand_right + integrand_left)
+
+
+def average_momentum(x, dx, Ψ):
+    """
+    Calculate the average momentum, <p>, of wave function (Ψ) per unit time.
+    """
+    # Calculate the derivative of Ψ using the central difference method
+    dΨ_dx = (Ψ[2:] - Ψ[:-2]) / (2 * dx)
+
+    # We'll truncate Ψ and x by 1 on each side since dΨ_dx is shorter.
+    integrand = -1j * hbar * np.conj(Ψ[1:-1]) * dΨ_dx
+    integrand_right = integrand[1:]
+    integrand_left = integrand[:-1]
+    return dx / 2 * np.sum(integrand_right + integrand_left)
+
+
+def Shannon_entropy(x, dx, Ψ):
+    """
+    Calculate the Entropy, S of wave function (Ψ) per unit time
+    """
+    prob_dens = np.conj(Ψ) * Ψ
+    integrand = prob_dens * np.log(prob_dens)
+    integrand_right = integrand[1:]
+    integrand_left = integrand[:-1]
+    return dx / 2 * np.sum(integrand_right + integrand_left)
 
 
 def Bose_Hubbard_Hamiltonian():
@@ -244,7 +212,14 @@ def TEV(x, wave):
     """
     # spatial variance
     SIGMAS_x_SQUARED = []
+    # positions
+    average_positions = []
+    # momenta
+    average_momenta = []
+    # Shannon entropies
+    shannon_entropies = []
 
+    # states
     states = []
 
     # Create a new HDF5 file
@@ -259,12 +234,22 @@ def TEV(x, wave):
 
     # VARIANCE
     sigma_x_squared = x_variance(x, dx, state)
-    # VARIANCE
     # # ONLY IF USING a shifted IC
     # sigma_x_squared = x_variance(x-1, dx, state)
 
-    SIGMAS_x_SQUARED.append(sigma_x_squared)
+    average_positions.append(sigma_x_squared)
     dset = file.create_dataset("0.0", data=state)
+
+    # <x>
+    average_x = average_position(x, dx, state)
+    average_positions.append(average_x)
+    # <p>
+    average_p = average_momentum(x, dx, state)
+    average_momenta.append(average_p)
+
+    entropy = Shannon_entropy(x, dx, state)
+    shannon_entropies.append(entropy)
+
 
     # generate timesteps
     times = np.arange(t_initial, t_final, dt)
@@ -279,18 +264,38 @@ def TEV(x, wave):
         # store variance
         sigma_x_squared = x_variance(x, dx, state)
         SIGMAS_x_SQUARED.append(sigma_x_squared)
+        # <x>
+        average_x = average_position(x, dx, state)
+        average_positions.append(average_x)
+        # <p>
+        average_p = average_momentum(x, dx, state)
+        average_momenta.append(average_p)
+        # Entropy
+        entropy = Shannon_entropy(x, dx, state)
+        shannon_entropies.append(entropy)
+
 
     # Close the hdf5 file
     file.close()
+
     SIGMAS_x_SQUARED = np.array(SIGMAS_x_SQUARED)
     np.save(f"Unitary_hubbard_variance.npy", SIGMAS_x_SQUARED)
+
+    average_positions = np.array(average_positions)
+    np.save(f"Unitary_hubbard_avg_positions.npy", average_positions)
+
+    average_momenta = np.array(average_momenta)
+    np.save(f"Unitary_hubbard_avg_momenta.npy", average_momenta)
+
+    shannon_entropies = np.array(shannon_entropies)
+    np.save(f"Unitary_hubbard_shannon_entropies.npy", shannon_entropies)
 
     PLOT_INTERVAL = 100
     for j, state in enumerate(states):
         if j % PLOT_INTERVAL == 0:
             print(f"t = {times[j]}")
             plot_evolution_frame(x, state, times[j], j)
-            plot_vs_k(state, times[j], j)
+            # plot_vs_k(state, times[j], j)
 
 
 def globals():
@@ -305,10 +310,6 @@ def globals():
     folder = Path(f'Unitary_hubbard')
     os.makedirs(folder, exist_ok=True)
     os.system(f'rm {folder}/*.pdf')
-
-    folder2 = Path(f'Unitary_hubbard-momentum')
-    os.makedirs(folder2, exist_ok=True)
-    os.system(f'rm {folder2}/*.pdf')
 
     hbar = 1
 
@@ -344,13 +345,12 @@ def globals():
     # with h5py.File('neg_quart_eigenvectors.h5', 'r') as file:
     #     # Access the 'eigenvectors' dataset
     #     eigenvectors = file['eigenvectors']
-        
+
     #     # Get the Hubbard negative quartic GS
     #     first_set_of_eigenvectors = eigenvectors[:, 4]
-        
+
     #     # Convert it to a numpy array
     #     wave = np.array(first_set_of_eigenvectors)
-
 
     # # initial conditions: HO ground state
     wave = np.sqrt(1 / (np.sqrt(np.pi) * l1)) * np.exp(-(x ** 2) / (2 * l1 ** 2))
@@ -360,7 +360,6 @@ def globals():
 
     return (
         folder,
-        folder2,
         hbar,
         m,
         omega,
@@ -386,7 +385,6 @@ if __name__ == "__main__":
 
     (
         folder,
-        folder2,
         hbar,
         m,
         omega,
@@ -407,7 +405,6 @@ if __name__ == "__main__":
 
     # # Generate and plot the Hamiltonian matrices
     # plot_matrices()
-
 
     # Perform time evolution and visualize
     TEV(x, wave)

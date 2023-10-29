@@ -7,8 +7,9 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
+from scipy.interpolate import interp1d
 
-plt.rcParams['figure.dpi'] = 300
+plt.rcParams['figure.dpi'] = 200
 
 
 def V(x):
@@ -66,36 +67,45 @@ def initialisation_parameters():
 
     alpha = 1
 
-    dx = 0.08
-    x_max = 45
-    
-    Nx = int(2 * x_max / dx)
-    x = np.linspace(-x_max, x_max, Nx, endpoint=False)
+    dx_RK4 = 1e-5
+    x_max_RK4 = 30
+    Nx_RK4 = int(2 * x_max_RK4 / dx_RK4)
+    x_RK4 = np.linspace(-x_max_RK4, x_max_RK4, Nx_RK4, endpoint=False)
+
+    dx_Hubb= 0.08
+    x_max_Hubb = 45
+    Nx_Hubb = int(2 * x_max_Hubb / dx_Hubb)
+    x_Hubb = np.linspace(-x_max_Hubb, x_max_Hubb, Nx_Hubb, endpoint=False)
 
     return (
         alpha,
-        dx,
-        x_max,
-        Nx,
-        x,
+        dx_RK4,
+        x_max_RK4,
+        Nx_RK4,
+        x_RK4,
+        dx_Hubb,
+        x_max_Hubb,
+        Nx_Hubb,
+        x_Hubb,
     )
 
 
 if __name__ == "__main__":
 
-    alpha, dx, x_max, Nx, x = initialisation_parameters()
+    alpha, dx_RK4, x_max_RK4, Nx_RK4, x_RK4, dx_Hubb, x_max_Hubb, Nx_Hubb, x_Hubb = initialisation_parameters()
 
     # RK4 numerics
-    evalue_RK4, wf_RK4 = get_files_RK4("Eval_gs_RK4")
+    evalue_RK4, wf_RK4 = get_files_RK4("0")
+    # eigenvalue for gs
     evalue_RK4 = evalue_RK4[0]
-    wf_RK4 = np.array(wf_RK4).reshape((562,))
-    # plot both sides of wave function (gs is even)
+    #wave function
+    wf_RK4 = np.array(np.squeeze(wf_RK4, axis=0))
+    # # obtain both sides of wave function (recall that gs is even)
     wf_RK4 = np.concatenate([wf_RK4[::-1], wf_RK4[0:1], wf_RK4])
+    print(f"{evalue_RK4 = }")
     print(f"{np.shape(wf_RK4) = }")
+    # print(f"{wf_RK4 = }") #<<< a list full OF nan :( when I use the dx=0.08 and x_max =45 
 
-    print(f"{wf_RK4 = }") <<< THIS IS A BUNCH OF NAN IN :(
-
-    ass
 
     # Hubbard model
     # Fuck my life
@@ -104,10 +114,9 @@ if __name__ == "__main__":
     eigenvalues_Hubb_array = np.array(eigenvalues_Hubb)
     # Squeeze array into 1D, i.e. (22,)
     eigenvalues_Hubb_array = np.squeeze(eigenvalues_Hubb_array, axis=0)
-    print(f"{np.shape(eigenvalues_Hubb_array)}")
     # get the ground state
     evalue_Hubb = eigenvalues_Hubb_array[4]
-    print(f"{evalue_Hubb = }")
+    print(f"\n{evalue_Hubb = }")
 
     # make the list 'wavefunctions_Hubb' a (1, 1125, 22) array
     wavefunctions_Hubb = np.array(wavefunctions_Hubb)
@@ -122,53 +131,56 @@ if __name__ == "__main__":
     # Plotting
     ax = plt.gca()
 
+    print(f"{np.shape(x_RK4) = }")
+    print(f"{np.shape(x_Hubb) = }")
+
     print("\n>>>> Plotting wavefunctions")
     ax = plt.gca()
     # color = next(ax._get_lines.prop_cycler)['color']
     plt.plot(
-            x,
-            (10 * abs(wf_RK4)**2) + evalue_RK4,
+            x_RK4,
+            ((1 / 2.107) * abs(wf_RK4)**2),
             "-",
             linewidth=1,
             label=R"$\psi_{0,\mathrm{RK4}}(x)$",
-            color="purple",
             )
 
-    # plt.plot(
-    #         x,
-    #         (10 * abs(wf_Hubb)**2) + evalue_Hubb,
-    #         "-",
-    #         linewidth=1,
-    #         label=R"$\psi_{0,\mathrm{Hubb}}(x)$",
-    #         )
+    plt.plot(
+            x_Hubb,
+            (20.82 * abs(wf_Hubb)**2),
+            "-",
+            linewidth=1,
+            label=R"$\psi_{0,\mathrm{Hubb}}(x)$",
+            color="mediumpurple",
+            )
 
-    textstr = '\n'.join(
-        (
-        r'$E_{{0,\mathrm{{RK4}}$ =',f'{np.real(evalue_RK4):.06f}$',
-        r'$E_{{0,\mathrm{{Hubb}}$ =',f'{np.real(evalue_Hubb):.06f}$',
-        )
-    )
-    # place a text box in upper left in axes coords
-    ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
-
-    # plt.plot(
-    #     x,
-    #     V(x),
-    #     linewidth=3,
-    #     label=R"$V(x) = -x^4$",
-    #     color="gray",
-    #     alpha=0.3,
+    # textstr = '\n'.join(
+    #     (
+    #     r'$E_{{0,\mathrm{{RK4}}$ =',f'{np.real(evalue_RK4):.06f}$',
+    #     r'$E_{{0,\mathrm{{Hubb}}$ =',f'{np.real(evalue_Hubb):.06f}$',
+    #     )
     # )
+    # # place a text box in upper left in axes coords
+    # ax.text(0.02, 0.98, textstr, transform=ax.transAxes, verticalalignment='top')
 
-    plt.ylim(0, 1.5)
+    plt.plot(
+        x_RK4,
+        V(x_RK4),
+        linewidth=3,
+        label=R"$V(x) = -x^4$",
+        color="gray",
+        alpha=0.3,
+    )
+
+    plt.ylim(-0.1, 1.2)
     # plt.xlim(-16.5, 16.5)
 
     plt.legend(loc="upper right")
     plt.xlabel(R'$x$')
     plt.ylabel('')
-    plt.ylabel('Probability density')
+    plt.ylabel('Probability density')# with vertical energy shift')
     plt.grid(color='gray', linestyle=':')
     plt.title('First few eigenstates')
-    plt.title('Ground state probability density with vertical energy shift\n(negative quartic Hamiltonian with Hubbard and RK4 methods)')
+    plt.title('Ground state of negative quartic Hamiltonian\n(with RK4 and Hubbard methods)')
     plt.show()
 
